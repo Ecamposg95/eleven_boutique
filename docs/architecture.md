@@ -131,5 +131,18 @@ estáticos demo), `product_media`, `collection`, `collection_product`. Todas con
 
 | Componente | Estado |
 |---|---|
-| Documentación base (este archivo, ADRs, pendientes, README) | EB-01 |
-| Monorepo, Docker Compose, fixtures, API mínima, web | Pendiente (EB-02 en adelante) |
+| Documentación base (este archivo, ADRs, pendientes, README) | EB-01 ✔ |
+| Monorepo pnpm + uv, `compose.yaml`, `.env.example`, feature flags | EB-02 ✔ |
+| API: `tenant`, `product`, `variant`, `channel_listing`, `media_asset`, `product_media`, `collection` con FKs compuestas por tenant; migración inicial | EB-02 ✔ |
+| API: catálogo de solo lectura, facetas, colecciones, disponibilidad `unknown`, `/site` | EB-02 ✔ |
+| Carga idempotente de fixtures DEMO (rechaza tenants no demo) | EB-02 ✔ |
+| Web: esqueleto React Router con prerender de `/`, banda Demostración y `noindex` | EB-02 ✔ |
+| Sistema visual, landing, catálogo, ficha, carrito/checkout demo | Pendiente (EB-03 a EB-06) |
+| Despliegue del preview en Railway | Pendiente (EB-07) |
+
+Paginación: el cursor es opaco y hoy codifica un desplazamiento ligado al orden elegido. Es
+suficiente para el tamaño del catálogo previsto en E1/E2; si el catálogo crece o se requiere
+estabilidad ante inserciones concurrentes, cambiar a keyset sin alterar el contrato.
+
+Búsqueda: `ILIKE` sobre nombre y categoría, sensible a acentos. Evaluar `unaccent` o búsqueda
+de texto completo en español cuando haya catálogo real (EB-09).

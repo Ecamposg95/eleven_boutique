@@ -1,0 +1,27 @@
+{
+  "name": "eleven-boutique",
+  "private": true,
+  "packageManager": "pnpm@12.9.1",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "concurrently -n api,web -c blue,magenta \"pnpm dev:api\" \"pnpm dev:web\"",
+    "dev:web": "pnpm --filter @eleven/web dev",
+    "dev:api": "cd apps/api && uv run uvicorn eleven.main:app --reload --port 8000",
+    "db:up": "docker compose up -d --wait db",
+    "db:down": "docker compose down",
+    "db:migrate": "cd apps/api && uv run alembic upgrade head",
+    "db:seed:demo": "cd apps/api && uv run eleven seed-demo",
+    "bootstrap": "pnpm install && cd apps/api && uv sync",
+    "build": "pnpm --filter @eleven/web build",
+    "lint": "pnpm lint:api && pnpm lint:web",
+    "lint:api": "cd apps/api && uv run ruff check . && uv run ruff format --check . && uv run mypy",
+    "lint:web": "pnpm --filter @eleven/web typecheck",
+    "test": "pnpm test:api",
+    "test:api": "cd apps/api && uv run pytest"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.5"
+  }
+}

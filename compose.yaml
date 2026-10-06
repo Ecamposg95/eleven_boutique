@@ -1,0 +1,41 @@
+# Entorno local. Uso habitual: `pnpm db:up` (solo Postgres) y API/web en el host.
+# Perfil `full` levanta también la API en contenedor: `docker compose --profile full up`.
+name: eleven
+
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_USER: eleven
+      POSTGRES_PASSWORD: eleven
+      POSTGRES_DB: eleven
+    ports:
+      - "${DB_PORT:-5433}:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./infra/db-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U eleven -d eleven"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  api:
+    profiles: ["full"]
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      DATABASE_URL: postgresql+psycopg://eleven:eleven@db:5432/eleven
+      APP_ENV: local
+      TENANT_SLUG: ${TENANT_SLUG:-demo}
+      DEMO_MODE: ${DEMO_MODE:-true}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db-data:

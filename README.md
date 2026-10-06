@@ -3,9 +3,9 @@
 Presencia digital, catálogo, organización de fotografías, atención por WhatsApp y comercio de
 Eleven Boutique, conectable con Atlas ONE. Responsable de producto: Emmanuel Campos / Atlas Tech.
 
-> **Estado actual: EB-01 (documentación base).** Todavía no hay código ejecutable; los comandos
-> de abajo describen el arranque que se implementa en EB-02 y se marcarán como verificados
-> cuando existan.
+> **Estado actual: EB-02 completo.** Monorepo, Postgres en Docker, API de catálogo de solo
+> lectura con 32 productos DEMO y esqueleto web con prerender. La landing y el catálogo visual
+> llegan en EB-03 a EB-05.
 
 ## Entregas
 
@@ -25,38 +25,70 @@ Eleven Boutique, conectable con Atlas ONE. Responsable de producto: Emmanuel Cam
 - [ADR-0002 · Render de la web pública (prerender)](docs/adr/0002-render-web-publica-prerender.md)
 - [Decisiones y dependencias pendientes](docs/pending-decisions.md)
 
-## Estructura (objetivo de EB-02)
+## Estructura
 
 ```
-apps/web/            Sitio público y /admin (React, TypeScript, Vite, React Router, Zustand)
-apps/api/            API FastAPI /api/v1 (SQLAlchemy, Alembic, Pydantic)
-workers/             Proceso Celery (desde E2/E3)
-packages/contracts/  Tipos TS generados desde OpenAPI
-fixtures/            Datos DEMO ficticios, versionados
-infra/               docker-compose, Dockerfiles, Railway
-docs/                Arquitectura, ADRs, runbooks
+apps/web/            Sitio público y, más adelante, /admin (React Router 8 + Vite, Tailwind 4)
+apps/api/            API FastAPI /api/v1 (SQLAlchemy 2.1, Alembic, Pydantic)
+fixtures/demo/       Catálogo DEMO ficticio (32 productos, 231 variantes)
+infra/db-init/       Inicialización de Postgres local (base eleven_test)
+compose.yaml         Postgres + pgvector local; perfil `full` levanta también la API
+docs/                Arquitectura, ADRs, pendientes
 _source/             Material del cliente (fotos, Excel). Ignorado por git
 ```
 
-## Requisitos (previstos)
+`workers/` y `packages/contracts/` se crean cuando haya código que los use (E2 y EB-05).
 
-- Node.js LTS + pnpm
-- Python 3.12+ + uv
-- Docker y Docker Compose
+## Requisitos
 
-## Comandos (previstos, se implementan en EB-02)
+- Node.js 22+ con corepack (`corepack enable` una vez para tener `pnpm` en el PATH)
+- Python 3.12+ y [uv](https://docs.astral.sh/uv/)
+- Docker con Docker Compose
+
+## Arranque local
 
 ```bash
-cp .env.example .env            # variables sin secretos reales
-docker compose up -d db         # Postgres con pgvector
-pnpm install                    # dependencias web
-uv sync --project apps/api      # dependencias API
-pnpm db:migrate                 # migraciones Alembic
-pnpm db:seed:demo               # carga fixtures DEMO
-pnpm dev                        # web + API en modo desarrollo
-pnpm lint && pnpm test          # verificación
-pnpm build                      # build con prerender de páginas públicas
+cp .env.example .env     # valores locales, sin secretos
+corepack enable          # habilita pnpm (una sola vez por máquina)
+pnpm bootstrap           # dependencias web (pnpm) y API (uv)
+pnpm db:up               # Postgres en localhost:5433 (crea también eleven_test)
+pnpm db:migrate          # migraciones Alembic
+pnpm db:seed:demo        # carga el catálogo DEMO; reejecutarlo no duplica
+pnpm dev                 # API en :8000 y web en :5173
 ```
+
+- API: <http://localhost:8000/api/v1/docs> (OpenAPI en `/api/v1/openapi.json`)
+- Web: <http://localhost:5173>
+
+API en contenedor (igual que en Railway): `docker compose --profile full up --build`.
+
+## Verificación
+
+```bash
+pnpm lint        # ruff + mypy estricto (API) y typecheck (web)
+pnpm test        # pytest contra la base eleven_test (requiere pnpm db:up)
+pnpm build       # web con HTML prerenderizado en apps/web/build/client
+```
+
+## Endpoints disponibles
+
+| Método y ruta | Descripción |
+|---|---|
+| `GET /api/v1/health` | Estado del servicio |
+| `GET /api/v1/site` | Configuración pública del tenant: nombre, WhatsApp, flags |
+| `GET /api/v1/catalog/products` | Productos publicados: `q`, `category`, `size`, `color`, `collection`, `price_min`, `price_max`, `sort` (`new`, `name`, `price_asc`, `price_desc`), `limit` (máx. `CATALOG_PAGE_MAX`), `cursor` |
+| `GET /api/v1/catalog/products/{slug}` | Ficha con variantes y precios autorizados |
+| `GET /api/v1/catalog/facets` | Valores de filtro con conteos y rango de precios |
+| `GET /api/v1/catalog/collections` | Colecciones publicadas |
+| `GET /api/v1/catalog/variants/{id}/availability` | Siempre `unknown` hasta que exista una fuente autorizada (E5) |
+
+El tenant se resuelve en el servidor (`TENANT_SLUG`); los parámetros del cliente no lo cambian.
+
+## Feature flags
+
+`DEMO_MODE`, `CATALOG_PUBLIC_ENABLED`, `VISION_PROCESSING_ENABLED`, `WHATSAPP_AUTOREPLY_ENABLED`,
+`ATLAS_SYNC_ENABLED`, `CHECKOUT_ENABLED`, `PAYMENTS_ENABLED`. Ver `.env.example`. Desactivar un
+flag no borra datos.
 
 ## Material fuente
 

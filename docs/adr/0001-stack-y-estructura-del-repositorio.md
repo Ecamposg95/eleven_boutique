@@ -35,7 +35,8 @@ eleven_boutique/
 ├── packages/
 │   └── contracts/    # Tipos TS generados desde el OpenAPI de la API
 ├── fixtures/         # Datos DEMO versionados (ficticios), separados de datos reales
-├── infra/            # docker-compose, Dockerfiles, configuración Railway
+├── infra/            # Inicialización de BD y configuración de despliegue
+├── compose.yaml      # Entorno local (Postgres + pgvector; perfil `full` con API)
 ├── docs/             # Arquitectura, ADRs, runbooks, pendientes
 └── _source/          # Material del cliente (ignorado por git)
 ```
@@ -46,7 +47,8 @@ eleven_boutique/
 |---|---|---|
 | Gestor JS | pnpm workspaces | Monorepo ligero, instalación determinista |
 | Gestor Python | uv (`pyproject.toml` + `uv.lock`) | Entornos reproducibles y rápidos |
-| Lint/format JS | ESLint + Prettier | Estándar del ecosistema React |
+| Estilos | Tailwind CSS 4 con tokens de marca en `@theme` | Incluido en la plantilla oficial de React Router; tokens centralizados |
+| Lint/format JS | ESLint + Prettier (se incorporan en EB-03) | Estándar del ecosistema React |
 | Lint/format Py | Ruff (lint + format) | Una herramienta, rápida |
 | Tipos Py | mypy en módulos de dominio | Contratos Pydantic/SQLAlchemy verificados |
 | Pruebas | Vitest (web), pytest (API), Playwright (E2E críticos) | Unitarias, integración y E2E según §13 |
@@ -54,8 +56,9 @@ eleven_boutique/
 | Local | Docker Compose: Postgres (imagen con pgvector) + API; web con Vite dev | Arranque reproducible |
 | Despliegue | Railway: servicio web estático, API, Postgres (Redis y worker desde E2/E3) | Elección del pack, confirmada para el preview |
 
-Las versiones mayores concretas se fijan en EB-02 con los lockfiles, verificando compatibilidad
-vigente; no se fijan en este ADR.
+Versiones fijadas en EB-02 (2026-10-06) por lockfiles: React 19.2, React Router 8.4, Vite 8,
+TypeScript 5.9 (la de la plantilla oficial; TypeScript 7 se evaluará aparte), FastAPI 0.142,
+SQLAlchemy 2.1, Alembic 1.20, Postgres 17 con pgvector.
 
 ### Módulos de la API
 

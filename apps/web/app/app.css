@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+/* Tokens base del task pack §4. La identidad final se ajusta al logo real en EB-03. */
+@theme {
+  --color-ivory: #f7f4ef;
+  --color-ink: #181716;
+  --color-line: #ddd7ce;
+  --color-champagne: #a68a64;
+}
+
+html,
+body {
+  background-color: var(--color-ivory);
+  color: var(--color-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

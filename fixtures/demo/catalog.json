@@ -1,0 +1,1671 @@
+{
+  "_comment": "DATOS DEMO FICTICIOS. No representan productos, precios ni existencias reales de Eleven Boutique.",
+  "tenant": {
+    "slug": "demo",
+    "name": "Eleven Boutique",
+    "is_demo": true,
+    "settings": {
+      "whatsapp_phone": "+525639748035"
+    }
+  },
+  "collections": [
+    {
+      "slug": "otono-demo",
+      "name": "Otoño (demo)",
+      "description": "Colección de demostración.",
+      "position": 1
+    },
+    {
+      "slug": "esenciales-demo",
+      "name": "Esenciales (demo)",
+      "description": "Colección de demostración.",
+      "position": 2
+    }
+  ],
+  "products": [
+    {
+      "external_id": "DEMO-001",
+      "slug": "blusa-de-manga-larga",
+      "name": "Blusa de manga larga",
+      "category": "blusas",
+      "description": "Blusa de manga larga de demostración. Texto ficticio para el borrador; la descripción real se aprueba con el catálogo.",
+      "status": "published",
+      "published_at": "2026-09-02T16:00:00Z",
+      "price": "799.00",
+      "collections": [
+        "esenciales-demo"
+      ],
+      "images": [],
+      "variants": [
+        {
+          "sku": "DEMO-001-NEG-CH",
+          "size": "CH",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-001-NEG-M",
+          "size": "M",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-001-NEG-G",
+          "size": "G",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-001-NEG-XG",
+          "size": "XG",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-001-BLA-CH",
+          "size": "CH",
+          "color": "blanco"
+        },
+        {
+          "sku": "DEMO-001-BLA-M",
+          "size": "M",
+          "color": "blanco"
+        },
+        {
+          "sku": "DEMO-001-BLA-G",
+          "size": "G",
+          "color": "blanco"
+        },
+        {
+          "sku": "DEMO-001-BLA-XG",
+          "size": "XG",
+          "color": "blanco"
+        },
+        {
+          "sku": "DEMO-001-ROJ-CH",
+          "size": "CH",
+          "color": "rojo vino"
+        },
+        {
+          "sku": "DEMO-001-ROJ-M",
+          "size": "M",
+          "color": "rojo vino"
+        },
+        {
+          "sku": "DEMO-001-ROJ-G",
+          "size": "G",
+          "color": "rojo vino"
+        },
+        {
+          "sku": "DEMO-001-ROJ-XG",
+          "size": "XG",
+          "color": "rojo vino"
+        }
+      ]
+    },
+    {
+      "external_id": "DEMO-002",
+      "slug": "blusa-con-lazo-al-cuello",
+      "name": "Blusa con lazo al cuello",
+      "category": "blusas",
+      "description": "Blusa con lazo al cuello de demostración. Texto ficticio para el borrador; la descripción real se aprueba con el catálogo.",
+      "status": "published",
+      "published_at": "2026-09-03T16:00:00Z",
+      "price": "849.00",
+      "collections": [],
+      "images": [],
+      "variants": [
+        {
+          "sku": "DEMO-002-BEI-CH",
+          "size": "CH",
+          "color": "beige"
+        },
+        {
+          "sku": "DEMO-002-BEI-M",
+          "size": "M",
+          "color": "beige"
+        },
+        {
+          "sku": "DEMO-002-BEI-G",
+          "size": "G",
+          "color": "beige"
+        },
+        {
+          "sku": "DEMO-002-BEI-XG",
+          "size": "XG",
+          "color": "beige"
+        },
+        {
+          "sku": "DEMO-002-NEG-CH",
+          "size": "CH",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-002-NEG-M",
+          "size": "M",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-002-NEG-G",
+          "size": "G",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-002-NEG-XG",
+          "size": "XG",
+          "color": "negro"
+        }
+      ]
+    },
+    {
+      "external_id": "DEMO-003",
+      "slug": "blusa-de-satin",
+      "name": "Blusa de satín",
+      "category": "blusas",
+      "description": "Blusa de satín de demostración. Texto ficticio para el borrador; la descripción real se aprueba con el catálogo.",
+      "status": "published",
+      "published_at": "2026-09-04T16:00:00Z",
+      "price": "799.00",
+      "collections": [],
+      "images": [],
+      "variants": [
+        {
+          "sku": "DEMO-003-CHA-CH",
+          "size": "CH",
+          "color": "champagne"
+        },
+        {
+          "sku": "DEMO-003-CHA-M",
+          "size": "M",
+          "color": "champagne"
+        },
+        {
+          "sku": "DEMO-003-CHA-G",
+          "size": "G",
+          "color": "champagne"
+        },
+        {
+          "sku": "DEMO-003-CHA-XG",
+          "size": "XG",
+          "color": "champagne"
+        },
+        {
+          "sku": "DEMO-003-AZU-CH",
+          "size": "CH",
+          "color": "azul marino"
+        },
+        {
+          "sku": "DEMO-003-AZU-M",
+          "size": "M",
+          "color": "azul marino"
+        },
+        {
+          "sku": "DEMO-003-AZU-G",
+          "size": "G",
+          "color": "azul marino"
+        },
+        {
+          "sku": "DEMO-003-AZU-XG",
+          "size": "XG",
+          "color": "azul marino"
+        }
+      ]
+    },
+    {
+      "external_id": "DEMO-004",
+      "slug": "blusa-de-lino",
+      "name": "Blusa de lino",
+      "category": "blusas",
+      "description": "Blusa de lino de demostración. Texto ficticio para el borrador; la descripción real se aprueba con el catálogo.",
+      "status": "published",
+      "published_at": "2026-09-05T16:00:00Z",
+      "price": "799.00",
+      "collections": [],
+      "images": [],
+      "variants": [
+        {
+          "sku": "DEMO-004-BLA-CH",
+          "size": "CH",
+          "color": "blanco"
+        },
+        {
+          "sku": "DEMO-004-BLA-M",
+          "size": "M",
+          "color": "blanco"
+        },
+        {
+          "sku": "DEMO-004-BLA-G",
+          "size": "G",
+          "color": "blanco"
+        },
+        {
+          "sku": "DEMO-004-BLA-XG",
+          "size": "XG",
+          "color": "blanco"
+        },
+        {
+          "sku": "DEMO-004-VER-CH",
+          "size": "CH",
+          "color": "verde olivo"
+        },
+        {
+          "sku": "DEMO-004-VER-M",
+          "size": "M",
+          "color": "verde olivo"
+        },
+        {
+          "sku": "DEMO-004-VER-G",
+          "size": "G",
+          "color": "verde olivo"
+        },
+        {
+          "sku": "DEMO-004-VER-XG",
+          "size": "XG",
+          "color": "verde olivo"
+        }
+      ]
+    },
+    {
+      "external_id": "DEMO-005",
+      "slug": "blusa-con-hombros-descubiertos",
+      "name": "Blusa con hombros descubiertos",
+      "category": "blusas",
+      "description": "Blusa con hombros descubiertos de demostración. Texto ficticio para el borrador; la descripción real se aprueba con el catálogo.",
+      "status": "published",
+      "published_at": "2026-09-06T16:00:00Z",
+      "price": null,
+      "collections": [],
+      "images": [],
+      "variants": [
+        {
+          "sku": "DEMO-005-NEG-CH",
+          "size": "CH",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-005-NEG-M",
+          "size": "M",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-005-NEG-G",
+          "size": "G",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-005-NEG-XG",
+          "size": "XG",
+          "color": "negro"
+        }
+      ]
+    },
+    {
+      "external_id": "DEMO-006",
+      "slug": "vestido-midi-cruzado",
+      "name": "Vestido midi cruzado",
+      "category": "vestidos",
+      "description": "Vestido midi cruzado de demostración. Texto ficticio para el borrador; la descripción real se aprueba con el catálogo.",
+      "status": "published",
+      "published_at": "2026-09-07T16:00:00Z",
+      "price": "1199.00",
+      "collections": [],
+      "images": [],
+      "variants": [
+        {
+          "sku": "DEMO-006-NEG-CH",
+          "size": "CH",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-006-NEG-M",
+          "size": "M",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-006-NEG-G",
+          "size": "G",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-006-NEG-XG",
+          "size": "XG",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-006-ROJ-CH",
+          "size": "CH",
+          "color": "rojo vino"
+        },
+        {
+          "sku": "DEMO-006-ROJ-M",
+          "size": "M",
+          "color": "rojo vino"
+        },
+        {
+          "sku": "DEMO-006-ROJ-G",
+          "size": "G",
+          "color": "rojo vino"
+        },
+        {
+          "sku": "DEMO-006-ROJ-XG",
+          "size": "XG",
+          "color": "rojo vino"
+        }
+      ]
+    },
+    {
+      "external_id": "DEMO-007",
+      "slug": "vestido-camisero",
+      "name": "Vestido camisero",
+      "category": "vestidos",
+      "description": "Vestido camisero de demostración. Texto ficticio para el borrador; la descripción real se aprueba con el catálogo.",
+      "status": "published",
+      "published_at": "2026-09-08T16:00:00Z",
+      "price": "1199.00",
+      "collections": [],
+      "images": [],
+      "variants": [
+        {
+          "sku": "DEMO-007-AZU-CH",
+          "size": "CH",
+          "color": "azul marino"
+        },
+        {
+          "sku": "DEMO-007-AZU-M",
+          "size": "M",
+          "color": "azul marino"
+        },
+        {
+          "sku": "DEMO-007-AZU-G",
+          "size": "G",
+          "color": "azul marino"
+        },
+        {
+          "sku": "DEMO-007-AZU-XG",
+          "size": "XG",
+          "color": "azul marino"
+        },
+        {
+          "sku": "DEMO-007-BEI-CH",
+          "size": "CH",
+          "color": "beige"
+        },
+        {
+          "sku": "DEMO-007-BEI-M",
+          "size": "M",
+          "color": "beige"
+        },
+        {
+          "sku": "DEMO-007-BEI-G",
+          "size": "G",
+          "color": "beige"
+        },
+        {
+          "sku": "DEMO-007-BEI-XG",
+          "size": "XG",
+          "color": "beige"
+        }
+      ]
+    },
+    {
+      "external_id": "DEMO-008",
+      "slug": "vestido-de-punto",
+      "name": "Vestido de punto",
+      "category": "vestidos",
+      "description": "Vestido de punto de demostración. Texto ficticio para el borrador; la descripción real se aprueba con el catálogo.",
+      "status": "published",
+      "published_at": "2026-09-09T16:00:00Z",
+      "price": "1049.00",
+      "collections": [
+        "otono-demo"
+      ],
+      "images": [],
+      "variants": [
+        {
+          "sku": "DEMO-008-GRI-CH",
+          "size": "CH",
+          "color": "gris"
+        },
+        {
+          "sku": "DEMO-008-GRI-M",
+          "size": "M",
+          "color": "gris"
+        },
+        {
+          "sku": "DEMO-008-GRI-G",
+          "size": "G",
+          "color": "gris"
+        },
+        {
+          "sku": "DEMO-008-GRI-XG",
+          "size": "XG",
+          "color": "gris"
+        },
+        {
+          "sku": "DEMO-008-CAM-CH",
+          "size": "CH",
+          "color": "camel"
+        },
+        {
+          "sku": "DEMO-008-CAM-M",
+          "size": "M",
+          "color": "camel"
+        },
+        {
+          "sku": "DEMO-008-CAM-G",
+          "size": "G",
+          "color": "camel"
+        },
+        {
+          "sku": "DEMO-008-CAM-XG",
+          "size": "XG",
+          "color": "camel"
+        }
+      ]
+    },
+    {
+      "external_id": "DEMO-009",
+      "slug": "vestido-largo-estampado",
+      "name": "Vestido largo estampado",
+      "category": "vestidos",
+      "description": "Vestido largo estampado de demostración. Texto ficticio para el borrador; la descripción real se aprueba con el catálogo.",
+      "status": "published",
+      "published_at": "2026-09-10T16:00:00Z",
+      "price": "1049.00",
+      "collections": [],
+      "images": [],
+      "variants": [
+        {
+          "sku": "DEMO-009-VER-CH",
+          "size": "CH",
+          "color": "verde olivo"
+        },
+        {
+          "sku": "DEMO-009-VER-M",
+          "size": "M",
+          "color": "verde olivo"
+        },
+        {
+          "sku": "DEMO-009-VER-G",
+          "size": "G",
+          "color": "verde olivo"
+        },
+        {
+          "sku": "DEMO-009-VER-XG",
+          "size": "XG",
+          "color": "verde olivo"
+        }
+      ]
+    },
+    {
+      "external_id": "DEMO-010",
+      "slug": "vestido-corto-de-tirantes",
+      "name": "Vestido corto de tirantes",
+      "category": "vestidos",
+      "description": "Vestido corto de tirantes de demostración. Texto ficticio para el borrador; la descripción real se aprueba con el catálogo.",
+      "status": "published",
+      "published_at": "2026-09-11T16:00:00Z",
+      "price": null,
+      "collections": [],
+      "images": [],
+      "variants": [
+        {
+          "sku": "DEMO-010-NEG-CH",
+          "size": "CH",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-010-NEG-M",
+          "size": "M",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-010-NEG-G",
+          "size": "G",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-010-NEG-XG",
+          "size": "XG",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-010-BLA-CH",
+          "size": "CH",
+          "color": "blanco"
+        },
+        {
+          "sku": "DEMO-010-BLA-M",
+          "size": "M",
+          "color": "blanco"
+        },
+        {
+          "sku": "DEMO-010-BLA-G",
+          "size": "G",
+          "color": "blanco"
+        },
+        {
+          "sku": "DEMO-010-BLA-XG",
+          "size": "XG",
+          "color": "blanco"
+        }
+      ]
+    },
+    {
+      "external_id": "DEMO-011",
+      "slug": "pantalon-sastre-de-pierna-amplia",
+      "name": "Pantalón sastre de pierna amplia",
+      "category": "pantalones",
+      "description": "Pantalón sastre de pierna amplia de demostración. Texto ficticio para el borrador; la descripción real se aprueba con el catálogo.",
+      "status": "published",
+      "published_at": "2026-09-12T16:00:00Z",
+      "price": "999.00",
+      "collections": [
+        "otono-demo",
+        "esenciales-demo"
+      ],
+      "images": [],
+      "variants": [
+        {
+          "sku": "DEMO-011-NEG-CH",
+          "size": "CH",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-011-NEG-M",
+          "size": "M",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-011-NEG-G",
+          "size": "G",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-011-NEG-XG",
+          "size": "XG",
+          "color": "negro",
+          "price": "1099.00"
+        },
+        {
+          "sku": "DEMO-011-CAM-CH",
+          "size": "CH",
+          "color": "camel"
+        },
+        {
+          "sku": "DEMO-011-CAM-M",
+          "size": "M",
+          "color": "camel"
+        },
+        {
+          "sku": "DEMO-011-CAM-G",
+          "size": "G",
+          "color": "camel"
+        },
+        {
+          "sku": "DEMO-011-CAM-XG",
+          "size": "XG",
+          "color": "camel",
+          "price": "1099.00"
+        },
+        {
+          "sku": "DEMO-011-GRI-CH",
+          "size": "CH",
+          "color": "gris"
+        },
+        {
+          "sku": "DEMO-011-GRI-M",
+          "size": "M",
+          "color": "gris"
+        },
+        {
+          "sku": "DEMO-011-GRI-G",
+          "size": "G",
+          "color": "gris"
+        },
+        {
+          "sku": "DEMO-011-GRI-XG",
+          "size": "XG",
+          "color": "gris",
+          "price": "1099.00"
+        }
+      ]
+    },
+    {
+      "external_id": "DEMO-012",
+      "slug": "pantalon-recto-de-tiro-alto",
+      "name": "Pantalón recto de tiro alto",
+      "category": "pantalones",
+      "description": "Pantalón recto de tiro alto de demostración. Texto ficticio para el borrador; la descripción real se aprueba con el catálogo.",
+      "status": "published",
+      "published_at": "2026-09-13T16:00:00Z",
+      "price": "949.00",
+      "collections": [
+        "esenciales-demo"
+      ],
+      "images": [],
+      "variants": [
+        {
+          "sku": "DEMO-012-AZU-CH",
+          "size": "CH",
+          "color": "azul marino"
+        },
+        {
+          "sku": "DEMO-012-AZU-M",
+          "size": "M",
+          "color": "azul marino"
+        },
+        {
+          "sku": "DEMO-012-AZU-G",
+          "size": "G",
+          "color": "azul marino"
+        },
+        {
+          "sku": "DEMO-012-AZU-XG",
+          "size": "XG",
+          "color": "azul marino"
+        },
+        {
+          "sku": "DEMO-012-BEI-CH",
+          "size": "CH",
+          "color": "beige"
+        },
+        {
+          "sku": "DEMO-012-BEI-M",
+          "size": "M",
+          "color": "beige"
+        },
+        {
+          "sku": "DEMO-012-BEI-G",
+          "size": "G",
+          "color": "beige"
+        },
+        {
+          "sku": "DEMO-012-BEI-XG",
+          "size": "XG",
+          "color": "beige"
+        }
+      ]
+    },
+    {
+      "external_id": "DEMO-013",
+      "slug": "jeans-de-corte-mom",
+      "name": "Jeans de corte mom",
+      "category": "pantalones",
+      "description": "Jeans de corte mom de demostración. Texto ficticio para el borrador; la descripción real se aprueba con el catálogo.",
+      "status": "published",
+      "published_at": "2026-09-14T16:00:00Z",
+      "price": "999.00",
+      "collections": [
+        "esenciales-demo"
+      ],
+      "images": [],
+      "variants": [
+        {
+          "sku": "DEMO-013-AZU-CH",
+          "size": "CH",
+          "color": "azul"
+        },
+        {
+          "sku": "DEMO-013-AZU-M",
+          "size": "M",
+          "color": "azul"
+        },
+        {
+          "sku": "DEMO-013-AZU-G",
+          "size": "G",
+          "color": "azul"
+        },
+        {
+          "sku": "DEMO-013-AZU-XG",
+          "size": "XG",
+          "color": "azul"
+        }
+      ]
+    },
+    {
+      "external_id": "DEMO-014",
+      "slug": "pantalon-cargo",
+      "name": "Pantalón cargo",
+      "category": "pantalones",
+      "description": "Pantalón cargo de demostración. Texto ficticio para el borrador; la descripción real se aprueba con el catálogo.",
+      "status": "published",
+      "published_at": "2026-09-15T16:00:00Z",
+      "price": "849.00",
+      "collections": [
+        "esenciales-demo"
+      ],
+      "images": [],
+      "variants": [
+        {
+          "sku": "DEMO-014-VER-CH",
+          "size": "CH",
+          "color": "verde olivo"
+        },
+        {
+          "sku": "DEMO-014-VER-M",
+          "size": "M",
+          "color": "verde olivo"
+        },
+        {
+          "sku": "DEMO-014-VER-G",
+          "size": "G",
+          "color": "verde olivo"
+        },
+        {
+          "sku": "DEMO-014-VER-XG",
+          "size": "XG",
+          "color": "verde olivo"
+        },
+        {
+          "sku": "DEMO-014-NEG-CH",
+          "size": "CH",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-014-NEG-M",
+          "size": "M",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-014-NEG-G",
+          "size": "G",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-014-NEG-XG",
+          "size": "XG",
+          "color": "negro"
+        }
+      ]
+    },
+    {
+      "external_id": "DEMO-015",
+      "slug": "falda-midi-plisada",
+      "name": "Falda midi plisada",
+      "category": "faldas",
+      "description": "Falda midi plisada de demostración. Texto ficticio para el borrador; la descripción real se aprueba con el catálogo.",
+      "status": "published",
+      "published_at": "2026-09-16T16:00:00Z",
+      "price": null,
+      "collections": [],
+      "images": [],
+      "variants": [
+        {
+          "sku": "DEMO-015-NEG-CH",
+          "size": "CH",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-015-NEG-M",
+          "size": "M",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-015-NEG-G",
+          "size": "G",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-015-NEG-XG",
+          "size": "XG",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-015-CHA-CH",
+          "size": "CH",
+          "color": "champagne"
+        },
+        {
+          "sku": "DEMO-015-CHA-M",
+          "size": "M",
+          "color": "champagne"
+        },
+        {
+          "sku": "DEMO-015-CHA-G",
+          "size": "G",
+          "color": "champagne"
+        },
+        {
+          "sku": "DEMO-015-CHA-XG",
+          "size": "XG",
+          "color": "champagne"
+        }
+      ]
+    },
+    {
+      "external_id": "DEMO-016",
+      "slug": "falda-de-mezclilla",
+      "name": "Falda de mezclilla",
+      "category": "faldas",
+      "description": "Falda de mezclilla de demostración. Texto ficticio para el borrador; la descripción real se aprueba con el catálogo.",
+      "status": "published",
+      "published_at": "2026-09-17T16:00:00Z",
+      "price": "699.00",
+      "collections": [],
+      "images": [],
+      "variants": [
+        {
+          "sku": "DEMO-016-AZU-CH",
+          "size": "CH",
+          "color": "azul"
+        },
+        {
+          "sku": "DEMO-016-AZU-M",
+          "size": "M",
+          "color": "azul"
+        },
+        {
+          "sku": "DEMO-016-AZU-G",
+          "size": "G",
+          "color": "azul"
+        },
+        {
+          "sku": "DEMO-016-AZU-XG",
+          "size": "XG",
+          "color": "azul"
+        }
+      ]
+    },
+    {
+      "external_id": "DEMO-017",
+      "slug": "falda-lapiz",
+      "name": "Falda lápiz",
+      "category": "faldas",
+      "description": "Falda lápiz de demostración. Texto ficticio para el borrador; la descripción real se aprueba con el catálogo.",
+      "status": "published",
+      "published_at": "2026-10-01T16:00:00Z",
+      "price": "849.00",
+      "collections": [
+        "esenciales-demo"
+      ],
+      "images": [],
+      "variants": [
+        {
+          "sku": "DEMO-017-NEG-CH",
+          "size": "CH",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-017-NEG-M",
+          "size": "M",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-017-NEG-G",
+          "size": "G",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-017-NEG-XG",
+          "size": "XG",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-017-GRI-CH",
+          "size": "CH",
+          "color": "gris"
+        },
+        {
+          "sku": "DEMO-017-GRI-M",
+          "size": "M",
+          "color": "gris"
+        },
+        {
+          "sku": "DEMO-017-GRI-G",
+          "size": "G",
+          "color": "gris"
+        },
+        {
+          "sku": "DEMO-017-GRI-XG",
+          "size": "XG",
+          "color": "gris"
+        }
+      ]
+    },
+    {
+      "external_id": "DEMO-018",
+      "slug": "chamarra-de-piel-sintetica",
+      "name": "Chamarra de piel sintética",
+      "category": "chamarras",
+      "description": "Chamarra de piel sintética de demostración. Texto ficticio para el borrador; la descripción real se aprueba con el catálogo.",
+      "status": "published",
+      "published_at": "2026-10-02T16:00:00Z",
+      "price": "1499.00",
+      "collections": [
+        "otono-demo"
+      ],
+      "images": [],
+      "variants": [
+        {
+          "sku": "DEMO-018-NEG-CH",
+          "size": "CH",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-018-NEG-M",
+          "size": "M",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-018-NEG-G",
+          "size": "G",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-018-NEG-XG",
+          "size": "XG",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-018-CAM-CH",
+          "size": "CH",
+          "color": "camel"
+        },
+        {
+          "sku": "DEMO-018-CAM-M",
+          "size": "M",
+          "color": "camel"
+        },
+        {
+          "sku": "DEMO-018-CAM-G",
+          "size": "G",
+          "color": "camel"
+        },
+        {
+          "sku": "DEMO-018-CAM-XG",
+          "size": "XG",
+          "color": "camel"
+        }
+      ]
+    },
+    {
+      "external_id": "DEMO-019",
+      "slug": "chamarra-de-mezclilla",
+      "name": "Chamarra de mezclilla",
+      "category": "chamarras",
+      "description": "Chamarra de mezclilla de demostración. Texto ficticio para el borrador; la descripción real se aprueba con el catálogo.",
+      "status": "published",
+      "published_at": "2026-10-03T16:00:00Z",
+      "price": "1449.00",
+      "collections": [
+        "otono-demo"
+      ],
+      "images": [],
+      "variants": [
+        {
+          "sku": "DEMO-019-AZU-CH",
+          "size": "CH",
+          "color": "azul"
+        },
+        {
+          "sku": "DEMO-019-AZU-M",
+          "size": "M",
+          "color": "azul"
+        },
+        {
+          "sku": "DEMO-019-AZU-G",
+          "size": "G",
+          "color": "azul"
+        },
+        {
+          "sku": "DEMO-019-AZU-XG",
+          "size": "XG",
+          "color": "azul"
+        }
+      ]
+    },
+    {
+      "external_id": "DEMO-020",
+      "slug": "chamarra-acolchada",
+      "name": "Chamarra acolchada",
+      "category": "chamarras",
+      "description": "Chamarra acolchada de demostración. Texto ficticio para el borrador; la descripción real se aprueba con el catálogo.",
+      "status": "published",
+      "published_at": "2026-10-04T16:00:00Z",
+      "price": null,
+      "collections": [
+        "otono-demo"
+      ],
+      "images": [],
+      "variants": [
+        {
+          "sku": "DEMO-020-NEG-CH",
+          "size": "CH",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-020-NEG-M",
+          "size": "M",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-020-NEG-G",
+          "size": "G",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-020-NEG-XG",
+          "size": "XG",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-020-BEI-CH",
+          "size": "CH",
+          "color": "beige"
+        },
+        {
+          "sku": "DEMO-020-BEI-M",
+          "size": "M",
+          "color": "beige"
+        },
+        {
+          "sku": "DEMO-020-BEI-G",
+          "size": "G",
+          "color": "beige"
+        },
+        {
+          "sku": "DEMO-020-BEI-XG",
+          "size": "XG",
+          "color": "beige"
+        }
+      ]
+    },
+    {
+      "external_id": "DEMO-021",
+      "slug": "saco-oversize",
+      "name": "Saco oversize",
+      "category": "sacos",
+      "description": "Saco oversize de demostración. Texto ficticio para el borrador; la descripción real se aprueba con el catálogo.",
+      "status": "published",
+      "published_at": "2026-10-05T16:00:00Z",
+      "price": "1299.00",
+      "collections": [
+        "otono-demo"
+      ],
+      "images": [],
+      "variants": [
+        {
+          "sku": "DEMO-021-NEG-CH",
+          "size": "CH",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-021-NEG-M",
+          "size": "M",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-021-NEG-G",
+          "size": "G",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-021-NEG-XG",
+          "size": "XG",
+          "color": "negro",
+          "price": "1399.00"
+        },
+        {
+          "sku": "DEMO-021-CAM-CH",
+          "size": "CH",
+          "color": "camel"
+        },
+        {
+          "sku": "DEMO-021-CAM-M",
+          "size": "M",
+          "color": "camel"
+        },
+        {
+          "sku": "DEMO-021-CAM-G",
+          "size": "G",
+          "color": "camel"
+        },
+        {
+          "sku": "DEMO-021-CAM-XG",
+          "size": "XG",
+          "color": "camel",
+          "price": "1399.00"
+        },
+        {
+          "sku": "DEMO-021-GRI-CH",
+          "size": "CH",
+          "color": "gris"
+        },
+        {
+          "sku": "DEMO-021-GRI-M",
+          "size": "M",
+          "color": "gris"
+        },
+        {
+          "sku": "DEMO-021-GRI-G",
+          "size": "G",
+          "color": "gris"
+        },
+        {
+          "sku": "DEMO-021-GRI-XG",
+          "size": "XG",
+          "color": "gris",
+          "price": "1399.00"
+        }
+      ]
+    },
+    {
+      "external_id": "DEMO-022",
+      "slug": "saco-cruzado",
+      "name": "Saco cruzado",
+      "category": "sacos",
+      "description": "Saco cruzado de demostración. Texto ficticio para el borrador; la descripción real se aprueba con el catálogo.",
+      "status": "published",
+      "published_at": "2026-10-05T16:00:00Z",
+      "price": "1499.00",
+      "collections": [
+        "otono-demo"
+      ],
+      "images": [],
+      "variants": [
+        {
+          "sku": "DEMO-022-BEI-CH",
+          "size": "CH",
+          "color": "beige"
+        },
+        {
+          "sku": "DEMO-022-BEI-M",
+          "size": "M",
+          "color": "beige"
+        },
+        {
+          "sku": "DEMO-022-BEI-G",
+          "size": "G",
+          "color": "beige"
+        },
+        {
+          "sku": "DEMO-022-BEI-XG",
+          "size": "XG",
+          "color": "beige"
+        },
+        {
+          "sku": "DEMO-022-AZU-CH",
+          "size": "CH",
+          "color": "azul marino"
+        },
+        {
+          "sku": "DEMO-022-AZU-M",
+          "size": "M",
+          "color": "azul marino"
+        },
+        {
+          "sku": "DEMO-022-AZU-G",
+          "size": "G",
+          "color": "azul marino"
+        },
+        {
+          "sku": "DEMO-022-AZU-XG",
+          "size": "XG",
+          "color": "azul marino"
+        }
+      ]
+    },
+    {
+      "external_id": "DEMO-023",
+      "slug": "playera-basica-de-algodon",
+      "name": "Playera básica de algodón",
+      "category": "playeras",
+      "description": "Playera básica de algodón de demostración. Texto ficticio para el borrador; la descripción real se aprueba con el catálogo.",
+      "status": "published",
+      "published_at": "2026-10-05T16:00:00Z",
+      "price": "349.00",
+      "collections": [
+        "esenciales-demo"
+      ],
+      "images": [],
+      "variants": [
+        {
+          "sku": "DEMO-023-BLA-CH",
+          "size": "CH",
+          "color": "blanco"
+        },
+        {
+          "sku": "DEMO-023-BLA-M",
+          "size": "M",
+          "color": "blanco"
+        },
+        {
+          "sku": "DEMO-023-BLA-G",
+          "size": "G",
+          "color": "blanco"
+        },
+        {
+          "sku": "DEMO-023-BLA-XG",
+          "size": "XG",
+          "color": "blanco"
+        },
+        {
+          "sku": "DEMO-023-NEG-CH",
+          "size": "CH",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-023-NEG-M",
+          "size": "M",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-023-NEG-G",
+          "size": "G",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-023-NEG-XG",
+          "size": "XG",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-023-GRI-CH",
+          "size": "CH",
+          "color": "gris"
+        },
+        {
+          "sku": "DEMO-023-GRI-M",
+          "size": "M",
+          "color": "gris"
+        },
+        {
+          "sku": "DEMO-023-GRI-G",
+          "size": "G",
+          "color": "gris"
+        },
+        {
+          "sku": "DEMO-023-GRI-XG",
+          "size": "XG",
+          "color": "gris"
+        }
+      ]
+    },
+    {
+      "external_id": "DEMO-024",
+      "slug": "playera-de-cuello-alto",
+      "name": "Playera de cuello alto",
+      "category": "playeras",
+      "description": "Playera de cuello alto de demostración. Texto ficticio para el borrador; la descripción real se aprueba con el catálogo.",
+      "status": "published",
+      "published_at": "2026-10-05T16:00:00Z",
+      "price": "549.00",
+      "collections": [
+        "esenciales-demo"
+      ],
+      "images": [],
+      "variants": [
+        {
+          "sku": "DEMO-024-NEG-CH",
+          "size": "CH",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-024-NEG-M",
+          "size": "M",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-024-NEG-G",
+          "size": "G",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-024-NEG-XG",
+          "size": "XG",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-024-CAM-CH",
+          "size": "CH",
+          "color": "camel"
+        },
+        {
+          "sku": "DEMO-024-CAM-M",
+          "size": "M",
+          "color": "camel"
+        },
+        {
+          "sku": "DEMO-024-CAM-G",
+          "size": "G",
+          "color": "camel"
+        },
+        {
+          "sku": "DEMO-024-CAM-XG",
+          "size": "XG",
+          "color": "camel"
+        }
+      ]
+    },
+    {
+      "external_id": "DEMO-025",
+      "slug": "top-de-canale",
+      "name": "Top de canalé",
+      "category": "playeras",
+      "description": "Top de canalé de demostración. Texto ficticio para el borrador; la descripción real se aprueba con el catálogo.",
+      "status": "published",
+      "published_at": "2026-10-05T16:00:00Z",
+      "price": null,
+      "collections": [
+        "esenciales-demo"
+      ],
+      "images": [],
+      "variants": [
+        {
+          "sku": "DEMO-025-BLA-CH",
+          "size": "CH",
+          "color": "blanco"
+        },
+        {
+          "sku": "DEMO-025-BLA-M",
+          "size": "M",
+          "color": "blanco"
+        },
+        {
+          "sku": "DEMO-025-BLA-G",
+          "size": "G",
+          "color": "blanco"
+        },
+        {
+          "sku": "DEMO-025-BLA-XG",
+          "size": "XG",
+          "color": "blanco"
+        },
+        {
+          "sku": "DEMO-025-BEI-CH",
+          "size": "CH",
+          "color": "beige"
+        },
+        {
+          "sku": "DEMO-025-BEI-M",
+          "size": "M",
+          "color": "beige"
+        },
+        {
+          "sku": "DEMO-025-BEI-G",
+          "size": "G",
+          "color": "beige"
+        },
+        {
+          "sku": "DEMO-025-BEI-XG",
+          "size": "XG",
+          "color": "beige"
+        },
+        {
+          "sku": "DEMO-025-NEG-CH",
+          "size": "CH",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-025-NEG-M",
+          "size": "M",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-025-NEG-G",
+          "size": "G",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-025-NEG-XG",
+          "size": "XG",
+          "color": "negro"
+        }
+      ]
+    },
+    {
+      "external_id": "DEMO-026",
+      "slug": "sueter-de-punto-grueso",
+      "name": "Suéter de punto grueso",
+      "category": "sueteres",
+      "description": "Suéter de punto grueso de demostración. Texto ficticio para el borrador; la descripción real se aprueba con el catálogo.",
+      "status": "published",
+      "published_at": "2026-10-05T16:00:00Z",
+      "price": "1049.00",
+      "collections": [
+        "otono-demo"
+      ],
+      "images": [],
+      "variants": [
+        {
+          "sku": "DEMO-026-BEI-CH",
+          "size": "CH",
+          "color": "beige"
+        },
+        {
+          "sku": "DEMO-026-BEI-M",
+          "size": "M",
+          "color": "beige"
+        },
+        {
+          "sku": "DEMO-026-BEI-G",
+          "size": "G",
+          "color": "beige"
+        },
+        {
+          "sku": "DEMO-026-BEI-XG",
+          "size": "XG",
+          "color": "beige"
+        },
+        {
+          "sku": "DEMO-026-GRI-CH",
+          "size": "CH",
+          "color": "gris"
+        },
+        {
+          "sku": "DEMO-026-GRI-M",
+          "size": "M",
+          "color": "gris"
+        },
+        {
+          "sku": "DEMO-026-GRI-G",
+          "size": "G",
+          "color": "gris"
+        },
+        {
+          "sku": "DEMO-026-GRI-XG",
+          "size": "XG",
+          "color": "gris"
+        }
+      ]
+    },
+    {
+      "external_id": "DEMO-027",
+      "slug": "cardigan-corto",
+      "name": "Cárdigan corto",
+      "category": "sueteres",
+      "description": "Cárdigan corto de demostración. Texto ficticio para el borrador; la descripción real se aprueba con el catálogo.",
+      "status": "published",
+      "published_at": "2026-10-05T16:00:00Z",
+      "price": "1049.00",
+      "collections": [
+        "otono-demo"
+      ],
+      "images": [],
+      "variants": [
+        {
+          "sku": "DEMO-027-NEG-CH",
+          "size": "CH",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-027-NEG-M",
+          "size": "M",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-027-NEG-G",
+          "size": "G",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-027-NEG-XG",
+          "size": "XG",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-027-ROJ-CH",
+          "size": "CH",
+          "color": "rojo vino"
+        },
+        {
+          "sku": "DEMO-027-ROJ-M",
+          "size": "M",
+          "color": "rojo vino"
+        },
+        {
+          "sku": "DEMO-027-ROJ-G",
+          "size": "G",
+          "color": "rojo vino"
+        },
+        {
+          "sku": "DEMO-027-ROJ-XG",
+          "size": "XG",
+          "color": "rojo vino"
+        }
+      ]
+    },
+    {
+      "external_id": "DEMO-028",
+      "slug": "bolso-de-mano-estructurado",
+      "name": "Bolso de mano estructurado",
+      "category": "accesorios",
+      "description": "Bolso de mano estructurado de demostración. Texto ficticio para el borrador; la descripción real se aprueba con el catálogo.",
+      "status": "published",
+      "published_at": "2026-10-05T16:00:00Z",
+      "price": "749.00",
+      "collections": [],
+      "images": [],
+      "variants": [
+        {
+          "sku": "DEMO-028-NEG-UNI",
+          "size": "UNI",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-028-CAM-UNI",
+          "size": "UNI",
+          "color": "camel"
+        }
+      ]
+    },
+    {
+      "external_id": "DEMO-029",
+      "slug": "cinturon-de-hebilla",
+      "name": "Cinturón de hebilla",
+      "category": "accesorios",
+      "description": "Cinturón de hebilla de demostración. Texto ficticio para el borrador; la descripción real se aprueba con el catálogo.",
+      "status": "published",
+      "published_at": "2026-10-05T16:00:00Z",
+      "price": "599.00",
+      "collections": [],
+      "images": [],
+      "variants": [
+        {
+          "sku": "DEMO-029-NEG-UNI",
+          "size": "UNI",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-029-CAM-UNI",
+          "size": "UNI",
+          "color": "camel"
+        }
+      ]
+    },
+    {
+      "external_id": "DEMO-030",
+      "slug": "mascada-estampada",
+      "name": "Mascada estampada",
+      "category": "accesorios",
+      "description": "Mascada estampada de demostración. Texto ficticio para el borrador; la descripción real se aprueba con el catálogo.",
+      "status": "published",
+      "published_at": "2026-10-05T16:00:00Z",
+      "price": null,
+      "collections": [],
+      "images": [],
+      "variants": [
+        {
+          "sku": "DEMO-030-CHA-UNI",
+          "size": "UNI",
+          "color": "champagne"
+        }
+      ]
+    },
+    {
+      "external_id": "DEMO-031",
+      "slug": "bolso-tote",
+      "name": "Bolso tote",
+      "category": "accesorios",
+      "description": "Bolso tote de demostración. Texto ficticio para el borrador; la descripción real se aprueba con el catálogo.",
+      "status": "draft",
+      "published_at": null,
+      "price": "749.00",
+      "collections": [],
+      "images": [],
+      "variants": [
+        {
+          "sku": "DEMO-031-BEI-UNI",
+          "size": "UNI",
+          "color": "beige"
+        },
+        {
+          "sku": "DEMO-031-NEG-UNI",
+          "size": "UNI",
+          "color": "negro"
+        }
+      ]
+    },
+    {
+      "external_id": "DEMO-032",
+      "slug": "vestido-de-noche-satinado",
+      "name": "Vestido de noche satinado",
+      "category": "vestidos",
+      "description": "Vestido de noche satinado de demostración. Texto ficticio para el borrador; la descripción real se aprueba con el catálogo.",
+      "status": "archived",
+      "published_at": null,
+      "price": "999.00",
+      "collections": [],
+      "images": [],
+      "variants": [
+        {
+          "sku": "DEMO-032-NEG-CH",
+          "size": "CH",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-032-NEG-M",
+          "size": "M",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-032-NEG-G",
+          "size": "G",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-032-NEG-XG",
+          "size": "XG",
+          "color": "negro"
+        },
+        {
+          "sku": "DEMO-032-AZU-CH",
+          "size": "CH",
+          "color": "azul marino"
+        },
+        {
+          "sku": "DEMO-032-AZU-M",
+          "size": "M",
+          "color": "azul marino"
+        },
+        {
+          "sku": "DEMO-032-AZU-G",
+          "size": "G",
+          "color": "azul marino"
+        },
+        {
+          "sku": "DEMO-032-AZU-XG",
+          "size": "XG",
+          "color": "azul marino"
+        }
+      ]
+    }
+  ]
+}
