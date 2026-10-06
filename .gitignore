@@ -1,0 +1,40 @@
+# Material fuente (fotos, Excel, entregables del cliente). Nunca se versiona.
+_source/
+
+# Secretos y entornos locales
+.env
+.env.*
+!.env.example
+
+# Node
+node_modules/
+dist/
+build/
+.react-router/
+*.tsbuildinfo
+.pnpm-store/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Editores y SO
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+Zone.Identifier
+*:Zone.Identifier
+
+# Artefactos de pruebas y evidencia temporal
+playwright-report/
+test-results/
+coverage/
