@@ -62,6 +62,18 @@ def test_visibility_of_brand_states(db, public_client, demo_client):
     assert demo_client.get("/api/v1/brands/archivada").status_code == 404
 
 
+def test_featured_brands_follow_display_order(db, public_client):
+    make_brand(db, "Chanel", is_featured=True, display_order=2)
+    make_brand(db, "Rolex", is_featured=True, display_order=1)
+    make_brand(db, "Hermès", is_featured=True, display_order=1)
+    make_brand(db, "Acne Studios", display_order=0)
+    db.commit()
+    featured = public_client.get("/api/v1/brands", params={"featured": "true"}).json()["items"]
+    assert [b["name"] for b in featured] == ["Hermès", "Rolex", "Chanel"]
+    everyone = public_client.get("/api/v1/brands").json()["items"]
+    assert [b["name"] for b in everyone] == ["Acne Studios", "Chanel", "Hermès", "Rolex"]
+
+
 def test_featured_filter(db, public_client):
     make_brand(db, "Destacada", is_featured=True)
     make_brand(db, "Normal")

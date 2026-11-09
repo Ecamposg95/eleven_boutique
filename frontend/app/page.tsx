@@ -1,18 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BrandMark } from "@/components/BrandMark";
 import { BrandWall } from "@/components/BrandWall";
 import { CatalogImage } from "@/components/CatalogImage";
 import { HeroPicture } from "@/components/HeroPicture";
-import { ProductGrid } from "@/components/ProductGrid";
+import { HouseShowroom } from "@/components/HouseShowroom";
+import { ProductCard } from "@/components/ProductCard";
 import { Reveal } from "@/components/Reveal";
 import { firstParagraph } from "@/components/TextBody";
 import { Wordmark } from "@/components/Wordmark";
-import { getBrands, getCollections, getLookbooks, getNovedades, getProducts, getSettings, soft } from "@/lib/api";
+import { getBrands, getNovedades, getSettings, soft } from "@/lib/api";
 import { safeImageSrc } from "@/lib/images";
+import { splitShowroom } from "@/lib/showroom";
 import { DEFAULT_DESCRIPTION, SITE_NAME } from "@/lib/seo";
 import type { BrandSummary, PublicSettings } from "@/lib/types";
-import { brandHref } from "@/lib/url";
 
 export const metadata: Metadata = {
   title: { absolute: SITE_NAME },
@@ -77,7 +77,7 @@ function WallHero({ settings, brands }: { settings: PublicSettings; brands: Bran
 function PlainHero({ settings }: { settings: PublicSettings }) {
   return (
     <section className="page flex min-h-[calc(100svh-var(--chrome-h))] flex-col justify-between gap-12 py-10">
-      <Wordmark className="text-104" />
+      <Wordmark className="h-40 md:h-64" />
       <HeroText settings={settings} />
     </section>
   );
@@ -102,30 +102,53 @@ export default async function HomePage() {
   // Sin ajustes no hay portada posible: lo recoge app/error.tsx.
   const settings = await getSettings();
   // Cada sección es opcional: si su dato falla, se oculta como si estuviera vacía.
-  const [brands, featuredBrands, collections, curated, novedades, lookbooks] = await Promise.all([
+  const [brands, featuredBrands, novedades] = await Promise.all([
     soft(getBrands()),
     soft(getBrands({ featured: true })),
-    soft(getCollections()),
-    soft(getProducts({ featured: true, page_size: 12 })),
     soft(getNovedades({ page_size: 4 })),
-    soft(getLookbooks()),
   ]);
 
   const heroImage = safeImageSrc(settings.hero.image_url);
   const allBrands = brands ?? [];
-  const mainCollection = collections?.[0];
-  const lookbook = lookbooks?.[0];
+  // La portada es un showroom: las casas destacadas (en el orden del panel) mandan.
+  const { stars, rest } = splitShowroom(allBrands, featuredBrands ?? []);
+  const showroom = stars.length > 0;
   const boutique = settings.boutique.body?.trim();
 
   return (
     <>
-      {heroImage ? (
+      {showroom ? (
+        <HouseShowroom houses={stars} title={settings.hero.headline ?? settings.site_name} />
+      ) : heroImage ? (
         <PhotoHero settings={settings} image={heroImage} />
       ) : allBrands.length > 0 ? (
         <WallHero settings={settings} brands={allBrands} />
       ) : (
         <PlainHero settings={settings} />
       )}
+
+      {showroom && rest.length > 0 ? (
+        <section aria-labelledby="casas-t" className="section page">
+          <Reveal>
+            <h2 id="casas-t" className="serif muted mb-6 text-22">
+              También en la boutique
+            </h2>
+            <BrandWall brands={rest} className="text-30 md:text-44" />
+            <p className="mt-8">
+              <Link href="/marcas" className="link text-15">
+                Ver las {allBrands.length} casas
+              </Link>
+            </p>
+          </Reveal>
+        </section>
+      ) : !showroom && heroImage && allBrands.length > 0 ? (
+        <section aria-labelledby="casas-t" className="section page">
+          <h2 id="casas-t" className="display mb-8 text-44">
+            Marcas
+          </h2>
+          <BrandWall brands={allBrands} className="text-68" />
+        </section>
+      ) : null}
 
       {settings.intro?.trim() ? (
         <section aria-label="Presentación" className="section page">
@@ -135,106 +158,16 @@ export default async function HomePage() {
         </section>
       ) : null}
 
-      {heroImage && allBrands.length > 0 ? (
-        <section aria-labelledby="casas-t" className="section page">
-          <h2 id="casas-t" className="display mb-8 text-44">
-            Marcas
-          </h2>
-          <BrandWall brands={allBrands} className="text-68" />
-        </section>
-      ) : !heroImage && featuredBrands?.length ? (
-        <section aria-labelledby="destacadas-t" className="section page">
-          <Reveal>
-            <h2 id="destacadas-t" className="display mb-10 text-44">
-              Marcas destacadas
-            </h2>
-            <ul className="grid gap-x-6 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
-              {featuredBrands.map((brand) => (
-                <li key={brand.slug}>
-                  <Link
-                    href={brandHref(brand.slug)}
-                    prefetch={false}
-                    className="inline-block decoration-bronze decoration-1 underline-offset-[6px] hover:underline"
-                  >
-                    <BrandMark name={brand.name} logoUrl={brand.logo_url} textClass="text-30" />
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </Reveal>
-        </section>
-      ) : null}
-
-      {mainCollection ? (
-        <section aria-labelledby="coleccion-t" className="section page">
-          <Reveal className="grid gap-8 md:grid-cols-12 md:items-end md:gap-x-6">
-            <Link
-              href={`/colecciones/${encodeURIComponent(mainCollection.slug)}`}
-              prefetch={false}
-              aria-hidden="true"
-              tabIndex={-1}
-              className="relative block aspect-[8/5] bg-charcoal md:col-span-8"
-            >
-              <CatalogImage
-                src={mainCollection.cover_url}
-                alt=""
-                sizes="(min-width: 768px) 66vw, 100vw"
-                className="object-cover"
-              />
-            </Link>
-            <div className="md:col-span-4">
-              <h2 id="coleccion-t" className="display text-44">
-                {mainCollection.title}
-              </h2>
-              {mainCollection.summary ? <p className="serif muted mt-3 text-22">{mainCollection.summary}</p> : null}
-              <p className="mt-6">
-                <Link href={`/colecciones/${encodeURIComponent(mainCollection.slug)}`} className="link text-15">
-                  Ver colección
-                </Link>
-              </p>
-            </div>
-          </Reveal>
-        </section>
-      ) : null}
-
-      {curated?.items.length ? (
-        <section aria-labelledby="seleccion-t" className="section page">
-          <SectionHead id="seleccion-t" title="Selección" />
-          <ProductGrid products={curated.items} />
-        </section>
-      ) : null}
-
       {novedades?.items.length ? (
         <section aria-labelledby="novedades-t" className="section page">
           <SectionHead id="novedades-t" title="Novedades" href="/novedades" action="Ver todas las novedades" />
-          <ProductGrid products={novedades.items} />
-        </section>
-      ) : null}
-
-      {lookbook ? (
-        <section aria-labelledby="lookbook-t" className="section">
-          <Reveal>
-            <Link
-              href={`/lookbooks/${encodeURIComponent(lookbook.slug)}`}
-              prefetch={false}
-              aria-hidden="true"
-              tabIndex={-1}
-              className="relative block aspect-[4/3] bg-charcoal md:aspect-[5/2]"
-            >
-              <CatalogImage src={lookbook.cover_url} alt="" sizes="100vw" className="object-cover" />
-            </Link>
-            <div className="page mt-6">
-              <h2 id="lookbook-t" className="display text-44">
-                {lookbook.title}
-              </h2>
-              {lookbook.summary ? <p className="serif muted measure mt-3 text-22">{lookbook.summary}</p> : null}
-              <p className="mt-6">
-                <Link href={`/lookbooks/${encodeURIComponent(lookbook.slug)}`} className="link text-15">
-                  Ver lookbook
-                </Link>
-              </p>
-            </div>
-          </Reveal>
+          <ul className="grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-4 md:gap-x-6">
+            {novedades.items.slice(0, 4).map((product) => (
+              <li key={product.slug}>
+                <ProductCard product={product} sizes="(min-width: 1600px) 360px, (min-width: 768px) 25vw, 50vw" />
+              </li>
+            ))}
+          </ul>
         </section>
       ) : null}
 

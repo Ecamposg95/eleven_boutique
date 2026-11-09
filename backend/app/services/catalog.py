@@ -86,8 +86,12 @@ def list_brands(
         stmt = stmt.where(_brand_name_match(query))
     brands = db.scalars(stmt).all()
     counts = _product_counts(db, demo_mode)
-    # Sorted here because SQL collations disagree on accents across databases.
-    ordered = sorted(brands, key=lambda brand: normalize(brand.name))
+    # Sorted here because SQL collations disagree on accents across databases. Featured brands
+    # are the home page showroom, so the editor's display_order sets their sequence.
+    if featured:
+        ordered = sorted(brands, key=lambda brand: (brand.display_order, normalize(brand.name)))
+    else:
+        ordered = sorted(brands, key=lambda brand: normalize(brand.name))
     return [_brand_summary(brand, counts) for brand in ordered]
 
 
