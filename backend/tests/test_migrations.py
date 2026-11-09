@@ -207,10 +207,10 @@ def seeded_0001(tmp_path):
     engine.dispose()
 
 
-def test_upgrade_from_0001_keeps_data_and_public_reads_work(seeded_0001, make_client):
+def test_upgrade_from_0001_to_head_keeps_data_and_public_reads_work(seeded_0001, make_client):
     url, engine = seeded_0001
     before = counts(engine)
-    command.upgrade(alembic_config(url), "0002")
+    command.upgrade(alembic_config(url), "head")
     assert counts(engine) == before
     with engine.connect() as connection:
         row = connection.execute(
@@ -287,9 +287,9 @@ def test_constraints_survive_the_downgrade_rebuild(seeded_0001):
 def test_round_trip_returns_to_a_schema_matching_the_models(seeded_0001):
     url, engine = seeded_0001
     config = alembic_config(url)
-    command.upgrade(config, "0002")
+    command.upgrade(config, "head")
     command.downgrade(config, "0001")
-    command.upgrade(config, "0002")
+    command.upgrade(config, "head")
     with engine.connect() as connection:
         assert schema_differences(connection) == []
         # Nothing was re-added twice and enforcement is back on a new connection.

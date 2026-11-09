@@ -52,6 +52,8 @@ class Brand(IdMixin, TimestampMixin, Base):
     description: Mapped[str | None] = mapped_column(Text)
     display_order: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     is_featured: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
+    # Premium brands route the consult button to the boutique line (whatsapp_premium_number).
+    is_premium: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
     status: Mapped[str] = status_column()
     validation_status: Mapped[str] = mapped_column(
         String(16), default=VALIDATION_PENDING, server_default=VALIDATION_PENDING

@@ -231,11 +231,22 @@ def list_novedades(db: Session, demo_mode: bool, *, page: int, page_size: int) -
     return _paginate(db, stmt, page, page_size)
 
 
-def effective_whatsapp_digits(db: Session, settings: Settings) -> str | None:
-    """The stored number wins; WHATSAPP_NUMBER covers a database that was not seeded yet."""
+def effective_whatsapp_digits(db: Session, settings: Settings, *, premium: bool = False) -> str | None:
+    """The stored number wins; the env var covers a database that was not seeded yet.
+
+    premium=True is the boutique line for premium brands. Without one, those pieces use the
+    general line, so a missing premium number never hides the consult button.
+    """
     row = db.scalar(select(SiteSettings).where(SiteSettings.is_demo.is_(False)))
-    stored = row.whatsapp_number if row else None
-    return normalize_number(stored or settings.whatsapp_number)
+    general = normalize_number((row.whatsapp_number if row else None) or settings.whatsapp_number)
+    if not premium:
+        return general
+    stored = row.whatsapp_premium_number if row else None
+    return normalize_number(stored or settings.whatsapp_premium_number) or general
+
+
+def any_whatsapp_digits(db: Session, settings: Settings) -> bool:
+    return bool(effective_whatsapp_digits(db, settings) or effective_whatsapp_digits(db, settings, premium=True))
 
 
 def get_product(db: Session, slug: str, settings: Settings) -> schemas.ProductDetail | None:
@@ -248,7 +259,7 @@ def get_product(db: Session, slug: str, settings: Settings) -> schemas.ProductDe
         **_card_fields(product),
         gallery=[_media(media) for media in product.media],
         consult_url=build_consult_url(
-            digits=effective_whatsapp_digits(db, settings),
+            digits=effective_whatsapp_digits(db, settings, premium=product.brand.is_premium),
             site_url=settings.site_base_url,
             brand_slug=None if is_classification else product.brand.slug,
             brand_name=None if is_classification else product.brand.name,
@@ -425,7 +436,7 @@ def public_settings(db: Session, settings: Settings) -> schemas.PublicSettings:
 
     return schemas.PublicSettings(
         demo_mode=settings.demo_mode,
-        whatsapp_enabled=effective_whatsapp_digits(db, settings) is not None,
+        whatsapp_enabled=any_whatsapp_digits(db, settings),
         site_name=pick("site_name") or DEFAULT_SITE_NAME,
         hero=schemas.Hero(
             image_url=pick("hero_image_url"),

@@ -108,6 +108,8 @@ class SiteSettings(IdMixin, TimestampMixin, Base):
     is_demo: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false(), unique=True)
     site_name: Mapped[str | None] = mapped_column(String(200))
     whatsapp_number: Mapped[str | None] = mapped_column(String(40))
+    # Boutique line for premium brands; empty falls back to whatsapp_number.
+    whatsapp_premium_number: Mapped[str | None] = mapped_column(String(40))
     hero_image_url: Mapped[str | None] = mapped_column(String(500))
     hero_mobile_image_url: Mapped[str | None] = mapped_column(String(500))
     hero_asset_id: Mapped[uuid.UUID | None] = mapped_column(

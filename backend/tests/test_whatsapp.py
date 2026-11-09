@@ -121,3 +121,54 @@ def test_number_is_not_exposed_in_settings(make_client):
     body = make_client(whatsapp_number=FAKE_NUMBER).get("/api/v1/site-settings/public")
     assert body.json()["whatsapp_enabled"] is True
     assert FAKE_DIGITS not in body.text and "0000" not in body.text
+
+
+# --- Premium line ----------------------------------------------------------------------
+
+PREMIUM_NUMBER = "+52 55 9999 0000"
+PREMIUM_DIGITS = "525599990000"
+
+
+def consult_url(client, slug: str) -> str | None:
+    return client.get(f"/api/v1/products/{slug}").json()["consult_url"]
+
+
+def test_premium_brands_use_the_premium_line(db, make_client):
+    category = make_category(db)
+    make_product(db, make_brand(db, "Hermès", is_premium=True), category, "Bolso", slug="bolso")
+    make_product(db, make_brand(db, "Básicos"), category, "Playera", slug="playera")
+    db.commit()
+    client = make_client(whatsapp_number=FAKE_NUMBER, whatsapp_premium_number=PREMIUM_NUMBER)
+    assert consult_url(client, "bolso").startswith(f"https://wa.me/{PREMIUM_DIGITS}?")
+    assert consult_url(client, "playera").startswith(f"https://wa.me/{FAKE_DIGITS}?")
+
+
+def test_premium_brand_falls_back_to_the_general_line(db, make_client):
+    make_product(db, make_brand(db, "Hermès", is_premium=True), make_category(db), "Bolso", slug="bolso")
+    db.commit()
+    client = make_client(whatsapp_number=FAKE_NUMBER)
+    assert consult_url(client, "bolso").startswith(f"https://wa.me/{FAKE_DIGITS}?")
+
+
+def test_only_premium_line_configured(db, make_client):
+    category = make_category(db)
+    make_product(db, make_brand(db, "Hermès", is_premium=True), category, "Bolso", slug="bolso")
+    make_product(db, make_brand(db, "Básicos"), category, "Playera", slug="playera")
+    db.commit()
+    client = make_client(whatsapp_premium_number=PREMIUM_NUMBER)
+    assert consult_url(client, "bolso").startswith(f"https://wa.me/{PREMIUM_DIGITS}?")
+    assert consult_url(client, "playera") is None
+    body = client.get("/api/v1/site-settings/public")
+    assert body.json()["whatsapp_enabled"] is True
+    assert PREMIUM_DIGITS not in body.text
+
+
+def test_premium_number_is_seeded_from_env_only_when_empty(db, make_settings):
+    seed_site_settings(db, make_settings(whatsapp_premium_number=PREMIUM_NUMBER))
+    db.commit()
+    row = db.scalar(select(SiteSettings).where(SiteSettings.is_demo.is_(False)))
+    assert row.whatsapp_premium_number == PREMIUM_NUMBER
+    row.whatsapp_premium_number = "+52 55 9999 0001"
+    seed_site_settings(db, make_settings(whatsapp_premium_number=PREMIUM_NUMBER))
+    db.commit()
+    assert db.scalar(select(SiteSettings.whatsapp_premium_number)) == "+52 55 9999 0001"

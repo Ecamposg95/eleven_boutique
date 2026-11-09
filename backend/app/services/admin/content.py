@@ -256,7 +256,7 @@ def archive_record(db: Session, kind: _Kind, record_id: uuid.UUID, user: AdminUs
 # --- Settings --------------------------------------------------------------------------
 
 _TEXT_SETTINGS = ("hero_headline", "hero_subhead", "intro", "boutique_body", "contact_body")
-_AUDITED_SETTINGS = ("whatsapp_number", "hero_asset_id", "hero_mobile_asset_id", *_TEXT_SETTINGS)
+_AUDITED_SETTINGS = ("whatsapp_number", "whatsapp_premium_number", "hero_asset_id", "hero_mobile_asset_id", *_TEXT_SETTINGS)
 
 
 def _real_settings(db: Session) -> SiteSettings | None:
@@ -266,6 +266,7 @@ def _real_settings(db: Session) -> SiteSettings | None:
 def _settings_out(row: SiteSettings | None) -> schemas.AdminSettings:
     return schemas.AdminSettings(
         whatsapp_number=row.whatsapp_number if row else None,
+        whatsapp_premium_number=row.whatsapp_premium_number if row else None,
         hero_asset_id=row.hero_asset_id if row else None,
         hero_image_url=row.hero_image_url if row else None,
         hero_mobile_asset_id=row.hero_mobile_asset_id if row else None,
@@ -290,11 +291,12 @@ def update_settings(db: Session, data: schemas.SettingsPatch, user: AdminUser) -
         db.flush()
     before = audit.snapshot(row, _AUDITED_SETTINGS)
     fields = data.model_fields_set
-    if "whatsapp_number" in fields:
-        number = data.whatsapp_number or None
-        if number is not None and normalize_number(number) is None:
-            raise ApiError(422, "invalid_whatsapp_number", "El número debe tener formato E.164")
-        row.whatsapp_number = number
+    for field in ("whatsapp_number", "whatsapp_premium_number"):
+        if field in fields:
+            number = getattr(data, field) or None
+            if number is not None and normalize_number(number) is None:
+                raise ApiError(422, "invalid_whatsapp_number", "El número debe tener formato E.164")
+            setattr(row, field, number)
     if "hero_asset_id" in fields:
         set_asset(row, "hero_asset_id", "hero_image_url", asset_or_error(db, data.hero_asset_id))
     if "hero_mobile_asset_id" in fields:

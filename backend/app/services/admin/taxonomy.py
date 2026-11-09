@@ -27,6 +27,7 @@ BRAND_FIELDS = (
     "description",
     "display_order",
     "is_featured",
+    "is_premium",
     "status",
     "validation_status",
 )
@@ -35,6 +36,7 @@ _PLAIN_BRAND_FIELDS = (
     "description",
     "display_order",
     "is_featured",
+    "is_premium",
     "status",
     "validation_status",
 )
@@ -59,6 +61,7 @@ def _brand_out(brand: Brand, count: int) -> schemas.AdminBrand:
         description=brand.description,
         display_order=brand.display_order,
         is_featured=brand.is_featured,
+        is_premium=brand.is_premium,
         status=brand.status,
         validation_status=brand.validation_status,
         aliases=_public_aliases(brand),
@@ -172,6 +175,7 @@ def create_brand(db: Session, data: schemas.BrandCreate, user: AdminUser) -> sch
         description=data.description,
         display_order=data.display_order,
         is_featured=data.is_featured,
+        is_premium=data.is_premium,
         status=data.status,
         validation_status=data.validation_status,
     )

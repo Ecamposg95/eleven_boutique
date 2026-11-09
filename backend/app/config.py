@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./eleven.db"
     demo_mode: bool = False
     whatsapp_number: str = ""
+    whatsapp_premium_number: str = ""
     public_site_url: str = "http://localhost:3000"
     cors_origins: str = "http://localhost:3000"
     # Anything other than "development" marks the session cookie Secure: safe if left unset.

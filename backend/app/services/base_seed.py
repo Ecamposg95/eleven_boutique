@@ -39,12 +39,14 @@ def seed_categories(db: Session) -> int:
 
 
 def seed_site_settings(db: Session, settings: Settings) -> SiteSettings:
-    """Creates the real row and fills the number from WHATSAPP_NUMBER only if none is stored."""
+    """Creates the real row and fills each number from its env var only if none is stored."""
     row = db.scalar(select(SiteSettings).where(SiteSettings.is_demo.is_(False)))
     if row is None:
         row = SiteSettings(is_demo=False)
         db.add(row)
     if not row.whatsapp_number and settings.whatsapp_number.strip():
         row.whatsapp_number = settings.whatsapp_number.strip()
+    if not row.whatsapp_premium_number and settings.whatsapp_premium_number.strip():
+        row.whatsapp_premium_number = settings.whatsapp_premium_number.strip()
     db.flush()
     return row

@@ -35,11 +35,11 @@ Un producto solo pasa a `published` si tiene nombre, marca (o clasificación "Si
 | PATCH/DELETE | `/media/{id}` | `alt`. Borrar da 409 si está en uso |
 | POST | `/media/bulk-match` | `{media_asset_ids}` → propuesta por archivo: `{media_asset_id, filename, product_id, match: sku\|photo_ref\|none, candidates}`. Ambiguo = sin asignar. No guarda nada |
 | POST | `/media/bulk-assign` | `{items: [{media_asset_id, product_id}]}` |
-| GET/POST, GET/PATCH | `/brands`, `/brands/{id}` | `name, slug, logo_asset_id, editorial_asset_id, description, display_order, is_featured, status, validation_status, aliases[]`. Sin fusiones. Cambiar slug conserva el anterior como alias |
+| GET/POST, GET/PATCH | `/brands`, `/brands/{id}` | `name, slug, logo_asset_id, editorial_asset_id, description, display_order, is_featured, is_premium, status, validation_status, aliases[]`. `is_premium` manda las consultas de sus piezas a la línea Boutique. Sin fusiones. Cambiar slug conserva el anterior como alias |
 | GET/POST, PATCH/DELETE | `/categories`, `/categories/{id}` | `DELETE` da 409 si tiene productos o hijas |
 | GET/POST, GET/PATCH/DELETE | `/collections`, `/collections/{id}` | `title, slug, summary, cover_asset_id, status, display_order, product_ids[]` ordenados |
 | GET/POST, GET/PATCH/DELETE | `/lookbooks`, `/lookbooks/{id}` | Igual, más `blocks[]` con las formas de `LookbookBlock` |
-| GET/PATCH | `/settings` | `whatsapp_number, hero_asset_id, hero_mobile_asset_id, hero_headline, hero_subhead, intro, boutique_body, contact_body` |
+| GET/PATCH | `/settings` | `whatsapp_number` (línea Ventas), `whatsapp_premium_number` (línea Boutique), `hero_asset_id, hero_mobile_asset_id, hero_headline, hero_subhead, intro, boutique_body, contact_body` |
 | POST | `/imports/products/preview` | Multipart `.xlsx` o `.csv` → `ImportPreview`. No escribe |
 | POST | `/imports/products` | `{preview_id, update_existing: bool}` → `ImportResult` |
 | GET | `/imports/template` | CSV plantilla |

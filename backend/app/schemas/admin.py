@@ -329,6 +329,7 @@ class BrandCreate(Input):
     description: LongText | None = None
     display_order: int = 0
     is_featured: bool = False
+    is_premium: bool = False
     status: Status = "draft"
     validation_status: Literal["pending", "approved"] = "pending"
     aliases: Annotated[list[Alias], Field(max_length=100)] = []
@@ -340,6 +341,7 @@ class BrandPatch(Input):
         "slug",
         "display_order",
         "is_featured",
+        "is_premium",
         "status",
         "validation_status",
         "aliases",
@@ -352,6 +354,7 @@ class BrandPatch(Input):
     description: LongText | None = None
     display_order: int | None = None
     is_featured: bool | None = None
+    is_premium: bool | None = None
     status: Status | None = None
     validation_status: Literal["pending", "approved"] | None = None
     aliases: Annotated[list[Alias], Field(max_length=100)] | None = None
@@ -369,6 +372,7 @@ class AdminBrand(Schema):
     description: str | None
     display_order: int
     is_featured: bool
+    is_premium: bool
     status: Status
     validation_status: str
     aliases: list[str]
@@ -479,6 +483,9 @@ class AdminLookbook(AdminCollection):
 
 class SettingsPatch(Input):
     whatsapp_number: Annotated[str, StringConstraints(strip_whitespace=True, max_length=40)] | None = None
+    whatsapp_premium_number: (
+        Annotated[str, StringConstraints(strip_whitespace=True, max_length=40)] | None
+    ) = None
     hero_asset_id: uuid.UUID | None = None
     hero_mobile_asset_id: uuid.UUID | None = None
     hero_headline: LongText | None = None
@@ -490,6 +497,7 @@ class SettingsPatch(Input):
 
 class AdminSettings(Schema):
     whatsapp_number: str | None
+    whatsapp_premium_number: str | None
     hero_asset_id: uuid.UUID | None
     hero_image_url: str | None
     hero_mobile_asset_id: uuid.UUID | None

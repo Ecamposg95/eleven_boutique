@@ -12,6 +12,7 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
   const router = useRouter();
   const initial = {
     whatsapp_number: settings.whatsapp_number ?? "",
+    whatsapp_premium_number: settings.whatsapp_premium_number ?? "",
     hero_asset_id: settings.hero_asset_id,
     hero_mobile_asset_id: settings.hero_mobile_asset_id,
     hero_headline: settings.hero_headline ?? "",
@@ -38,11 +39,15 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
   };
 
   const whatsapp = checkWhatsapp(form.whatsapp_number);
+  const premium = checkWhatsapp(form.whatsapp_premium_number);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    if (!whatsapp.ok) {
-      setErrors({ whatsapp_number: whatsapp.message });
+    if (!whatsapp.ok || !premium.ok) {
+      setErrors({
+        ...(whatsapp.ok ? {} : { whatsapp_number: whatsapp.message }),
+        ...(premium.ok ? {} : { whatsapp_premium_number: premium.message }),
+      });
       setFormError("Revise los campos marcados.");
       return;
     }
@@ -52,6 +57,7 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
     setMessage(null);
     const body = {
       whatsapp_number: whatsapp.digits || null,
+      whatsapp_premium_number: premium.digits || null,
       hero_asset_id: form.hero_asset_id,
       hero_mobile_asset_id: form.hero_mobile_asset_id,
       hero_headline: form.hero_headline.trim() || null,
@@ -62,7 +68,7 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
     };
     try {
       await api("/settings", { method: "PATCH", json: body });
-      const next = { ...form, whatsapp_number: whatsapp.digits };
+      const next = { ...form, whatsapp_number: whatsapp.digits, whatsapp_premium_number: premium.digits };
       setForm(next);
       setSaved(next);
       setMessage("Cambios guardados. El sitio público los muestra en menos de un minuto.");
@@ -76,6 +82,8 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
   };
 
   const liveError = errors.whatsapp_number ?? (form.whatsapp_number && !whatsapp.ok ? whatsapp.message : null);
+  const premiumError =
+    errors.whatsapp_premium_number ?? (form.whatsapp_premium_number && !premium.ok ? premium.message : null);
 
   return (
     <form onSubmit={submit} noValidate className="max-w-4xl">
@@ -85,7 +93,7 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
         </h2>
         <TextField
           className="mt-2 max-w-sm"
-          label="Número para consultas"
+          label="Línea Ventas: todas las piezas"
           type="tel"
           inputMode="tel"
           autoComplete="off"
@@ -94,6 +102,22 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
           onChange={(value) => set("whatsapp_number", value)}
           error={liveError}
           hint={whatsapp.ok && whatsapp.hint ? whatsapp.hint : "Con lada de país, sin ceros iniciales. Si lo deja vacío, el botón de consulta no aparece."}
+        />
+        <TextField
+          className="mt-4 max-w-sm"
+          label="Línea Boutique: marcas premium"
+          type="tel"
+          inputMode="tel"
+          autoComplete="off"
+          placeholder="52 55 1234 5678"
+          value={form.whatsapp_premium_number}
+          onChange={(value) => set("whatsapp_premium_number", value)}
+          error={premiumError}
+          hint={
+            premium.ok && premium.hint
+              ? premium.hint
+              : "Atiende las piezas de las marcas marcadas como premium. Si lo deja vacío, esas piezas usan la línea Ventas."
+          }
         />
         {whatsapp.ok && whatsapp.digits ? (
           <div className="a-notice mt-3 max-w-2xl">

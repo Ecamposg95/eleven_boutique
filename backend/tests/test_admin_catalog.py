@@ -655,6 +655,22 @@ def test_settings_reject_a_bad_number_and_unknown_fields(client):
     assert patch(client, "/settings", {"whatsapp_number": ""}).json()["whatsapp_number"] is None
 
 
+def test_settings_premium_number_round_trip_and_validation(client):
+    saved = patch(client, "/settings", {"whatsapp_premium_number": "+52 55 9999 0000"}).json()
+    assert saved["whatsapp_premium_number"] == "+52 55 9999 0000"
+    response = patch(client, "/settings", {"whatsapp_premium_number": "123"})
+    assert response.status_code == 422 and error_code(response) == "invalid_whatsapp_number"
+    assert patch(client, "/settings", {"whatsapp_premium_number": None}).json()["whatsapp_premium_number"] is None
+
+
+def test_brand_premium_flag_round_trip(client):
+    brand = post(client, "/brands", {"name": "Hermès", "is_premium": True}).json()
+    assert brand["is_premium"] is True
+    updated = patch(client, f"/brands/{brand['id']}", {"is_premium": False}).json()
+    assert updated["is_premium"] is False
+    assert patch(client, f"/brands/{brand['id']}", {"is_premium": None}).status_code == 422
+
+
 def test_settings_edits_show_publicly_in_demo_mode_too(db, make_client, make_settings):
     from app.services.demo_seed import seed_demo
 

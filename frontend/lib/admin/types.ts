@@ -91,6 +91,7 @@ export type Brand = {
   description: string | null;
   display_order: number;
   is_featured: boolean;
+  is_premium: boolean;
   status: Status;
   validation_status: "pending" | "approved";
   aliases: string[];
@@ -131,6 +132,7 @@ export type AdminLookbook = AdminCollection & { blocks: AdminBlock[] };
 
 export type AdminSettings = {
   whatsapp_number: string | null;
+  whatsapp_premium_number: string | null;
   hero_asset_id: string | null;
   hero_mobile_asset_id: string | null;
   hero_image_url: string | null;

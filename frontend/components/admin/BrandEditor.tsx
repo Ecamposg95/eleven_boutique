@@ -14,6 +14,7 @@ type Values = {
   description: string;
   display_order: string;
   is_featured: boolean;
+  is_premium: boolean;
   validation_status: Brand["validation_status"];
   aliases: string[];
   logo_asset_id: string | null;
@@ -28,6 +29,7 @@ export function BrandEditor({ brand }: { brand: Brand }) {
     description: brand.description ?? "",
     display_order: String(brand.display_order ?? 0),
     is_featured: brand.is_featured,
+    is_premium: brand.is_premium,
     validation_status: brand.validation_status,
     aliases: brand.aliases,
     logo_asset_id: brand.logo_asset_id,
@@ -58,6 +60,7 @@ export function BrandEditor({ brand }: { brand: Brand }) {
     description: form.description.trim() || null,
     display_order: Number(form.display_order) || 0,
     is_featured: form.is_featured,
+    is_premium: form.is_premium,
     validation_status: form.validation_status,
     aliases: form.aliases,
     logo_asset_id: form.logo_asset_id,
@@ -160,6 +163,12 @@ export function BrandEditor({ brand }: { brand: Brand }) {
               <option value="approved">Validada</option>
             </SelectField>
             <CheckField label="Marca destacada" checked={form.is_featured} onChange={(value) => set("is_featured", value)} />
+            <CheckField
+              label="Marca premium"
+              checked={form.is_premium}
+              onChange={(value) => set("is_premium", value)}
+              hint="Sus piezas se consultan por la línea Boutique de WhatsApp. Las demás, por la línea Ventas."
+            />
           </div>
 
           <section aria-labelledby="alias-t" className="a-section">
