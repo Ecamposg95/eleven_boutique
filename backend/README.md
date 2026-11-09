@@ -13,10 +13,13 @@ uv run alembic upgrade head
 uv run python -m scripts.import_brands
 uv run python -m scripts.seed_base   # categorías y fila real de site_settings
 uv run python -m scripts.seed_demo   # solo con DEMO_MODE=true; también corre los dos anteriores
+uv run python -m scripts.publish_brands [--apply]  # publica las marcas en borrador; sin --apply solo simula
 uv run uvicorn app.main:app --port 8000
 ```
 
 API en `http://localhost:8000/api/v1`, documentación en `/docs`.
+
+`publish_brands` deja en borrador las marcas pendientes de revisión (`PENDING_REVIEW` en `app/data/brand_rules.py`), las clasificaciones como "Sin marca" y las archivadas. Cada publicación queda en la auditoría.
 
 ## Panel admin
 
