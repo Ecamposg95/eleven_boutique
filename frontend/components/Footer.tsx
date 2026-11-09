@@ -8,7 +8,7 @@ export function Footer() {
       <div className="page grid gap-10 py-14 md:grid-cols-12">
         <div className="md:col-span-6">
           <Link href="/" aria-label="Eleven, inicio" className="inline-flex min-h-11 items-center">
-            <Wordmark className="text-44" />
+            <Wordmark className="h-20" />
           </Link>
           <p className="muted measure mt-4 text-15">
             Los nombres de las marcas pertenecen a sus respectivos titulares.

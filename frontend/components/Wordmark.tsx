@@ -1,7 +1,37 @@
 /**
- * Wordmark tipográfico provisional. No existe activo original del logotipo:
- * al recibirlo del propietario, se reemplaza solo este archivo.
+ * Logotipo de Eleven Boutique (original: public/eleven-logo.svg, exportado de Illustrator).
+ * En línea y con currentColor para tomar el marfil del sitio. Las dos líneas pequeñas son
+ * texto en Montserrat, que carga app/layout.tsx. El alto lo fija className; el ancho se ajusta.
  */
-export function Wordmark({ className = "text-30" }: { className?: string }) {
-  return <span className={`display leading-none ${className}`}>Eleven</span>;
+export function Wordmark({ className = "h-14" }: { className?: string }) {
+  return (
+    <svg
+      role="img"
+      aria-label="Eleven Boutique"
+      viewBox="12 54 372 156"
+      className={`block w-auto fill-current ${className}`}
+    >
+      <g>
+        <polygon points="295.84 140.24 282.98 140.26 282.88 126.65 295.79 126.69 295.82 110.78 279.49 110.81 279.5 97.52 308.44 97.47 308.46 170.13 279.48 170.17 279.4 156.66 295.76 156.63 295.84 140.24" />
+        <polygon points="299.06 137.04 286.26 136.94 286.16 129.89 299 129.93 299.05 107.61 282.75 107.61 282.76 100.75 305.19 100.67 305.17 166.92 282.76 166.93 282.74 159.93 299.03 159.91 299.06 137.04" />
+        <polygon points="161.19 140.49 148.45 140.11 148.49 126.71 161.18 126.66 161.17 110.77 144.97 110.81 144.98 97.44 173.95 97.45 173.98 170.19 144.97 170.17 144.97 156.75 161.17 156.54 161.19 140.49" />
+        <polygon points="164.39 136.98 151.71 136.91 151.73 129.93 164.47 129.87 164.45 107.58 148.19 107.54 148.21 100.69 170.66 100.69 170.66 166.93 148.28 166.9 148.2 159.98 164.47 159.94 164.39 136.98" />
+        <path d="M378.6,97.53l-12.09-.05-.4,31.27-8.12-31.19h-13.03s.05,72.59.05,72.59l12.24.02.34-31.1,8.58,31.11,12.46-.39-.03-72.26ZM368.63,166.7l-11.66-43.97h-3.01s.1,44.06.1,44.06l-5.73.07-.08-66.11,7.11.06,11.46,45.54c.17.68,2.73.62,2.86-.04l.03-45.5,5.66-.04.08,65.71c-2.16.78-4.46.47-6.81.23Z" />
+        <path d="M226.13,137.06l-5.41-39.54h-12.49s10.45,72.53,10.45,72.53l15.14.1,10.45-72.6-12.7.12-5.44,39.38ZM240.47,100.77l-9.61,66.1h-9.36s-9.66-66.1-9.66-66.1l6.1-.1,6.79,53.65c.98.27,1.87.28,2.87,0l6.82-53.41c1.97-.46,3.83-.36,6.06-.14Z" />
+        <path d="M27.76,140.33l13.09-.09v-13.6s-13.12,0-13.12,0v-15.82s16.37,0,16.37,0v-13.36s-28.98.02-28.98.02v72.67s28.96.03,28.96.03l.03-13.62-16.36.02.02-16.26ZM40.75,159.92v6.97s-22.39.04-22.39.04v-66.18s22.47-.08,22.47-.08l-.08,6.96-16.22-.06-.02,22.32h12.86s.13,6.99.13,6.99l-12.98.08-.03,22.92,16.25.04Z" />
+        <path d="M93.31,97.45l-12.84.05.05,72.67,28.75.02.02-13.66h-15.96s-.02-59.09-.02-59.09ZM105.94,166.89l-22.13-.02-.05-66.11,6.22-.04.02,59.16,15.71-.06c.72,2.27.35,4.59.23,7.06Z" />
+      </g>
+      <g style={{ fontFamily: "var(--font-montserrat), Montserrat, sans-serif", fontSize: "15.52px" }}>
+        <text x="85.86" y="70.48" style={{ letterSpacing: "0.25em" }}>
+          FASHION BOUTIQUE
+        </text>
+        <text x="76.44" y="203.92" style={{ letterSpacing: "0.1em" }}>
+          <tspan fontWeight={500}>WWW</tspan>
+          <tspan x="133.52" fontWeight={700}>
+            .ELEVEN.BOUTIQUE
+          </tspan>
+        </text>
+      </g>
+    </svg>
+  );
 }

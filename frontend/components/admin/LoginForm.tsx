@@ -42,7 +42,7 @@ export function LoginForm({ next, expired }: { next: string; expired: boolean })
   return (
     <main id="contenido" tabIndex={-1} className="flex min-h-svh items-center justify-center p-4 outline-none">
       <div className="w-full max-w-sm">
-        <Wordmark className="text-44" />
+        <Wordmark className="h-20" />
         <h1 className="a-h2 mt-1">Panel de administración</h1>
         {expired ? (
           <p role="status" className="a-notice mt-4">

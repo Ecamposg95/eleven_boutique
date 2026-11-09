@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Cormorant_Garamond, Inter } from "next/font/google";
+import { Cormorant_Garamond, Inter, Montserrat } from "next/font/google";
 import type { ReactNode } from "react";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
@@ -22,6 +22,13 @@ const inter = Inter({
   variable: "--font-inter",
   display: "swap",
 });
+// Solo para las dos líneas pequeñas del logotipo (components/Wordmark.tsx).
+const montserrat = Montserrat({
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  variable: "--font-montserrat",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -38,7 +45,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   const demo = settings?.demo_mode ?? false;
 
   return (
-    <html lang="es-MX" data-demo={demo} className={`${cormorant.variable} ${inter.variable}`}>
+    <html lang="es-MX" data-demo={demo} className={`${cormorant.variable} ${inter.variable} ${montserrat.variable}`}>
       <body className="flex min-h-svh flex-col">
         <a
           href="#contenido"
