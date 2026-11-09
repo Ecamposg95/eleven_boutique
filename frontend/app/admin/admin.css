@@ -1,0 +1,368 @@
+/*
+ * Panel: misma paleta y tipografía que el sitio, en clave de herramienta. Inter 15 para trabajar,
+ * Cormorant solo para títulos y nombres de pieza. Sin cajas decorativas: ink de fondo, charcoal
+ * para lo que está agrupado, bronze para los límites. Las alertas invierten a sand sobre ink.
+ */
+@layer components {
+  .a-root {
+    font-size: var(--text-15);
+    line-height: 1.45;
+  }
+  .a-shell {
+    display: grid;
+    min-height: 100svh;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  @media (min-width: 1024px) {
+    .a-shell {
+      grid-template-columns: 13rem minmax(0, 1fr);
+    }
+  }
+  .a-rail {
+    position: sticky;
+    top: 0;
+    display: flex;
+    height: 100svh;
+    flex-direction: column;
+    overflow-y: auto;
+    border-right: 1px solid color-mix(in srgb, var(--color-bronze) 40%, transparent);
+    padding: 1.25rem 0 1rem;
+  }
+  .a-nav-link {
+    display: flex;
+    min-height: 2.5rem;
+    align-items: center;
+    padding-inline: 1.25rem;
+    border-left: 2px solid transparent;
+  }
+  .a-nav-link:hover {
+    background: var(--color-charcoal);
+  }
+  .a-nav-link[aria-current="page"] {
+    border-left-color: var(--color-ivory);
+    background: var(--color-charcoal);
+    font-weight: 500;
+  }
+  .a-main {
+    min-width: 0;
+    padding: 1.25rem clamp(1rem, 2.5vw, 2.25rem) 6rem;
+    outline: none;
+  }
+  .a-page-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem 1.5rem;
+    margin-bottom: 1.25rem;
+  }
+  .a-h1 {
+    font-family: var(--font-display);
+    font-size: var(--text-30);
+    line-height: 1.2;
+    font-weight: 400;
+  }
+  .a-h2 {
+    font-family: var(--font-display);
+    font-size: var(--text-22);
+    line-height: 1.25;
+    font-weight: 500;
+    color: var(--color-sand);
+  }
+  .a-piece {
+    font-family: var(--font-display);
+    font-size: var(--text-17);
+    line-height: 1.2;
+    font-weight: 500;
+  }
+
+  .a-btn {
+    display: inline-flex;
+    min-height: 2.5rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.875rem;
+    border: 1px solid var(--color-ivory);
+    background: transparent;
+    color: var(--color-ivory);
+    font-size: var(--text-15);
+    font-weight: 500;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color 120ms, color 120ms;
+  }
+  .a-btn:hover:not(:disabled, [aria-disabled="true"]) {
+    background: var(--color-ivory);
+    color: var(--color-ink);
+  }
+  .a-btn-primary {
+    background: var(--color-ivory);
+    color: var(--color-ink);
+  }
+  .a-btn-primary:hover:not(:disabled, [aria-disabled="true"]) {
+    background: var(--color-sand);
+    border-color: var(--color-sand);
+  }
+  .a-btn-quiet {
+    border-color: var(--color-bronze);
+    font-weight: 400;
+  }
+  .a-btn-small {
+    min-height: 2rem;
+    padding: 0.125rem 0.625rem;
+    font-weight: 400;
+  }
+  .a-btn:disabled,
+  .a-btn[aria-disabled="true"] {
+    border-color: color-mix(in srgb, var(--color-bronze) 60%, transparent);
+    background: transparent;
+    color: var(--color-taupe);
+    cursor: not-allowed;
+  }
+  @media (pointer: coarse) {
+    .a-btn,
+    .a-btn-small,
+    .a-input,
+    .a-nav-link {
+      min-height: 2.75rem;
+    }
+  }
+
+  .a-label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: 500;
+  }
+  .a-input {
+    display: block;
+    width: 100%;
+    min-height: 2.5rem;
+    padding: 0.375rem 0.625rem;
+    border: 1px solid var(--color-bronze);
+    border-radius: 0;
+    background: var(--color-ink);
+    color: var(--color-ivory);
+    font-size: var(--text-15);
+  }
+  textarea.a-input {
+    resize: vertical;
+    line-height: 1.5;
+  }
+  .a-input::placeholder {
+    color: var(--color-taupe);
+  }
+  .a-input[aria-invalid="true"] {
+    border: 2px solid var(--color-sand);
+  }
+  .a-hint {
+    margin-top: 0.25rem;
+    color: var(--color-taupe);
+  }
+  .a-error {
+    margin-top: 0.25rem;
+    color: var(--color-sand);
+    font-weight: 500;
+  }
+  input[type="checkbox"],
+  input[type="radio"] {
+    width: 1.125rem;
+    height: 1.125rem;
+    flex: none;
+    accent-color: var(--color-ivory);
+  }
+
+  /* Alertas: el único bloque invertido del panel, para que no pase desapercibido. */
+  .a-alert {
+    padding: 0.625rem 0.875rem;
+    background: var(--color-sand);
+    color: var(--color-ink);
+  }
+  .a-alert a {
+    text-decoration: underline;
+  }
+  .a-notice {
+    padding: 0.625rem 0.875rem;
+    background: var(--color-charcoal);
+    border-left: 2px solid var(--color-bronze);
+  }
+  .a-panel {
+    padding: 1rem;
+    background: var(--color-charcoal);
+  }
+  /* Dentro de un panel, los campos quedan hundidos en ink. */
+  .a-section:not(:first-child) {
+    margin-top: 2rem;
+  }
+  .a-page-head + .a-section {
+    margin-top: 0;
+  }
+
+  .a-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .a-table th {
+    padding: 0.5rem 0.625rem;
+    border-bottom: 1px solid var(--color-bronze);
+    color: var(--color-taupe);
+    font-weight: 400;
+    text-align: left;
+    white-space: nowrap;
+  }
+  .a-table td {
+    padding: 0.375rem 0.625rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--color-bronze) 28%, transparent);
+    vertical-align: middle;
+  }
+  .a-table tbody tr:hover,
+  .a-table tbody tr[data-selected="true"] {
+    background: var(--color-charcoal);
+  }
+  .a-thumb {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    flex: none;
+    background: var(--color-charcoal);
+  }
+  tr:hover .a-thumb,
+  tr[data-selected="true"] .a-thumb {
+    background: var(--color-ink);
+  }
+  .a-no-photo {
+    display: flex;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    padding: 0.125rem;
+    color: var(--color-taupe);
+    text-align: center;
+    line-height: 1.1;
+    border: 1px dashed var(--color-bronze);
+  }
+
+  .a-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4375rem;
+    white-space: nowrap;
+  }
+  .a-status::before {
+    content: "";
+    width: 0.5625rem;
+    height: 0.5625rem;
+    flex: none;
+    border: 1px solid var(--color-ivory);
+  }
+  .a-status[data-status="published"]::before {
+    background: var(--color-ivory);
+  }
+  .a-status[data-status="archived"] {
+    color: var(--color-taupe);
+  }
+  .a-status[data-status="archived"]::before {
+    border: 1px dashed var(--color-taupe);
+  }
+
+  .a-bar {
+    position: sticky;
+    bottom: 0;
+    z-index: 20;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+    margin-top: 0.75rem;
+    padding: 0.625rem 0.875rem;
+    border-top: 1px solid var(--color-ivory);
+    background: var(--color-charcoal);
+  }
+
+  /* Sin nada que guardar, la barra no estorba sobre los campos. */
+  .a-bar-rest {
+    position: static;
+  }
+
+  .a-drop {
+    display: flex;
+    min-height: 9rem;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1.25rem;
+    border: 1px dashed var(--color-bronze);
+    text-align: center;
+  }
+  .a-drop[data-over="true"] {
+    border: 1px solid var(--color-ivory);
+    background: var(--color-charcoal);
+  }
+  progress.a-progress {
+    display: block;
+    width: 100%;
+    height: 0.25rem;
+    appearance: none;
+    border: 0;
+    background: color-mix(in srgb, var(--color-bronze) 35%, transparent);
+  }
+  progress.a-progress::-webkit-progress-bar {
+    background: color-mix(in srgb, var(--color-bronze) 35%, transparent);
+  }
+  progress.a-progress::-webkit-progress-value {
+    background: var(--color-ivory);
+  }
+  progress.a-progress::-moz-progress-bar {
+    background: var(--color-ivory);
+  }
+
+  .a-drag {
+    cursor: grab;
+  }
+  .a-drag:active {
+    cursor: grabbing;
+  }
+  [data-drop-target="true"] {
+    outline: 2px solid var(--color-ivory);
+    outline-offset: 1px;
+  }
+  [data-dragging="true"] {
+    opacity: 0.5;
+  }
+  /* Cientos de filas en la revisión. El margen negativo evita que la contención recorte el foco. */
+  .a-lazy-row {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 9rem;
+    margin-inline: -0.375rem;
+    padding-inline: 0.375rem;
+  }
+  .a-pick[aria-pressed="true"] {
+    outline: 2px solid var(--color-ivory);
+    outline-offset: -2px;
+  }
+
+  .a-dialog {
+    width: min(100vw - 2rem, 32rem);
+    max-height: calc(100dvh - 2rem);
+    margin: auto;
+    padding: 1.25rem;
+    border: 1px solid var(--color-bronze);
+    background: var(--color-ink);
+    color: var(--color-ivory);
+    overflow: auto;
+  }
+  .a-dialog-wide {
+    width: min(100vw - 2rem, 62rem);
+    height: min(100dvh - 2rem, 48rem);
+  }
+}
+
+/* Fuera de la capa: globals.css fija un fondo opaco sin capa, y ese ganaría. Aquí debe verse lo que se confirma. */
+.a-dialog::backdrop {
+  background: color-mix(in srgb, var(--color-ink) 72%, transparent);
+}
+/* Un campo enfocado no queda oculto bajo la barra fija de guardar. */
+html:has(.a-bar) {
+  scroll-padding-bottom: 6rem;
+}

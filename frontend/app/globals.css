@@ -1,0 +1,269 @@
+@import "tailwindcss";
+
+@theme {
+  /* Solo la paleta y la escala del documento de diseño: nada más existe como utilidad. */
+  --color-*: initial;
+  --color-ink: #1b1915; /* Fondo principal. */
+  --color-charcoal: #292620; /* Bloques secundarios y franja demo. */
+  --color-ivory: #f7f3ec; /* Texto e interfaz. */
+  --color-sand: #e9dfd1; /* Titulares secundarios. */
+  --color-taupe: #c7b7a3; /* Texto secundario. */
+  --color-bronze: #9a846b; /* Bordes, foco y subrayados. Solo texto de 24 px o más. */
+
+  --shadow-*: initial;
+  --radius-*: initial;
+
+  --text-*: initial;
+  --text-15: 0.9375rem;
+  --text-15--line-height: 1.45;
+  --text-17: 1.0625rem;
+  --text-17--line-height: 1.5;
+  --text-22: 1.375rem;
+  --text-22--line-height: 1.35;
+  --text-30: 1.875rem;
+  --text-30--line-height: 1.25;
+  --text-44: clamp(2.25rem, 1.8rem + 1.6vw, 2.75rem);
+  --text-44--line-height: 1.1;
+  --text-68: clamp(2.75rem, 1.9rem + 3.6vw, 4.25rem);
+  --text-68--line-height: 1.04;
+  --text-104: clamp(2.75rem, 0.9rem + 6.6vw, 6.5rem);
+  --text-104--line-height: 0.98;
+}
+
+@theme inline {
+  --font-display: var(--font-cormorant), "Times New Roman", serif;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+}
+
+:root {
+  color-scheme: dark;
+  --header-h: 72px;
+  --banner-h: 0px;
+  --chrome-h: calc(var(--header-h) + var(--banner-h));
+  --gutter: clamp(1.25rem, 4vw, 3.5rem);
+}
+html[data-demo="true"] {
+  --banner-h: 56px;
+}
+@media (min-width: 640px) {
+  html[data-demo="true"] {
+    --banner-h: 40px;
+  }
+}
+
+html {
+  scroll-padding-top: calc(var(--chrome-h) + 1rem);
+  background: var(--color-ink);
+}
+html:has(dialog[open]) {
+  overflow: hidden;
+}
+body {
+  background: var(--color-ink);
+  color: var(--color-ivory);
+  font-family: var(--font-sans);
+  font-size: var(--text-17);
+  line-height: 1.5;
+  font-variant-numeric: lining-nums; /* Las cifras antiguas de Cormorant hacen que "01" parezca "oI". */
+  -webkit-font-smoothing: antialiased;
+}
+:focus-visible {
+  outline: 2px solid var(--color-bronze);
+  outline-offset: 3px;
+}
+dialog::backdrop {
+  background: var(--color-ink);
+}
+
+@layer components {
+  .page {
+    margin-inline: auto;
+    width: 100%;
+    max-width: 100rem;
+    padding-inline: var(--gutter);
+  }
+  .section {
+    padding-block: clamp(4rem, 8vw, 8rem);
+  }
+  .display {
+    font-family: var(--font-display);
+    font-weight: 300;
+    letter-spacing: -0.01em;
+  }
+  .serif {
+    font-family: var(--font-display);
+    font-weight: 400;
+  }
+  h2.display {
+    color: var(--color-sand);
+  }
+  .muted {
+    color: var(--color-taupe);
+  }
+  .measure {
+    max-width: 62ch;
+  }
+  .link {
+    text-decoration: underline;
+    text-decoration-color: var(--color-bronze);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.25em;
+  }
+  .link:hover {
+    text-decoration-thickness: 2px;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 3rem;
+    padding: 0.625rem 1.75rem;
+    border: 1px solid var(--color-ivory);
+    background: transparent;
+    color: var(--color-ivory);
+    font-family: var(--font-sans);
+    font-size: var(--text-15);
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 200ms, color 200ms;
+  }
+  .btn:hover {
+    background: var(--color-ivory);
+    color: var(--color-ink);
+  }
+  .field {
+    width: 100%;
+    min-height: 3rem;
+    padding: 0.5rem 0;
+    border: 0;
+    border-bottom: 1px solid var(--color-bronze);
+    background: transparent;
+    color: var(--color-ivory);
+    font-family: var(--font-display);
+    font-size: var(--text-30);
+    line-height: 1.2;
+    border-radius: 0;
+    appearance: none;
+  }
+  .field:focus-visible {
+    outline-offset: 2px;
+  }
+
+  /*
+   * Velos de legibilidad sobre la fotografía de portada, solo detrás del texto.
+   * Bajo el texto sostienen 65 % de ink: ivory da AA incluso sobre una foto blanca.
+   * El desvanecido escalonado evita que se note el borde del velo.
+   */
+  .scrim-top,
+  .scrim-bottom {
+    --scrim: color-mix(in srgb, var(--color-ink) 65%, transparent);
+    --scrim-mid: color-mix(in srgb, var(--color-ink) 34%, transparent);
+    --scrim-low: color-mix(in srgb, var(--color-ink) 10%, transparent);
+  }
+  .scrim-top {
+    background: linear-gradient(
+      to bottom,
+      var(--scrim) calc(var(--header-h) - 0.75rem),
+      var(--scrim-mid) calc(var(--header-h) + 1rem),
+      var(--scrim-low) calc(var(--header-h) + 2.25rem),
+      transparent
+    );
+  }
+  .scrim-bottom {
+    background: linear-gradient(
+      to top,
+      var(--scrim) calc(100% - 7rem),
+      var(--scrim-mid) calc(100% - 3.5rem),
+      var(--scrim-low) calc(100% - 1.25rem),
+      transparent
+    );
+  }
+  /* En escritorio el texto queda a la izquierda: el velo no cruza la foto entera. */
+  @media (min-width: 768px) {
+    .scrim-bottom {
+      /* Sostiene hasta el ancho máximo del texto (42rem) y luego se desvanece sin borde visible. */
+      --text-end: calc(max(0px, (100vw - 100rem) / 2) + var(--gutter) + 42rem);
+      mask-image: linear-gradient(
+        to right,
+        #000 var(--text-end),
+        rgb(0 0 0 / 0.72) calc(var(--text-end) + 5rem),
+        rgb(0 0 0 / 0.38) calc(var(--text-end) + 11rem),
+        rgb(0 0 0 / 0.12) calc(var(--text-end) + 18rem),
+        transparent calc(var(--text-end) + 26rem)
+      );
+    }
+  }
+  /* El CTA lleva su propio fondo: puede caer sobre cualquier zona de la foto. */
+  .btn-on-photo {
+    background: color-mix(in srgb, var(--color-ink) 65%, transparent);
+  }
+  .btn-on-photo:hover {
+    background: var(--color-ivory);
+  }
+
+  /* El muro de casas. */
+  .wall {
+    font-family: var(--font-display);
+    font-weight: 300;
+    letter-spacing: -0.015em;
+  }
+  .wall > li {
+    display: inline;
+  }
+  .wall a,
+  .wall span {
+    transition: opacity 200ms;
+  }
+  .wall:has(a:focus-visible) a:not(:focus-visible),
+  .wall:has(a:focus-visible) span {
+    opacity: 0.3;
+  }
+  @media (hover: hover) {
+    .wall:has(a:hover) a:not(:hover),
+    .wall:has(a:hover) span {
+      opacity: 0.3;
+    }
+  }
+  .wall-cover {
+    overflow: hidden;
+    mask-image: linear-gradient(to bottom, #000 62%, transparent 98%);
+  }
+  /* Con teclado el enlace enfocado debe verse completo, también en la zona que se desvanece. */
+  .wall-cover:has(a:focus-visible) {
+    mask-image: none;
+  }
+  .wall-in {
+    animation: fade-in 700ms ease-out both;
+  }
+
+  .crossfade {
+    opacity: 0;
+    transition: opacity 300ms;
+  }
+  @media (hover: hover) {
+    .group:hover .crossfade {
+      opacity: 1;
+    }
+  }
+  .group:focus-visible .crossfade {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
