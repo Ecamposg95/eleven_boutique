@@ -316,7 +316,7 @@ export default async function HomePage() {
       {stars.length > 0 ? <HouseShowroom houses={stars} /> : null}
 
       {allBrands.length > 0 ? (
-        <section aria-labelledby="casas-t" className={`section page ${stars.length > 0 ? "" : "pt-0"}`}>
+        <section aria-labelledby="casas-t" className="section page">
           <Reveal>
             <SectionHead
               id="casas-t"
