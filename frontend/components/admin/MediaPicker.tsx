@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api, errorText, uploadMedia } from "@/lib/admin/client";
+import { moveItem } from "@/lib/admin/reorder";
 import { createUploadQueue, countUploads, validateImageFile, type UploadItem } from "@/lib/admin/upload-queue";
 import type { MediaAsset } from "@/lib/admin/types";
 import { Notice, Pager, Thumb } from "./ui";
@@ -240,6 +241,81 @@ export function AssetField({
       </div>
       {hint ? <p className="a-hint max-w-prose">{hint}</p> : null}
       <MediaPicker open={open} title={label} onClose={() => setOpen(false)} onPick={(assets) => onChange(assets[0] ?? null)} />
+    </div>
+  );
+}
+
+export type GallerySlide = { asset_id: string; url: string };
+
+/** Varias imágenes en orden: añadir desde la biblioteca, mover y quitar. */
+export function GalleryField({
+  label,
+  slides,
+  max,
+  hint,
+  onChange,
+}: {
+  label: string;
+  slides: GallerySlide[];
+  max: number;
+  hint?: string;
+  onChange: (slides: GallerySlide[]) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const full = slides.length >= max;
+  const add = (assets: MediaAsset[]) => {
+    const known = new Set(slides.map((slide) => slide.asset_id));
+    const fresh = assets.filter((asset) => !known.has(asset.id)).map((asset) => ({ asset_id: asset.id, url: asset.url }));
+    onChange([...slides, ...fresh].slice(0, max));
+  };
+  return (
+    <div>
+      <p className="a-label">{label}</p>
+      {slides.length > 0 ? (
+        <ol className="flex flex-wrap gap-4">
+          {slides.map((slide, index) => (
+            <li key={slide.asset_id} className="flex flex-col items-start gap-1">
+              <Thumb src={slide.url} size="9rem" ratio="16 / 10" sizes="200px" />
+              <span className="a-hint">Foto {index + 2}</span>
+              <div className="flex gap-1">
+                <button
+                  type="button"
+                  className="a-btn a-btn-quiet a-btn-small"
+                  aria-label={`Mover antes: foto ${index + 2}`}
+                  disabled={index === 0}
+                  onClick={() => onChange(moveItem(slides, index, index - 1))}
+                >
+                  ←
+                </button>
+                <button
+                  type="button"
+                  className="a-btn a-btn-quiet a-btn-small"
+                  aria-label={`Mover después: foto ${index + 2}`}
+                  disabled={index === slides.length - 1}
+                  onClick={() => onChange(moveItem(slides, index, index + 1))}
+                >
+                  →
+                </button>
+                <button
+                  type="button"
+                  className="a-btn a-btn-quiet a-btn-small"
+                  aria-label={`Quitar: foto ${index + 2}`}
+                  onClick={() => onChange(slides.filter((item) => item.asset_id !== slide.asset_id))}
+                >
+                  Quitar
+                </button>
+              </div>
+            </li>
+          ))}
+        </ol>
+      ) : (
+        <p className="a-hint">Sin fotos adicionales: la portada muestra solo la principal.</p>
+      )}
+      <button type="button" className="a-btn a-btn-quiet a-btn-small mt-3" disabled={full} onClick={() => setOpen(true)}>
+        {full ? `Máximo ${max} fotos` : "Añadir fotos"}
+      </button>
+      {hint ? <p className="a-hint max-w-prose">{hint}</p> : null}
+      <MediaPicker open={open} multiple title={label} onClose={() => setOpen(false)} onPick={add} />
     </div>
   );
 }

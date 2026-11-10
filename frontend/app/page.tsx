@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BrandWall } from "@/components/BrandWall";
 import { CatalogImage } from "@/components/CatalogImage";
+import { HeroSlides } from "@/components/HeroSlides";
 import { HouseShowroom } from "@/components/HouseShowroom";
 import { ProductCard } from "@/components/ProductCard";
 import { Reveal } from "@/components/Reveal";
@@ -38,11 +39,12 @@ export const metadata: Metadata = {
  */
 function Hero({
   settings,
-  image,
+  images,
 }: {
   settings: PublicSettings;
-  image: string | null;
+  images: string[];
 }) {
+  const image = images.length > 0;
   const word = giantWord(settings.site_name);
   return (
     <section
@@ -66,12 +68,9 @@ function Hero({
 
         {image ? (
           <div className="mono relative aspect-[4/5] bg-charcoal md:col-span-5 md:-mt-[9vw]">
-            <CatalogImage
-              src={image}
-              alt=""
+            <HeroSlides
+              images={images}
               sizes="(min-width: 768px) 42vw, 100vw"
-              preload
-              className="object-cover"
             />
           </div>
         ) : null}
@@ -260,6 +259,14 @@ export default async function HomePage() {
     ]);
 
   const heroImage = safeImageSrc(settings.hero.image_url);
+  // La principal primero; las de la galería se turnan después. Sin principal, la galería basta.
+  const heroImages = [
+    ...new Set(
+      [heroImage, ...(settings.hero.gallery ?? []).map((url) => safeImageSrc(url))].filter(
+        (url): url is string => Boolean(url),
+      ),
+    ),
+  ];
   const allBrands = brands ?? [];
   const allCollections = collections ?? [];
   const allLookbooks = lookbooks ?? [];
@@ -275,7 +282,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <Hero settings={settings} image={heroImage} />
+      <Hero settings={settings} images={heroImages} />
 
       {strip.length > 0 ? <Strip entries={strip} /> : null}
 

@@ -53,8 +53,14 @@ def _block_urls(db: Session) -> set[str]:
     return {content["url"] for content in contents if content.get("url")}
 
 
+def _gallery_urls(db: Session) -> set[str]:
+    """The portada gallery keeps its URLs in JSON too."""
+    galleries = db.scalars(select(SiteSettings.hero_gallery))
+    return {slide["url"] for gallery in galleries for slide in (gallery or []) if slide.get("url")}
+
+
 def _used_urls(db: Session) -> set[str]:
-    return set(db.scalars(_referenced_urls_query())) | _block_urls(db)
+    return set(db.scalars(_referenced_urls_query())) | _block_urls(db) | _gallery_urls(db)
 
 
 def _asset_out(asset: MediaAsset, used: set[str]) -> schemas.AdminMedia:
@@ -86,7 +92,7 @@ def list_media(
         )
     if unused is not None:
         referenced = select(_referenced_urls_query().subquery().c.url)
-        blocks = _block_urls(db)
+        blocks = _block_urls(db) | _gallery_urls(db)
         if unused:
             stmt = stmt.where(MediaAsset.url.not_in(referenced), MediaAsset.url.not_in(blocks))
         else:

@@ -116,6 +116,8 @@ DEMO_BLOCKS: tuple[tuple[str, dict[str, Any]], ...] = (
 
 DEMO_SETTINGS = {
     "hero_image_url": "/demo/editorial-1.jpg",
+    # Demo slides have no media asset: public reads only use the URL.
+    "hero_gallery": [{"url": "/demo/editorial-2.jpg"}, {"url": "/demo/editorial-3.jpg"}],
     "hero_headline": "Texto de demostración: titular de portada",
     "hero_subhead": "Texto de demostración: subtítulo de portada",
     "intro": "Texto de demostración: introducción del sitio.",

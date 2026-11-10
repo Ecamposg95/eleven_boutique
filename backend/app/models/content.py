@@ -118,6 +118,11 @@ class SiteSettings(IdMixin, TimestampMixin, Base):
     hero_mobile_asset_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("media_assets.id", ondelete="RESTRICT"), index=True
     )
+    # Extra portada photos that rotate after the main one: [{"asset_id": str, "url": str}].
+    # JSON keeps the order; media usage reads it like lookbook image blocks.
+    hero_gallery: Mapped[list[dict[str, str]]] = mapped_column(
+        JSON, default=list, server_default="[]"
+    )
     hero_headline: Mapped[str | None] = mapped_column(Text)
     hero_subhead: Mapped[str | None] = mapped_column(Text)
     intro: Mapped[str | None] = mapped_column(Text)

@@ -256,7 +256,14 @@ def archive_record(db: Session, kind: _Kind, record_id: uuid.UUID, user: AdminUs
 # --- Settings --------------------------------------------------------------------------
 
 _TEXT_SETTINGS = ("hero_headline", "hero_subhead", "intro", "boutique_body", "contact_body")
-_AUDITED_SETTINGS = ("whatsapp_number", "whatsapp_premium_number", "hero_asset_id", "hero_mobile_asset_id", *_TEXT_SETTINGS)
+_AUDITED_SETTINGS = (
+    "whatsapp_number",
+    "whatsapp_premium_number",
+    "hero_asset_id",
+    "hero_mobile_asset_id",
+    "hero_gallery",
+    *_TEXT_SETTINGS,
+)
 
 
 def _real_settings(db: Session) -> SiteSettings | None:
@@ -271,12 +278,23 @@ def _settings_out(row: SiteSettings | None) -> schemas.AdminSettings:
         hero_image_url=row.hero_image_url if row else None,
         hero_mobile_asset_id=row.hero_mobile_asset_id if row else None,
         hero_mobile_image_url=row.hero_mobile_image_url if row else None,
+        hero_gallery=[schemas.HeroSlide(**slide) for slide in (row.hero_gallery or [])] if row else [],
         hero_headline=row.hero_headline if row else None,
         hero_subhead=row.hero_subhead if row else None,
         intro=row.intro if row else None,
         boutique_body=row.boutique_body if row else None,
         contact_body=row.contact_body if row else None,
     )
+
+
+def _hero_gallery(db: Session, asset_ids: list[uuid.UUID]) -> list[dict[str, str]]:
+    """Ordered, without repeats. Stores the URL next to the id, like the other asset fields."""
+    slides: list[dict[str, str]] = []
+    for asset_id in dict.fromkeys(asset_ids):
+        asset = asset_or_error(db, asset_id)
+        assert asset is not None
+        slides.append({"asset_id": str(asset.id), "url": asset.url})
+    return slides
 
 
 def get_settings(db: Session) -> schemas.AdminSettings:
@@ -306,6 +324,8 @@ def update_settings(db: Session, data: schemas.SettingsPatch, user: AdminUser) -
             "hero_mobile_image_url",
             asset_or_error(db, data.hero_mobile_asset_id),
         )
+    if "hero_gallery_asset_ids" in fields:
+        row.hero_gallery = _hero_gallery(db, data.hero_gallery_asset_ids or [])
     for field in _TEXT_SETTINGS:
         if field in fields:
             setattr(row, field, getattr(data, field))

@@ -62,6 +62,7 @@ export type PublicSettings = {
     mobile_image_url?: string | null; // Dirección de arte para teléfono; si falta, se recorta image_url.
     headline: string | null;
     subhead: string | null;
+    gallery?: string[]; // Fotos extra que se turnan después de image_url. Opcional: APIs anteriores no lo envían.
   };
   intro: string | null;
   boutique: { body: string | null };

@@ -98,7 +98,7 @@ def test_site_settings(client):
         "boutique",
         "contact",
     }
-    assert set(settings["hero"]) == {"image_url", "mobile_image_url", "headline", "subhead"}
+    assert set(settings["hero"]) == {"image_url", "mobile_image_url", "headline", "subhead", "gallery"}
     assert set(settings["boutique"]) == {"body"}
     assert set(settings["contact"]) == {"body"}
 

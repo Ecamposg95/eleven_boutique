@@ -429,6 +429,11 @@ def search(db: Session, q: str | None, demo_mode: bool) -> schemas.SearchResults
 # --- Site settings --------------------------------------------------------------------
 
 
+def _pick_gallery(real: SiteSettings | None, demo: SiteSettings | None) -> list[dict[str, str]]:
+    # Like pick(): the real gallery wins whenever it has photos.
+    return (real.hero_gallery if real else None) or (demo.hero_gallery if demo else None) or []
+
+
 def public_settings(db: Session, settings: Settings) -> schemas.PublicSettings:
     rows = db.scalars(select(SiteSettings)).all()
     real = next((row for row in rows if not row.is_demo), None)
@@ -447,6 +452,7 @@ def public_settings(db: Session, settings: Settings) -> schemas.PublicSettings:
             mobile_image_url=pick("hero_mobile_image_url"),
             headline=pick("hero_headline"),
             subhead=pick("hero_subhead"),
+            gallery=[slide["url"] for slide in _pick_gallery(real, demo)],
         ),
         intro=pick("intro"),
         boutique=schemas.BodyText(body=pick("boutique_body")),

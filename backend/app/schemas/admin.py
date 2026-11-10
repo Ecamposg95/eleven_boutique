@@ -481,6 +481,14 @@ class AdminLookbook(AdminCollection):
 # --- Settings --------------------------------------------------------------------------
 
 
+HERO_GALLERY_MAX = 8
+
+
+class HeroSlide(Schema):
+    asset_id: uuid.UUID
+    url: str
+
+
 class SettingsPatch(Input):
     whatsapp_number: Annotated[str, StringConstraints(strip_whitespace=True, max_length=40)] | None = None
     whatsapp_premium_number: (
@@ -488,6 +496,7 @@ class SettingsPatch(Input):
     ) = None
     hero_asset_id: uuid.UUID | None = None
     hero_mobile_asset_id: uuid.UUID | None = None
+    hero_gallery_asset_ids: Annotated[list[uuid.UUID], Field(max_length=HERO_GALLERY_MAX)] | None = None
     hero_headline: LongText | None = None
     hero_subhead: LongText | None = None
     intro: LongText | None = None
@@ -502,6 +511,7 @@ class AdminSettings(Schema):
     hero_image_url: str | None
     hero_mobile_asset_id: uuid.UUID | None
     hero_mobile_image_url: str | None
+    hero_gallery: list[HeroSlide]
     hero_headline: str | None
     hero_subhead: str | None
     intro: str | None

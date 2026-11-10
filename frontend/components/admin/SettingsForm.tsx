@@ -5,7 +5,7 @@ import { type FormEvent, useState } from "react";
 import { AdminApiError, api, errorText } from "@/lib/admin/client";
 import type { AdminSettings } from "@/lib/admin/types";
 import { checkWhatsapp, whatsappPreview } from "@/lib/admin/whatsapp";
-import { AssetField } from "./MediaPicker";
+import { AssetField, GalleryField } from "./MediaPicker";
 import { Notice, TextAreaField, TextField, useUnsavedWarning } from "./ui";
 
 export function SettingsForm({ settings }: { settings: AdminSettings }) {
@@ -15,6 +15,7 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
     whatsapp_premium_number: settings.whatsapp_premium_number ?? "",
     hero_asset_id: settings.hero_asset_id,
     hero_mobile_asset_id: settings.hero_mobile_asset_id,
+    hero_gallery: settings.hero_gallery ?? [],
     hero_headline: settings.hero_headline ?? "",
     hero_subhead: settings.hero_subhead ?? "",
     intro: settings.intro ?? "",
@@ -60,6 +61,7 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
       whatsapp_premium_number: premium.digits || null,
       hero_asset_id: form.hero_asset_id,
       hero_mobile_asset_id: form.hero_mobile_asset_id,
+      hero_gallery_asset_ids: form.hero_gallery.map((slide) => slide.asset_id),
       hero_headline: form.hero_headline.trim() || null,
       hero_subhead: form.hero_subhead.trim() || null,
       intro: form.intro.trim() || null,
@@ -155,6 +157,15 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
               set("hero_mobile_asset_id", asset?.id ?? null);
               setMobileUrl(asset?.url ?? null);
             }}
+          />
+        </div>
+        <div className="mt-6">
+          <GalleryField
+            label="Más fotos de portada (se turnan)"
+            slides={form.hero_gallery}
+            max={8}
+            hint="Se muestran después de la principal, una a la vez con fundido lento. Verticales o cuadradas lucen mejor junto al nombre gigante."
+            onChange={(slides) => set("hero_gallery", slides)}
           />
         </div>
       </section>

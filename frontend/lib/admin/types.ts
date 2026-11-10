@@ -137,6 +137,7 @@ export type AdminSettings = {
   hero_mobile_asset_id: string | null;
   hero_image_url: string | null;
   hero_mobile_image_url: string | null;
+  hero_gallery: { asset_id: string; url: string }[];
   hero_headline: string | null;
   hero_subhead: string | null;
   intro: string | null;

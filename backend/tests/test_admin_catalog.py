@@ -639,6 +639,7 @@ def test_settings_round_trip_and_public_mobile_hero(client):
         "mobile_image_url": mobile["url"],
         "headline": "Titular",
         "subhead": "Sub",
+        "gallery": [],
     }
     assert public["whatsapp_enabled"] is True
     assert "whatsapp_number" not in public
@@ -646,6 +647,35 @@ def test_settings_round_trip_and_public_mobile_hero(client):
     cleared = patch(client, "/settings", {"hero_mobile_asset_id": None}).json()
     assert cleared["hero_mobile_image_url"] is None
     assert client.get("/api/v1/site-settings/public").json()["hero"]["mobile_image_url"] is None
+
+
+def test_settings_hero_gallery_round_trip_order_and_clear(client):
+    first, second = upload_one(client), upload_one(client)
+    saved = patch(client, "/settings", {"hero_gallery_asset_ids": [second["id"], first["id"]]})
+    assert saved.status_code == 200, saved.text
+    assert saved.json()["hero_gallery"] == [
+        {"asset_id": second["id"], "url": second["url"]},
+        {"asset_id": first["id"], "url": first["url"]},
+    ]
+    assert client.get(f"{BASE}/settings").json() == saved.json()
+    public = client.get("/api/v1/site-settings/public").json()
+    assert public["hero"]["gallery"] == [second["url"], first["url"]]
+
+    # Repeated ids collapse; an unrelated patch keeps the gallery.
+    again = patch(client, "/settings", {"hero_gallery_asset_ids": [first["id"], first["id"]]}).json()
+    assert [slide["asset_id"] for slide in again["hero_gallery"]] == [first["id"]]
+    assert patch(client, "/settings", {"intro": "x"}).json()["hero_gallery"] == again["hero_gallery"]
+
+    assert patch(client, "/settings", {"hero_gallery_asset_ids": []}).json()["hero_gallery"] == []
+    assert client.get("/api/v1/site-settings/public").json()["hero"]["gallery"] == []
+
+
+def test_settings_hero_gallery_rejects_unknown_and_too_many(client):
+    missing = patch(client, "/settings", {"hero_gallery_asset_ids": [str(uuid.uuid4())]})
+    assert missing.status_code == 422
+    item = upload_one(client)
+    too_many = patch(client, "/settings", {"hero_gallery_asset_ids": [item["id"]] * 9})
+    assert too_many.status_code == 422
 
 
 def test_settings_reject_a_bad_number_and_unknown_fields(client):

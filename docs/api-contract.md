@@ -48,7 +48,7 @@ type PublicSettings = {
   demo_mode: boolean;
   whatsapp_enabled: boolean;      // nunca se expone el número por separado
   site_name: string;
-  hero: { image_url: string | null; headline: string | null; subhead: string | null };
+  hero: { image_url: string | null; headline: string | null; subhead: string | null; gallery: string[] };
   intro: string | null;
   boutique: { body: string | null };
   contact: { body: string | null };

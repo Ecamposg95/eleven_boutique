@@ -142,6 +142,7 @@ class Hero(Schema):
     mobile_image_url: str | None
     headline: str | None
     subhead: str | None
+    gallery: list[str]  # Extra photos that rotate after image_url, in order.
 
 
 class BodyText(Schema):
