@@ -79,7 +79,8 @@ function Hero({
         <div
           className={`flex flex-col justify-end ${image ? "md:col-span-4" : "md:col-span-6 md:col-start-7"}`}
         >
-          <h1 id="hero-t" className="display text-68">
+          {/* Sin titular propio, el nombre ya está en la palabra gigante: el h1 queda solo para lectores. */}
+          <h1 id="hero-t" className={settings.hero.headline ? "display text-68" : "sr-only"}>
             {settings.hero.headline ?? settings.site_name}
           </h1>
           {settings.hero.subhead ? (
