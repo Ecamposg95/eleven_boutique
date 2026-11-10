@@ -76,7 +76,7 @@ body {
   outline: 2px solid var(--color-bronze);
   outline-offset: 3px;
 }
-dialog:not(.drawer)::backdrop {
+dialog:not(.drawer, .sheet)::backdrop {
   background: var(--color-ink);
 }
 
@@ -194,6 +194,16 @@ dialog:not(.drawer)::backdrop {
     opacity: 0.55;
   }
 
+  /* Hoja inferior de filtros y orden del catálogo: sube desde abajo sobre la página velada. */
+  .sheet[open] {
+    animation: sheet-in 340ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+  .sheet::backdrop {
+    background: rgb(18 18 18 / 0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
   /* Fotografía en blanco y negro, como en la referencia editorial. */
   .mono img {
     filter: grayscale(1) contrast(1.05);
@@ -298,6 +308,15 @@ dialog:not(.drawer)::backdrop {
   }
   .group:focus-visible .crossfade {
     opacity: 1;
+  }
+}
+
+@keyframes sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
   }
 }
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BrandWall } from "@/components/BrandWall";
 import { CatalogImage } from "@/components/CatalogImage";
+import { CategoryRail } from "@/components/CategoryRail";
 import { HeroSlides } from "@/components/HeroSlides";
 import { HouseShowroom } from "@/components/HouseShowroom";
 import { ProductCard } from "@/components/ProductCard";
@@ -9,9 +10,11 @@ import { Reveal } from "@/components/Reveal";
 import { firstParagraph } from "@/components/TextBody";
 import {
   getBrands,
+  getCategories,
   getCollections,
   getLookbooks,
   getNovedades,
+  getProducts,
   getSettings,
   soft,
 } from "@/lib/api";
@@ -21,6 +24,7 @@ import {
   stripEntries,
   type StripEntry,
 } from "@/lib/home";
+import { categoryTiles, topCategories } from "@/lib/categories";
 import { safeImageSrc } from "@/lib/images";
 import { splitShowroom } from "@/lib/showroom";
 import { DEFAULT_DESCRIPTION, SITE_NAME } from "@/lib/seo";
@@ -33,8 +37,16 @@ export const metadata: Metadata = {
   openGraph: { title: SITE_NAME, description: DEFAULT_DESCRIPTION, url: "/" },
 };
 
-function HeroText({ settings, light }: { settings: PublicSettings; light?: boolean }) {
-  const size = light ? "display text-30 md:text-44" : "display text-44 md:text-68";
+function HeroText({
+  settings,
+  light,
+}: {
+  settings: PublicSettings;
+  light?: boolean;
+}) {
+  const size = light
+    ? "display text-30 md:text-44"
+    : "display text-44 md:text-68";
   return (
     <>
       {/* Sin titular propio, el nombre ya está en la palabra gigante: el h1 queda solo para lectores. */}
@@ -42,7 +54,9 @@ function HeroText({ settings, light }: { settings: PublicSettings; light?: boole
         {settings.hero.headline ?? settings.site_name}
       </h1>
       {settings.hero.subhead ? (
-        <p className={`label mt-5 max-w-xs ${light ? "opacity-75" : "muted"}`}>{settings.hero.subhead}</p>
+        <p className={`label mt-5 max-w-xs ${light ? "opacity-75" : "muted"}`}>
+          {settings.hero.subhead}
+        </p>
       ) : null}
       <span aria-hidden="true" className="mt-6 block h-px w-8 bg-current" />
       <Link href="/marcas" className="label cta mt-3 self-start">
@@ -56,7 +70,13 @@ function HeroText({ settings, light }: { settings: PublicSettings; light?: boole
  * Portada a pantalla completa: las fotos se turnan detrás, el encabezado flota encima en acrílico,
  * el texto va en una tarjeta acrílica y el nombre gigante cierra la imagen por abajo.
  */
-function PhotoHero({ settings, images }: { settings: PublicSettings; images: string[] }) {
+function PhotoHero({
+  settings,
+  images,
+}: {
+  settings: PublicSettings;
+  images: string[];
+}) {
   return (
     <section
       aria-labelledby="hero-t"
@@ -70,7 +90,10 @@ function PhotoHero({ settings, images }: { settings: PublicSettings; images: str
           controlsClassName="acrylic-card absolute left-[var(--gutter)] top-[calc(var(--chrome-h)+1.25rem)] z-10 rounded-full px-4 py-1.5"
         />
       </div>
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-black/25" />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-black/25"
+      />
 
       <div className="page absolute inset-x-0 bottom-[calc(min(26vw,25.5rem)*0.8+2rem)] z-10 flex items-end justify-between gap-6">
         <p className="label hidden opacity-80 md:block">
@@ -96,8 +119,14 @@ function PhotoHero({ settings, images }: { settings: PublicSettings; images: str
 /** Sin fotografía queda solo la tipografía, que se sostiene sola. */
 function TypeHero({ settings }: { settings: PublicSettings }) {
   return (
-    <section aria-labelledby="hero-t" className="page overflow-hidden pb-14 pt-6 md:pb-20 md:pt-8">
-      <p aria-hidden="true" className="giant wall-in text-giant -ml-[0.04em] whitespace-nowrap">
+    <section
+      aria-labelledby="hero-t"
+      className="page overflow-hidden pb-14 pt-6 md:pb-20 md:pt-8"
+    >
+      <p
+        aria-hidden="true"
+        className="giant wall-in text-giant -ml-[0.04em] whitespace-nowrap"
+      >
         {giantWord(settings.site_name)}
       </p>
       <div className="mt-6 grid gap-8 md:grid-cols-12 md:gap-6">
@@ -201,7 +230,9 @@ function Collections({ collections }: { collections: CollectionSummary[] }) {
         href="/colecciones"
         action="Ver todas"
       />
-      <ul className={`grid gap-x-3 gap-y-10 ${collections.length === 2 ? "md:grid-cols-2" : "md:grid-cols-3"}`}>
+      <ul
+        className={`grid gap-x-3 gap-y-10 ${collections.length === 2 ? "md:grid-cols-2" : "md:grid-cols-3"}`}
+      >
         {collections.slice(0, 3).map((collection) => (
           <li key={collection.slug}>
             <Link
@@ -264,26 +295,42 @@ function Closing({ body, image }: { body: string; image: string | null }) {
   );
 }
 
+/** Una pieza de muestra y el total por categoría principal; si el catálogo falla, no hay carrusel. */
+async function categorySamples() {
+  const categories = await soft(getCategories());
+  if (!categories) return [];
+  return Promise.all(
+    topCategories(categories).map(async (category) => {
+      const page = await soft(
+        getProducts({ category: category.slug, page_size: 4 }),
+      );
+      return { category, total: page?.total ?? 0, items: page?.items ?? [] };
+    }),
+  );
+}
+
 export default async function HomePage() {
   // Sin ajustes no hay portada posible: lo recoge app/error.tsx.
   const settings = await getSettings();
   // Cada sección es opcional: si su dato falla, se oculta como si estuviera vacía.
-  const [brands, featuredBrands, novedades, collections, lookbooks] =
+  const [brands, featuredBrands, novedades, collections, lookbooks, samples] =
     await Promise.all([
       soft(getBrands()),
       soft(getBrands({ featured: true })),
       soft(getNovedades({ page_size: 4 })),
       soft(getCollections()),
       soft(getLookbooks()),
+      categorySamples(),
     ]);
 
   const heroImage = safeImageSrc(settings.hero.image_url);
   // La principal primero; las de la galería se turnan después. Sin principal, la galería basta.
   const heroImages = [
     ...new Set(
-      [heroImage, ...(settings.hero.gallery ?? []).map((url) => safeImageSrc(url))].filter(
-        (url): url is string => Boolean(url),
-      ),
+      [
+        heroImage,
+        ...(settings.hero.gallery ?? []).map((url) => safeImageSrc(url)),
+      ].filter((url): url is string => Boolean(url)),
     ),
   ];
   const allBrands = brands ?? [];
@@ -292,6 +339,7 @@ export default async function HomePage() {
   const newest = novedades?.items ?? [];
   const { stars, rest } = splitShowroom(allBrands, featuredBrands ?? []);
   const boutique = settings.boutique.body?.trim();
+  const tiles = categoryTiles(newest, samples);
   const strip = stripEntries({
     lookbooks: allLookbooks,
     novedades: newest,
@@ -306,6 +354,8 @@ export default async function HomePage() {
       ) : (
         <TypeHero settings={settings} />
       )}
+
+      {tiles.length > 1 ? <CategoryRail tiles={tiles} /> : null}
 
       {strip.length > 0 ? <Strip entries={strip} /> : null}
 
