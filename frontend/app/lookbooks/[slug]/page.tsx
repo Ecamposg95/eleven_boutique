@@ -38,7 +38,7 @@ function Block({ block }: { block: LookbookBlock }) {
     return (
       <Reveal>
         <div className="mono relative aspect-[4/3] bg-charcoal md:aspect-[8/5]">
-          <CatalogImage src={block.url} alt={block.alt} sizes="100vw" className="object-cover" />
+          <CatalogImage src={block.url} alt={block.alt} sizes="100vw" className="object-cover object-[50%_25%]" />
         </div>
       </Reveal>
     );
@@ -49,7 +49,7 @@ function Block({ block }: { block: LookbookBlock }) {
         <div
           className={`mono relative aspect-[8/5] bg-charcoal md:col-span-7 ${block.layout === "right" ? "md:col-start-6" : ""}`}
         >
-          <CatalogImage src={block.url} alt={block.alt} sizes="(min-width: 768px) 58vw, 100vw" className="object-cover" />
+          <CatalogImage src={block.url} alt={block.alt} sizes="(min-width: 768px) 58vw, 100vw" className="object-cover object-[50%_25%]" />
         </div>
       </div>
     </Reveal>
