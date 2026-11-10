@@ -3,17 +3,20 @@
 @theme {
   /* Solo la paleta y la escala del documento de diseño: nada más existe como utilidad. */
   --color-*: initial;
-  --color-ink: #1b1915; /* Fondo principal. */
-  --color-charcoal: #292620; /* Bloques secundarios y franja demo. */
-  --color-ivory: #f7f3ec; /* Texto e interfaz. */
-  --color-sand: #e9dfd1; /* Titulares secundarios. */
-  --color-taupe: #c7b7a3; /* Texto secundario. */
-  --color-bronze: #9a846b; /* Bordes, foco y subrayados. Solo texto de 24 px o más. */
+  /* Tema claro editorial. Los nombres son roles: ink es el fondo, ivory el texto. */
+  --color-ink: #efece6; /* Fondo principal (papel). */
+  --color-charcoal: #e2ded6; /* Bloques secundarios, fondo de imágenes y franja demo. */
+  --color-ivory: #121212; /* Texto e interfaz. */
+  --color-sand: #121212; /* Titulares. */
+  --color-taupe: #5c5852; /* Texto secundario (AA sobre ink y charcoal). */
+  --color-bronze: #8a857d; /* Bordes, foco y subrayados. */
 
   --shadow-*: initial;
   --radius-*: initial;
 
   --text-*: initial;
+  --text-11: 0.6875rem;
+  --text-11--line-height: 1.5;
   --text-15: 0.9375rem;
   --text-15--line-height: 1.45;
   --text-17: 1.0625rem;
@@ -28,6 +31,8 @@
   --text-68--line-height: 1.04;
   --text-104: clamp(2.75rem, 0.9rem + 6.6vw, 6.5rem);
   --text-104--line-height: 0.98;
+  --text-giant: clamp(5rem, 26vw, 25.5rem);
+  --text-giant--line-height: 0.8;
 }
 
 @theme inline {
@@ -36,7 +41,7 @@
 }
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
   --header-h: 72px;
   --banner-h: 0px;
   --chrome-h: calc(var(--header-h) + var(--banner-h));
@@ -86,9 +91,58 @@ dialog::backdrop {
     padding-block: clamp(4rem, 8vw, 8rem);
   }
   .display {
-    font-family: var(--font-display);
-    font-weight: 300;
-    letter-spacing: -0.01em;
+    font-family: var(--font-sans);
+    font-weight: 600;
+    letter-spacing: -0.035em;
+  }
+  /* La palabra gigante de portada. */
+  .giant {
+    font-family: var(--font-sans);
+    font-weight: 700;
+    letter-spacing: -0.06em;
+    text-transform: uppercase;
+  }
+  /* Etiquetas pequeñas en mayúsculas espaciadas, como en una revista. */
+  .label {
+    font-family: var(--font-sans);
+    font-size: var(--text-11);
+    line-height: 1.5;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  /* Enlace editorial: etiqueta con flecha que avanza al pasar el cursor. */
+  .cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75em;
+    min-height: 2.75rem;
+  }
+  .cta::after {
+    content: "→";
+    letter-spacing: 0;
+    font-size: 1.3em;
+    line-height: 1;
+    transition: transform 200ms;
+  }
+  .cta:hover::after,
+  .group:hover .cta::after {
+    transform: translateX(0.3em);
+  }
+  /* Bloque invertido: negro con texto claro. Redefine los roles de color dentro. */
+  .inverse {
+    --color-ink: #121212;
+    --color-charcoal: #1f1f1f;
+    --color-ivory: #efece6;
+    --color-sand: #efece6;
+    --color-taupe: #a8a39b;
+    --color-bronze: #6b6760;
+    background: var(--color-ink);
+    color: var(--color-ivory);
+  }
+  /* Fotografía en blanco y negro, como en la referencia editorial. */
+  .mono img {
+    filter: grayscale(1) contrast(1.05);
   }
   .serif {
     font-family: var(--font-display);
@@ -149,63 +203,12 @@ dialog::backdrop {
     outline-offset: 2px;
   }
 
-  /*
-   * Velos de legibilidad sobre la fotografía de portada, solo detrás del texto.
-   * Bajo el texto sostienen 65 % de ink: ivory da AA incluso sobre una foto blanca.
-   * El desvanecido escalonado evita que se note el borde del velo.
-   */
-  .scrim-top,
-  .scrim-bottom {
-    --scrim: color-mix(in srgb, var(--color-ink) 65%, transparent);
-    --scrim-mid: color-mix(in srgb, var(--color-ink) 34%, transparent);
-    --scrim-low: color-mix(in srgb, var(--color-ink) 10%, transparent);
-  }
-  .scrim-top {
-    background: linear-gradient(
-      to bottom,
-      var(--scrim) calc(var(--header-h) - 0.75rem),
-      var(--scrim-mid) calc(var(--header-h) + 1rem),
-      var(--scrim-low) calc(var(--header-h) + 2.25rem),
-      transparent
-    );
-  }
-  .scrim-bottom {
-    background: linear-gradient(
-      to top,
-      var(--scrim) calc(100% - 7rem),
-      var(--scrim-mid) calc(100% - 3.5rem),
-      var(--scrim-low) calc(100% - 1.25rem),
-      transparent
-    );
-  }
-  /* En escritorio el texto queda a la izquierda: el velo no cruza la foto entera. */
-  @media (min-width: 768px) {
-    .scrim-bottom {
-      /* Sostiene hasta el ancho máximo del texto (42rem) y luego se desvanece sin borde visible. */
-      --text-end: calc(max(0px, (100vw - 100rem) / 2) + var(--gutter) + 42rem);
-      mask-image: linear-gradient(
-        to right,
-        #000 var(--text-end),
-        rgb(0 0 0 / 0.72) calc(var(--text-end) + 5rem),
-        rgb(0 0 0 / 0.38) calc(var(--text-end) + 11rem),
-        rgb(0 0 0 / 0.12) calc(var(--text-end) + 18rem),
-        transparent calc(var(--text-end) + 26rem)
-      );
-    }
-  }
-  /* El CTA lleva su propio fondo: puede caer sobre cualquier zona de la foto. */
-  .btn-on-photo {
-    background: color-mix(in srgb, var(--color-ink) 65%, transparent);
-  }
-  .btn-on-photo:hover {
-    background: var(--color-ivory);
-  }
 
   /* El muro de casas. */
   .wall {
-    font-family: var(--font-display);
-    font-weight: 300;
-    letter-spacing: -0.015em;
+    font-family: var(--font-sans);
+    font-weight: 600;
+    letter-spacing: -0.04em;
   }
   .wall > li {
     display: inline;
@@ -223,14 +226,6 @@ dialog::backdrop {
     .wall:has(a:hover) span {
       opacity: 0.3;
     }
-  }
-  .wall-cover {
-    overflow: hidden;
-    mask-image: linear-gradient(to bottom, #000 62%, transparent 98%);
-  }
-  /* Con teclado el enlace enfocado debe verse completo, también en la zona que se desvanece. */
-  .wall-cover:has(a:focus-visible) {
-    mask-image: none;
   }
   .wall-in {
     animation: fade-in 700ms ease-out both;

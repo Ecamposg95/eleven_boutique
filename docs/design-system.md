@@ -1,5 +1,19 @@
 # Eleven Boutique — dirección de diseño
 
+> **Actualización 2026-11-09 — giro editorial claro.** Por decisión del propietario el sitio pasa a una
+> estética de revista en blanco y negro: fondo papel (`ink` = `#EFECE6`), texto casi negro
+> (`ivory` = `#121212`), titulares en Inter 600 con tracking cerrado (`.display`), la palabra
+> gigante de portada (`.giant`), etiquetas pequeñas en mayúsculas espaciadas (`.label`), enlaces
+> con flecha (`.cta`), bloques negros invertidos (`.inverse`) y fotografía editorial en escala de
+> grises (`.mono`, no se aplica a fotos de producto). Cormorant queda para texto editorial
+> (`.serif`). Los nombres de los tokens se conservan como roles: `ink` es el fondo e `ivory` el
+> texto. Las reglas de "Evitar" sobre mayúsculas, numeración y flechas quedan sin efecto.
+>
+> Portada: palabra gigante + foto de portada montada encima + titular a la derecha; franja negra
+> con hasta 3 historias (lookbooks, completadas con novedades, casas y boutique: `lib/home.ts`);
+> colecciones; introducción; novedades; casas destacadas; muro de casas; cierre "La boutique." con
+> retrato. El texto de abajo describe la versión oscura anterior.
+
 Paleta y familias tipográficas vienen fijadas por el brief; todo lo demás es decisión de este documento.
 
 ## Tokens

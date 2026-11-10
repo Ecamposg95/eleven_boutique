@@ -5,7 +5,6 @@ import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { PublicChrome } from "@/components/PublicChrome";
 import { getSettings, soft } from "@/lib/api";
-import { safeImageSrc } from "@/lib/images";
 import { DEFAULT_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/seo";
 import "./globals.css";
 
@@ -18,7 +17,7 @@ const cormorant = Cormorant_Garamond({
 });
 const inter = Inter({
   subsets: ["latin"],
-  weight: ["400", "500"],
+  weight: ["400", "500", "600", "700"],
   variable: "--font-inter",
   display: "swap",
 });
@@ -37,7 +36,7 @@ export const metadata: Metadata = {
   openGraph: { siteName: SITE_NAME, locale: "es_MX", type: "website" },
 };
 
-export const viewport: Viewport = { themeColor: "#1B1915", colorScheme: "dark" };
+export const viewport: Viewport = { themeColor: "#EFECE6", colorScheme: "light" };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
   // Sin ajustes la página sigue en pie: encabezado sólido y sin franja demo.
@@ -61,7 +60,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
                   Entorno de demostración: productos e imágenes de ejemplo.
                 </p>
               ) : null}
-              <Header heroPhoto={Boolean(safeImageSrc(settings?.hero.image_url))} />
+              <Header />
             </div>
           }
           footer={<Footer />}
