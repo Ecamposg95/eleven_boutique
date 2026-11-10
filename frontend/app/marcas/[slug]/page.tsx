@@ -40,7 +40,7 @@ function FilterLink({ href, current, children }: { href: string; current: boolea
     <Link
       href={href}
       aria-current={current ? "true" : undefined}
-      className="inline-flex min-h-8 items-center decoration-bronze decoration-1 underline-offset-[6px] hover:underline aria-[current=true]:underline"
+      className="label inline-flex min-h-8 items-center decoration-bronze decoration-1 underline-offset-[6px] hover:underline aria-[current=true]:underline"
     >
       {children}
     </Link>
@@ -71,19 +71,19 @@ export default async function BrandPage({ params, searchParams }: Props) {
 
   return (
     <>
-      <header className="page grid gap-8 pb-10 pt-14 md:grid-cols-12 md:gap-x-6 md:pb-16 md:pt-24">
+      <header className="page grid gap-8 pb-10 pt-12 md:grid-cols-12 md:gap-x-6 md:pb-16 md:pt-24">
         <div className={editorial ? "md:col-span-5" : "md:col-span-8"}>
           {brand.logo_url ? (
             <h1>
               <BrandMark name={brand.name} logoUrl={brand.logo_url} textClass="text-68" logoClass="h-20 w-72" />
             </h1>
           ) : (
-            <h1 className="display text-68">{brand.name}</h1>
+            <h1 className="display text-104">{brand.name}</h1>
           )}
           {brand.description ? <TextBody text={brand.description} className="serif mt-6 text-22" /> : null}
         </div>
         {editorial ? (
-          <div className="relative aspect-[8/5] bg-charcoal md:col-span-7">
+          <div className="mono relative aspect-[8/5] bg-charcoal md:col-span-7">
             <CatalogImage src={editorial} alt="" sizes="(min-width: 768px) 58vw, 100vw" preload className="object-cover" />
           </div>
         ) : null}
@@ -91,7 +91,7 @@ export default async function BrandPage({ params, searchParams }: Props) {
 
       <div className="page pb-24">
         {categories.length > 1 || products.total > 1 ? (
-          <div className="mb-10 flex flex-col gap-4 text-15 md:flex-row md:items-baseline md:justify-between md:gap-10">
+          <div className="mb-10 flex flex-col gap-4 border-y border-bronze/30 py-3 md:flex-row md:items-baseline md:justify-between md:gap-10">
             {categories.length > 1 ? (
               <nav aria-label="Filtrar por categoría">
                 <ul className="flex flex-wrap gap-x-5 gap-y-1">

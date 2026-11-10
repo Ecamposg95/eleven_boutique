@@ -27,6 +27,7 @@ export default async function LookbooksPage() {
                   summary={lookbook.summary}
                   cover={lookbook.cover_url}
                   wide={index === 0}
+                  index={index}
                 />
               </li>
             ))}

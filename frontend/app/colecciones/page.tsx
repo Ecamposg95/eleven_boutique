@@ -27,6 +27,7 @@ export default async function CollectionsPage() {
                   summary={collection.summary}
                   cover={collection.cover_url}
                   wide={index === 0}
+                  index={index}
                 />
               </li>
             ))}

@@ -37,13 +37,13 @@ export function ProductView({ product, demoMode }: { product: ProductDetail; dem
       />
       <div className="self-start lg:sticky lg:top-[calc(var(--chrome-h)+3rem)] lg:col-span-4 lg:col-start-9 lg:row-start-1">
         {product.brand.name && product.brand.slug ? (
-          <p className="text-15">
-            <Link href={brandHref(product.brand.slug)} className="link">
+          <p className="label">
+            <Link href={brandHref(product.brand.slug)} className="cta">
               {product.brand.name}
             </Link>
           </p>
         ) : null}
-        <h1 className="display mt-3 text-44">{product.name}</h1>
+        <h1 className="display mt-2 text-68">{product.name}</h1>
         <div className="mt-8">
           {product.consult_url ? (
             <ConsultButton href={product.consult_url} productSlug={product.slug} />

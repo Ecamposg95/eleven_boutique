@@ -37,7 +37,7 @@ function Block({ block }: { block: LookbookBlock }) {
   if (block.layout === "full") {
     return (
       <Reveal>
-        <div className="relative aspect-[4/3] bg-charcoal md:aspect-[8/5]">
+        <div className="mono relative aspect-[4/3] bg-charcoal md:aspect-[8/5]">
           <CatalogImage src={block.url} alt={block.alt} sizes="100vw" className="object-cover" />
         </div>
       </Reveal>
@@ -47,7 +47,7 @@ function Block({ block }: { block: LookbookBlock }) {
     <Reveal className="page">
       <div className="md:grid md:grid-cols-12 md:gap-x-6">
         <div
-          className={`relative aspect-[8/5] bg-charcoal md:col-span-7 ${block.layout === "right" ? "md:col-start-6" : ""}`}
+          className={`mono relative aspect-[8/5] bg-charcoal md:col-span-7 ${block.layout === "right" ? "md:col-start-6" : ""}`}
         >
           <CatalogImage src={block.url} alt={block.alt} sizes="(min-width: 768px) 58vw, 100vw" className="object-cover" />
         </div>
@@ -62,7 +62,7 @@ export default async function LookbookPage({ params }: Props) {
   const blocks = [...lookbook.blocks].sort((a, b) => a.position - b.position);
   return (
     <>
-      <PageHeader title={lookbook.title}>
+      <PageHeader title={lookbook.title} kicker="Lookbook">
         {lookbook.summary ? <p className="serif measure mt-5 text-22">{lookbook.summary}</p> : null}
       </PageHeader>
       {blocks.length > 0 ? (

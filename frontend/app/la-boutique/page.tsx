@@ -15,10 +15,12 @@ export default async function BoutiquePage() {
   const body = settings.boutique.body?.trim();
   return (
     <>
-      <PageHeader title="La Boutique" />
-      <div className="page pb-32">
+      <PageHeader title="La Boutique" kicker="Eleven · Fashion boutique" />
+      <div className="page pb-32 md:grid md:grid-cols-12 md:gap-x-6">
         {body ? (
-          <TextBody text={body} />
+          <div className="md:col-span-7 md:col-start-4">
+            <TextBody text={body} />
+          </div>
         ) : (
           <p className="serif measure text-30">La información de la boutique se publicará una vez confirmada.</p>
         )}

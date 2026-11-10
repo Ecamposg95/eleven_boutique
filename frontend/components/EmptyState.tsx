@@ -6,7 +6,7 @@ export function EmptyState({ message, href, action }: { message: string; href?: 
       <p className="serif measure text-30">{message}</p>
       {href && action ? (
         <p className="mt-6">
-          <Link href={href} className="link text-15">
+          <Link href={href} className="label cta">
             {action}
           </Link>
         </p>

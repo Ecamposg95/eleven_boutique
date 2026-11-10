@@ -28,11 +28,11 @@ export default async function CollectionPage({ params }: Props) {
   const cover = safeImageSrc(collection.cover_url);
   return (
     <>
-      <PageHeader title={collection.title}>
+      <PageHeader title={collection.title} kicker="Colección">
         {collection.summary ? <p className="serif measure mt-5 text-22">{collection.summary}</p> : null}
       </PageHeader>
       {cover ? (
-        <div className="relative mb-16 aspect-[4/3] bg-charcoal md:mb-24 md:aspect-[5/2]">
+        <div className="mono relative mb-16 aspect-[4/3] bg-charcoal md:mb-24 md:aspect-[5/2]">
           <CatalogImage src={cover} alt="" sizes="100vw" preload className="object-cover" />
         </div>
       ) : null}

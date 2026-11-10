@@ -21,8 +21,8 @@ export function ProductCard({ product, sizes }: { product: Product; sizes: strin
         />
       </span>
       <span className="mt-3 block">
-        {product.brand.name ? <span className="muted block text-15">{product.brand.name}</span> : null}
-        <span className="serif block text-22 decoration-bronze decoration-1 underline-offset-4 group-hover:underline">
+        {product.brand.name ? <span className="label muted block">{product.brand.name}</span> : null}
+        <span className="mt-1 block text-17 font-medium tracking-[-0.01em] decoration-bronze decoration-1 underline-offset-4 group-hover:underline">
           {product.name}
         </span>
       </span>
