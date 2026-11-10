@@ -5,6 +5,7 @@ import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { PublicChrome } from "@/components/PublicChrome";
 import { getSettings, soft } from "@/lib/api";
+import { safeImageSrc } from "@/lib/images";
 import { DEFAULT_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/seo";
 import "./globals.css";
 
@@ -60,7 +61,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
                   Entorno de demostración: productos e imágenes de ejemplo.
                 </p>
               ) : null}
-              <Header />
+              <Header overHero={Boolean(safeImageSrc(settings?.hero.image_url) || settings?.hero.gallery?.some((url) => safeImageSrc(url)))} />
             </div>
           }
           footer={<Footer />}

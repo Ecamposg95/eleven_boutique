@@ -33,62 +33,81 @@ export const metadata: Metadata = {
   openGraph: { title: SITE_NAME, description: DEFAULT_DESCRIPTION, url: "/" },
 };
 
+function HeroText({ settings, light }: { settings: PublicSettings; light?: boolean }) {
+  const size = light ? "display text-30 md:text-44" : "display text-44 md:text-68";
+  return (
+    <>
+      {/* Sin titular propio, el nombre ya está en la palabra gigante: el h1 queda solo para lectores. */}
+      <h1 id="hero-t" className={settings.hero.headline ? size : "sr-only"}>
+        {settings.hero.headline ?? settings.site_name}
+      </h1>
+      {settings.hero.subhead ? (
+        <p className={`label mt-5 max-w-xs ${light ? "opacity-75" : "muted"}`}>{settings.hero.subhead}</p>
+      ) : null}
+      <span aria-hidden="true" className="mt-6 block h-px w-8 bg-current" />
+      <Link href="/marcas" className="label cta mt-3 self-start">
+        Explorar marcas
+      </Link>
+    </>
+  );
+}
+
 /**
- * Portada editorial: la palabra gigante, la fotografía montada encima y el titular a la derecha.
- * Sin fotografía queda solo la tipografía, que se sostiene sola.
+ * Portada a pantalla completa: las fotos se turnan detrás, el encabezado flota encima en acrílico,
+ * el texto va en una tarjeta acrílica y el nombre gigante cierra la imagen por abajo.
  */
-function Hero({
-  settings,
-  images,
-}: {
-  settings: PublicSettings;
-  images: string[];
-}) {
-  const image = images.length > 0;
-  const word = giantWord(settings.site_name);
+function PhotoHero({ settings, images }: { settings: PublicSettings; images: string[] }) {
   return (
     <section
       aria-labelledby="hero-t"
-      className="page overflow-hidden pb-14 pt-6 md:pb-20 md:pt-8"
+      className="relative -mt-[var(--chrome-h)] h-[100svh] min-h-[36rem] overflow-hidden bg-[#121212] text-[#efece6]"
     >
+      <div className="mono absolute inset-0">
+        <HeroSlides
+          images={images}
+          sizes="100vw"
+          imageClassName="object-[50%_25%]"
+          controlsClassName="acrylic-card absolute left-[var(--gutter)] top-[calc(var(--chrome-h)+1.25rem)] z-10 rounded-full px-4 py-1.5"
+        />
+      </div>
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-black/25" />
+
+      <div className="page absolute inset-x-0 bottom-[calc(min(26vw,25.5rem)*0.8+2rem)] z-10 flex items-end justify-between gap-6">
+        <p className="label hidden opacity-80 md:block">
+          Fashion
+          <br />
+          boutique
+        </p>
+        <div className="acrylic-card flex w-full max-w-[26rem] flex-col p-6 md:p-8">
+          <HeroText settings={settings} light />
+        </div>
+      </div>
+
       <p
         aria-hidden="true"
-        className="giant wall-in text-giant -ml-[0.04em] whitespace-nowrap"
+        className="giant wall-in text-giant pointer-events-none absolute inset-x-0 bottom-0 translate-y-[0.06em] whitespace-nowrap px-[var(--gutter)] text-[#efece6]/95"
       >
-        {word}
+        {giantWord(settings.site_name)}
       </p>
+    </section>
+  );
+}
 
-      <div className="mt-6 grid gap-8 md:mt-0 md:grid-cols-12 md:gap-6">
+/** Sin fotografía queda solo la tipografía, que se sostiene sola. */
+function TypeHero({ settings }: { settings: PublicSettings }) {
+  return (
+    <section aria-labelledby="hero-t" className="page overflow-hidden pb-14 pt-6 md:pb-20 md:pt-8">
+      <p aria-hidden="true" className="giant wall-in text-giant -ml-[0.04em] whitespace-nowrap">
+        {giantWord(settings.site_name)}
+      </p>
+      <div className="mt-6 grid gap-8 md:grid-cols-12 md:gap-6">
         <p className="label muted hidden md:col-span-3 md:block md:pt-10">
           Fashion
           <br />
           boutique
-          <span aria-hidden="true" className="mt-4 block h-px w-8 bg-ivory" />
         </p>
-
-        {image ? (
-          <div className="mono relative aspect-[4/5] bg-charcoal md:col-span-5 md:-mt-[9vw]">
-            <HeroSlides
-              images={images}
-              sizes="(min-width: 768px) 42vw, 100vw"
-            />
-          </div>
-        ) : null}
-
-        <div
-          className={`flex flex-col justify-end ${image ? "md:col-span-4" : "md:col-span-6 md:col-start-7"}`}
-        >
-          {/* Sin titular propio, el nombre ya está en la palabra gigante: el h1 queda solo para lectores. */}
-          <h1 id="hero-t" className={settings.hero.headline ? "display text-68" : "sr-only"}>
-            {settings.hero.headline ?? settings.site_name}
-          </h1>
-          {settings.hero.subhead ? (
-            <p className="label muted mt-6 max-w-xs">{settings.hero.subhead}</p>
-          ) : null}
-          <span aria-hidden="true" className="mt-6 block h-px w-8 bg-ivory" />
-          <Link href="/marcas" className="label cta mt-4 self-start">
-            Explorar marcas
-          </Link>
+        <div className="flex flex-col justify-end md:col-span-6 md:col-start-7">
+          <HeroText settings={settings} />
         </div>
       </div>
     </section>
@@ -282,7 +301,11 @@ export default async function HomePage() {
 
   return (
     <>
-      <Hero settings={settings} images={heroImages} />
+      {heroImages.length > 0 ? (
+        <PhotoHero settings={settings} images={heroImages} />
+      ) : (
+        <TypeHero settings={settings} />
+      )}
 
       {strip.length > 0 ? <Strip entries={strip} /> : null}
 

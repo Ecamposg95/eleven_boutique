@@ -18,7 +18,17 @@ function subscribeReduced(onChange: () => void) {
  * Fotos de portada apiladas que se turnan con fundido lento. Una sola foto no rota.
  * Se pausa con la pestaña oculta y con el botón; con prefers-reduced-motion arranca en pausa.
  */
-export function HeroSlides({ images, sizes }: { images: string[]; sizes: string }) {
+export function HeroSlides({
+  images,
+  sizes,
+  imageClassName = "",
+  controlsClassName = "absolute inset-x-0 bottom-0 px-4 pb-3",
+}: {
+  images: string[];
+  sizes: string;
+  imageClassName?: string;
+  controlsClassName?: string;
+}) {
   const [active, setActive] = useState(0);
   const [choice, setChoice] = useState<boolean | null>(null);
   const reduced = useSyncExternalStore(subscribeReduced, () => window.matchMedia(REDUCED).matches, () => false);
@@ -46,11 +56,11 @@ export function HeroSlides({ images, sizes }: { images: string[]; sizes: string 
           aria-hidden={index !== active}
           className={`absolute inset-0 transition-opacity duration-[1200ms] ease-out ${index === active ? "opacity-100" : "opacity-0"}`}
         >
-          <CatalogImage src={src} alt="" sizes={sizes} preload={index === 0} className="object-cover" />
+          <CatalogImage src={src} alt="" sizes={sizes} preload={index === 0} className={`object-cover ${imageClassName}`} />
         </div>
       ))}
       {images.length > 1 ? (
-        <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-4 px-4 pb-3 text-[#efece6]">
+        <div className={`flex items-center justify-between gap-4 text-[#efece6] ${controlsClassName}`}>
           <ul className="flex gap-1" aria-label="Fotos de portada">
             {images.map((src, index) => (
               <li key={src}>
