@@ -140,8 +140,8 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
             label="Portada en computadora"
             url={heroUrl}
             assetId={form.hero_asset_id}
-            ratio="16 / 10"
-            hint="Horizontal, de al menos 2000 px de ancho."
+            ratio="4 / 5"
+            hint="Vertical 4:5, ideal 1920 × 2400 px. Se monta sobre el nombre gigante y se ve en blanco y negro."
             onChange={(asset) => {
               set("hero_asset_id", asset?.id ?? null);
               setHeroUrl(asset?.url ?? null);
@@ -152,7 +152,7 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
             url={mobileUrl}
             assetId={form.hero_mobile_asset_id}
             ratio="9 / 16"
-            hint="Vertical, con el sujeto al centro. Si falta, el teléfono recorta la de computadora y puede cortar el sujeto."
+            hint="Opcional: la portada usa la misma foto vertical en teléfono. Puede dejarlo vacío."
             onChange={(asset) => {
               set("hero_mobile_asset_id", asset?.id ?? null);
               setMobileUrl(asset?.url ?? null);
@@ -164,7 +164,7 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
             label="Más fotos de portada (se turnan)"
             slides={form.hero_gallery}
             max={8}
-            hint="Se muestran después de la principal, una a la vez con fundido lento. Verticales o cuadradas lucen mejor junto al nombre gigante."
+            hint="Se muestran después de la principal, una a la vez con fundido lento. Mismo formato: vertical 4:5, ideal 1920 × 2400 px."
             onChange={(slides) => set("hero_gallery", slides)}
           />
         </div>

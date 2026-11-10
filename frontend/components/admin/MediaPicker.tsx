@@ -275,7 +275,7 @@ export function GalleryField({
         <ol className="flex flex-wrap gap-4">
           {slides.map((slide, index) => (
             <li key={slide.asset_id} className="flex flex-col items-start gap-1">
-              <Thumb src={slide.url} size="9rem" ratio="16 / 10" sizes="200px" />
+              <Thumb src={slide.url} size="9rem" ratio="4 / 5" sizes="200px" />
               <span className="a-hint">Foto {index + 2}</span>
               <div className="flex gap-1">
                 <button
