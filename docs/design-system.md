@@ -13,6 +13,25 @@
 > con hasta 3 historias (lookbooks, completadas con novedades, casas y boutique: `lib/home.ts`);
 > colecciones; introducción; novedades; casas destacadas; muro de casas; cierre "La boutique." con
 > retrato. El texto de abajo describe la versión oscura anterior.
+>
+> **Actualización 2026-11-10/11 — navegación inspirada en rickowens.eu.**
+> - **Encabezado acrílico** (`components/Header.tsx`): «≡ Menú» a la izquierda, logotipo al centro,
+>   «Buscar» a la derecha. Sobre la foto de portada usa `.acrylic-dark` con texto claro; al hacer
+>   scroll o en otras páginas, `.acrylic-light`.
+> - **Panel lateral** (`<dialog class="drawer">`, entra desde la izquierda): Novedades;
+>   **Categorías** y **Casas** desplegables (`<details>`, `+ / −`), alimentados desde
+>   `app/layout.tsx` (categorías principales con `product_count > 0` y hasta 12 marcas destacadas,
+>   más «Todas las marcas»); luego Colecciones y los grupos fijos de `components/nav.ts`.
+> - **Portada a pantalla completa** (`PhotoHero` en `app/page.tsx`): fotos que se turnan cada 6 s
+>   (`components/HeroSlides.tsx`, galería de hasta 8 en el panel), tarjeta acrílica con el titular
+>   abajo a la derecha y ELEVEN gigante en blanco.
+> - **Carrusel de categorías** (`components/CategoryRail.tsx`) bajo la portada: Novedades + cada
+>   categoría principal con piezas, fichas 4:5 en B/N sin fotos repetidas (`lib/categories.ts`).
+>   Se oculta con menos de 2 fichas.
+> - **Página de categoría** `/categorias/[slug]` (solo principales; las hijas son filtros).
+> - **Barra flotante «Filtros · Ordenar»** (`components/CatalogBar.tsx`) abajo al centro en
+>   categoría y marca; cada botón abre una hoja inferior (`<dialog class="sheet">`). Un grupo con
+>   una sola opción no se muestra.
 
 Paleta y familias tipográficas vienen fijadas por el brief; todo lo demás es decisión de este documento.
 

@@ -57,6 +57,29 @@ cd frontend && npm run lint && npm run typecheck && npm test
 - [`docs/design-system.md`](docs/design-system.md): sistema de diseño del sitio.
 - [`docs/demo-image-credits.md`](docs/demo-image-credits.md): créditos de las imágenes demo.
 
+## Producción
+
+- **Railway**, proyecto `eleven-boutique`, entorno `production`: servicios `web` (`/frontend`),
+  `api` (`/backend`) y Postgres. Ambos servicios se despliegan solos al hacer push a `main` en
+  GitHub (`Ecamposg95/eleven_boutique`); cada uno solo reconstruye si cambian archivos de su carpeta.
+- **Dominio** `eleven.boutique` en Hostinger: `A @ → 153.52.255.5` (borde de Railway) y `www` por CNAME.
+- **Panel:** `https://eleven.boutique/admin`. Crear usuarios con
+  `railway ssh --service api -- sh -c "cd /app && ADMIN_PASSWORD='…' python -m scripts.create_admin correo@dominio"`
+  (contraseña de 12+ caracteres).
+
+## Estado al 2026-11-11
+
+- En vivo: portada a pantalla completa con fotos que rotan y titular «Viste tus propias reglas.»,
+  menú lateral con Categorías/Casas, carrusel de categorías, páginas de categoría, barra
+  «Filtros · Ordenar», lookbook «Invierno en lana» publicado. Diseño: `docs/design-system.md`.
+- Producción tiene 77 marcas y **0 productos publicados**: el carrusel, «Categorías» del menú y las
+  páginas de categoría se llenan solos al publicar piezas desde el panel.
+- Pendiente de contenido: texto de «La boutique» (activa el cierre de portada), marca y nombre del
+  blazer gris (dos fotos ya subidas, sin asignar).
+- Pendiente de seguridad: rotar la contraseña del usuario admin creado en esta etapa.
+- Idea siguiente propuesta: **«Mi selección»**, guardar piezas y enviarlas juntas en un solo
+  mensaje de WhatsApp (sin carrito; la venta sigue por consulta).
+
 ## Próximos pasos
 
 - Ampliar el alcance de landing a catálogo completo con gestor de productos.
