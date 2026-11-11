@@ -26,8 +26,8 @@ def get_brand(slug: str, db: DbDep, settings: SettingsDep):
 
 
 @router.get("/categories", response_model=schemas.Items[schemas.Category])
-def list_categories(db: DbDep):
-    return {"items": catalog.list_categories(db)}
+def list_categories(db: DbDep, settings: SettingsDep):
+    return {"items": catalog.list_categories(db, settings.demo_mode)}
 
 
 @router.get("/products", response_model=schemas.Page[schemas.ProductCard])

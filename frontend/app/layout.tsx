@@ -4,8 +4,10 @@ import type { ReactNode } from "react";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { PublicChrome } from "@/components/PublicChrome";
-import { getSettings, soft } from "@/lib/api";
+import { getBrands, getCategories, getSettings, soft } from "@/lib/api";
+import { categoryHref, stockedCategories } from "@/lib/categories";
 import { safeImageSrc } from "@/lib/images";
+import { brandHref } from "@/lib/url";
 import { DEFAULT_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/seo";
 import "./globals.css";
 
@@ -37,15 +39,40 @@ export const metadata: Metadata = {
   openGraph: { siteName: SITE_NAME, locale: "es_MX", type: "website" },
 };
 
-export const viewport: Viewport = { themeColor: "#EFECE6", colorScheme: "light" };
+export const viewport: Viewport = {
+  themeColor: "#EFECE6",
+  colorScheme: "light",
+};
 
-export default async function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
   // Sin ajustes la página sigue en pie: encabezado sólido y sin franja demo.
-  const settings = await soft(getSettings());
+  // El menú es opcional por partes: sin catálogo, el panel muestra solo los enlaces fijos.
+  const [settings, categories, houses] = await Promise.all([
+    soft(getSettings()),
+    soft(getCategories()),
+    soft(getBrands({ featured: true })),
+  ]);
+  const menuCategories = stockedCategories(categories ?? []).map(
+    (category) => ({
+      href: categoryHref(category.slug),
+      label: category.name,
+    }),
+  );
+  const menuHouses = (houses ?? [])
+    .slice(0, 12)
+    .map((brand) => ({ href: brandHref(brand.slug), label: brand.name }));
   const demo = settings?.demo_mode ?? false;
 
   return (
-    <html lang="es-MX" data-demo={demo} className={`${cormorant.variable} ${inter.variable} ${montserrat.variable}`}>
+    <html
+      lang="es-MX"
+      data-demo={demo}
+      className={`${cormorant.variable} ${inter.variable} ${montserrat.variable}`}
+    >
       <body className="flex min-h-svh flex-col">
         <a
           href="#contenido"
@@ -61,7 +88,14 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
                   Entorno de demostración: productos e imágenes de ejemplo.
                 </p>
               ) : null}
-              <Header overHero={Boolean(safeImageSrc(settings?.hero.image_url) || settings?.hero.gallery?.some((url) => safeImageSrc(url)))} />
+              <Header
+                overHero={Boolean(
+                  safeImageSrc(settings?.hero.image_url) ||
+                  settings?.hero.gallery?.some((url) => safeImageSrc(url)),
+                )}
+                categories={menuCategories}
+                houses={menuHouses}
+              />
             </div>
           }
           footer={<Footer />}

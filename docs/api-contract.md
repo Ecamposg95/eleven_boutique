@@ -21,7 +21,7 @@ type BrandSummary = {
 };
 type BrandDetail = BrandSummary & { description: string | null; editorial_image_url: string | null };
 
-type Category = { slug: string; name: string; parent_slug: string | null };
+type Category = { slug: string; name: string; parent_slug: string | null; product_count: number }; // piezas visibles; la principal suma las de sus hijas
 
 type ProductCard = {
   slug: string; name: string;

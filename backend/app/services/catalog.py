@@ -119,14 +119,28 @@ def get_brand(db: Session, slug: str, demo_mode: bool) -> schemas.BrandDetail | 
 # --- Categories -----------------------------------------------------------------------
 
 
-def list_categories(db: Session) -> list[schemas.Category]:
+def list_categories(db: Session, demo_mode: bool) -> list[schemas.Category]:
+    """The tree in display order; a parent's count includes its children's visible products."""
     categories = db.scalars(select(Category).order_by(Category.display_order, Category.slug)).all()
     slug_by_id = {category.id: category.slug for category in categories}
+    own = dict(
+        db.execute(
+            select(Product.category_id, func.count())
+            .join(Product.brand)
+            .where(product_visible(demo_mode))
+            .group_by(Product.category_id)
+        ).all()
+    )
+    totals = dict(own)
+    for category in categories:
+        if category.parent_id is not None and category.id in own:
+            totals[category.parent_id] = totals.get(category.parent_id, 0) + own[category.id]
     return [
         schemas.Category(
             slug=category.slug,
             name=category.name,
             parent_slug=slug_by_id.get(category.parent_id),
+            product_count=totals.get(category.id, 0),
         )
         for category in categories
     ]

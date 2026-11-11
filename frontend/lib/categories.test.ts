@@ -5,14 +5,20 @@ import {
   childCategories,
   filterOptions,
   sortOptions,
+  stockedCategories,
   topCategories,
 } from "./categories";
 import type { Category, ProductCard } from "./types";
 
-const cat = (slug: string, parent: string | null = null): Category => ({
+const cat = (
+  slug: string,
+  parent: string | null = null,
+  product_count = 0,
+): Category => ({
   slug,
   name: slug.toUpperCase(),
   parent_slug: parent,
+  product_count,
 });
 const product = (url: string): ProductCard => ({
   slug: url,
@@ -36,6 +42,15 @@ describe("categorías", () => {
     expect(childCategories(all, "calzado").map((c) => c.slug)).toEqual([
       "botas",
     ]);
+  });
+
+  it("solo enlaza principales con piezas", () => {
+    const list = [
+      cat("ropa", null, 2),
+      cat("camisas", "ropa", 2),
+      cat("calzado"),
+    ];
+    expect(stockedCategories(list).map((c) => c.slug)).toEqual(["ropa"]);
   });
 
   it("arma fichas con novedades primero y omite categorías vacías", () => {

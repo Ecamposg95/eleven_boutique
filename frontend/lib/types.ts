@@ -1,6 +1,11 @@
 // Espejo exacto de docs/api-contract.md.
 
-export type Media = { url: string; alt: string; is_primary: boolean; position: number };
+export type Media = {
+  url: string;
+  alt: string;
+  is_primary: boolean;
+  position: number;
+};
 
 export type BrandSummary = {
   slug: string;
@@ -15,7 +20,13 @@ export type BrandDetail = BrandSummary & {
   editorial_image_url: string | null;
 };
 
-export type Category = { slug: string; name: string; parent_slug: string | null };
+/** `product_count`: piezas visibles; la principal suma las de sus hijas. */
+export type Category = {
+  slug: string;
+  name: string;
+  parent_slug: string | null;
+  product_count: number;
+};
 
 export type ProductCard = {
   slug: string;
@@ -50,8 +61,17 @@ export type LookbookSummary = {
 };
 export type LookbookBlock =
   | { type: "text"; position: number; heading: string | null; body: string }
-  | { type: "image"; position: number; url: string; alt: string; layout: "full" | "left" | "right" };
-export type LookbookDetail = LookbookSummary & { blocks: LookbookBlock[]; products: ProductCard[] };
+  | {
+      type: "image";
+      position: number;
+      url: string;
+      alt: string;
+      layout: "full" | "left" | "right";
+    };
+export type LookbookDetail = LookbookSummary & {
+  blocks: LookbookBlock[];
+  products: ProductCard[];
+};
 
 export type PublicSettings = {
   demo_mode: boolean;
@@ -69,7 +89,12 @@ export type PublicSettings = {
   contact: { body: string | null };
 };
 
-export type Paginated<T> = { items: T[]; total: number; page: number; page_size: number };
+export type Paginated<T> = {
+  items: T[];
+  total: number;
+  page: number;
+  page_size: number;
+};
 export type ItemList<T> = { items: T[] };
 export type SearchResults = { brands: BrandSummary[]; products: ProductCard[] };
 export type ApiErrorBody = { error: { code: string; message: string } };

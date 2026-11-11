@@ -8,16 +8,13 @@ export const NAV_ITEMS = [
   { href: "/buscar", label: "Buscar" },
 ] as const;
 
-/** El panel lateral agrupa el menú como una revista: tienda, editorial y la casa. */
+export type NavLink = { href: string; label: string };
+
+/**
+ * El panel lateral agrupa el menú como una revista. La tienda abre con Novedades; «Categorías» y
+ * «Casas» se despliegan con el catálogo real (components/Header.tsx) y luego vienen estos grupos.
+ */
 export const NAV_GROUPS = [
-  {
-    label: "Tienda",
-    items: [
-      { href: "/marcas", label: "Marcas" },
-      { href: "/novedades", label: "Novedades" },
-      { href: "/colecciones", label: "Colecciones" },
-    ],
-  },
   {
     label: "Editorial",
     items: [{ href: "/lookbooks", label: "Lookbooks" }],

@@ -61,6 +61,7 @@ class Category(Schema):
     slug: str
     name: str
     parent_slug: str | None
+    product_count: int  # Visible products; a parent's count includes its children.
 
 
 class CardBrand(Schema):

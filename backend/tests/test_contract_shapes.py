@@ -41,7 +41,7 @@ def test_brands(client):
 def test_categories(client):
     listing = client.get("/api/v1/categories").json()
     assert set(listing) == {"items"}
-    assert set(listing["items"][0]) == {"slug", "name", "parent_slug"}
+    assert set(listing["items"][0]) == {"slug", "name", "parent_slug", "product_count"}
 
 
 @pytest.mark.parametrize("path", ["/api/v1/products", "/api/v1/novedades"])

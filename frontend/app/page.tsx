@@ -24,7 +24,7 @@ import {
   stripEntries,
   type StripEntry,
 } from "@/lib/home";
-import { categoryTiles, topCategories } from "@/lib/categories";
+import { categoryTiles, stockedCategories } from "@/lib/categories";
 import { safeImageSrc } from "@/lib/images";
 import { splitShowroom } from "@/lib/showroom";
 import { DEFAULT_DESCRIPTION, SITE_NAME } from "@/lib/seo";
@@ -300,7 +300,7 @@ async function categorySamples() {
   const categories = await soft(getCategories());
   if (!categories) return [];
   return Promise.all(
-    topCategories(categories).map(async (category) => {
+    stockedCategories(categories).map(async (category) => {
       const page = await soft(
         getProducts({ category: category.slug, page_size: 4 }),
       );

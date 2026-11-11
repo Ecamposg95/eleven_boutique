@@ -15,6 +15,10 @@ export const categoryHref = (slug: string) =>
 export const topCategories = (categories: Category[]) =>
   categories.filter((category) => !category.parent_slug);
 
+/** Categorías principales con piezas: las únicas que vale la pena enlazar. */
+export const stockedCategories = (categories: Category[]) =>
+  topCategories(categories).filter((category) => category.product_count > 0);
+
 export const childCategories = (categories: Category[], parent: string) =>
   categories.filter((category) => category.parent_slug === parent);
 
