@@ -4,6 +4,7 @@ import type { Media, ProductDetail } from "@/lib/types";
 import { brandHref, productHref } from "@/lib/url";
 import { ConsultButton } from "./ConsultButton";
 import { ProductGallery } from "./ProductGallery";
+import { SaveButton } from "./SaveButton";
 
 function orderedGallery(product: ProductDetail): Media[] {
   const images = product.gallery.length
@@ -46,7 +47,18 @@ export function ProductView({ product, demoMode }: { product: ProductDetail; dem
         <h1 className="display mt-2 text-68">{product.name}</h1>
         <div className="mt-8">
           {product.consult_url ? (
-            <ConsultButton href={product.consult_url} productSlug={product.slug} />
+            <>
+              <ConsultButton href={product.consult_url} productSlug={product.slug} />
+              <SaveButton
+                piece={{
+                  slug: product.slug,
+                  name: product.name,
+                  brand: product.brand.name,
+                  href: productHref(product),
+                  image: images[0] ? { url: images[0].url, alt: images[0].alt } : null,
+                }}
+              />
+            </>
           ) : demoMode ? (
             <p className="muted text-15">Consulta desactivada: falta configurar WHATSAPP_NUMBER.</p>
           ) : null}

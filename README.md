@@ -67,7 +67,7 @@ cd frontend && npm run lint && npm run typecheck && npm test
   `railway ssh --service api -- sh -c "cd /app && ADMIN_PASSWORD='…' python -m scripts.create_admin correo@dominio"`
   (contraseña de 12+ caracteres).
 
-## Estado al 2026-11-11
+## Estado al 2026-11-13
 
 - En vivo: portada a pantalla completa con fotos que rotan y titular «Viste tus propias reglas.»,
   menú lateral con Categorías/Casas, carrusel de categorías, páginas de categoría, barra
@@ -77,8 +77,9 @@ cd frontend && npm run lint && npm run typecheck && npm test
 - Pendiente de contenido: texto de «La boutique» (activa el cierre de portada), marca y nombre del
   blazer gris (dos fotos ya subidas, sin asignar).
 - Pendiente de seguridad: rotar la contraseña del usuario admin creado en esta etapa.
-- Idea siguiente propuesta: **«Mi selección»**, guardar piezas y enviarlas juntas en un solo
-  mensaje de WhatsApp (sin carrito; la venta sigue por consulta).
+- **«Mi selección»** (2026-11-13): en cada pieza, «Guardar en mi selección»; `/seleccion` reúne las
+  piezas y arma un solo mensaje de WhatsApp (dos si se mezclan casas premium con línea Boutique).
+  Vive en el navegador (localStorage), sin carrito ni cuenta. API: `POST /selection/consult`.
 
 ## Próximos pasos
 

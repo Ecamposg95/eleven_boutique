@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRef, useSyncExternalStore } from "react";
 import { NAV_GROUPS, type NavLink } from "./nav";
+import { SelectionLink } from "./SelectionLink";
 import { Wordmark } from "./Wordmark";
 
 function subscribeScroll(onChange: () => void) {
@@ -168,14 +169,17 @@ export function Header({
           <Wordmark className="h-11 md:h-12" />
         </Link>
 
-        <Link
-          href="/buscar"
-          className="label inline-flex min-h-11 items-center gap-2 justify-self-end"
-        >
-          <SearchIcon />
-          <span className="hidden sm:inline">Buscar</span>
-          <span className="sr-only sm:hidden">Buscar</span>
-        </Link>
+        <div className="flex items-center gap-5 justify-self-end sm:gap-7">
+          <SelectionLink className="label inline-flex min-h-11 items-center" />
+          <Link
+            href="/buscar"
+            className="label inline-flex min-h-11 items-center gap-2"
+          >
+            <SearchIcon />
+            <span className="hidden sm:inline">Buscar</span>
+            <span className="sr-only sm:hidden">Buscar</span>
+          </Link>
+        </div>
       </div>
 
       <dialog
@@ -205,6 +209,7 @@ export function Header({
 
           <nav aria-label="Principal" className="mt-14 space-y-12">
             <ul aria-label="Tienda" className="space-y-1">
+              <SelectionLink onNavigate={close} className={LINK} asListItem />
               <li>
                 <Link
                   href="/novedades"

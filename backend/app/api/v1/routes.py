@@ -95,6 +95,11 @@ def site_settings(db: DbDep, settings: SettingsDep):
     return catalog.public_settings(db, settings)
 
 
+@router.post("/selection/consult", response_model=schemas.SelectionConsult)
+def consult_selection(selection: schemas.SelectionIn, db: DbDep, settings: SettingsDep):
+    return catalog.consult_selection(db, selection.product_slugs, settings)
+
+
 @router.post("/events", status_code=204, response_class=Response)
 def create_event(event: schemas.EventIn, db: DbDep, settings: SettingsDep) -> None:
     product = found(

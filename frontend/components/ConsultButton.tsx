@@ -2,7 +2,7 @@
 
 import type { ConsultEvent } from "@/lib/types";
 
-function trackConsult(productSlug: string) {
+export function trackConsult(productSlug: string) {
   try {
     const event: ConsultEvent = { type: "whatsapp_click", product_slug: productSlug };
     const body = new Blob([JSON.stringify(event)], { type: "application/json" });

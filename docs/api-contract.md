@@ -72,6 +72,7 @@ type PublicSettings = {
 | GET | `/lookbooks/{slug}` | `LookbookDetail` | |
 | GET | `/search` | `{brands: BrandSummary[], products: ProductCard[]}` | `?q=`; sin distinguir mayúsculas ni acentos. Marca, alias, producto, categoría |
 | GET | `/site-settings/public` | `PublicSettings` | |
+| POST | `/selection/consult` | `{lines: [{url, product_slugs, boutique}], missing_slugs}` | `{product_slugs}` (1 a 24, en el orden del visitante). Ver «Mi selección» abajo |
 | POST | `/events` | `204` | `{type:"whatsapp_click", product_slug}`. Lista blanca de tipos. No guarda IP, teléfono ni user-agent |
 
 ## WhatsApp
@@ -84,6 +85,20 @@ type PublicSettings = {
 - Número: `site_settings.whatsapp_number`, sembrado desde `WHATSAPP_NUMBER` si existe. Se normaliza a dígitos con validación E.164 (8 a 15 dígitos); si es inválido o falta, `consult_url = null`.
 - Línea Boutique: las piezas de marcas con `is_premium` usan `site_settings.whatsapp_premium_number` (sembrado desde `WHATSAPP_PREMIUM_NUMBER`); si falta o es inválido, usan el número general. `whatsapp_enabled` es `true` si hay al menos una línea válida.
 - Producto sin marca: la frase usa solo `{nombre}`, sin "{marca} — ". Su URL es `/piezas/{slug}`.
+
+## Mi selección
+
+`POST /selection/consult` arma un mensaje de WhatsApp con varias piezas guardadas en el navegador (sin carrito ni cuenta). Las piezas se agrupan por línea: las de casas premium van a la línea Boutique (`boutique: true`) solo si es distinta de la general. Con una sola pieza en una línea se usa la plantilla de producto; con varias:
+
+> Hola, me interesa conocer más sobre estas piezas de Eleven Boutique:
+>
+> 1. {marca} — {nombre}. Referencia: {sku}. Enlace: {url}
+> 2. …
+>
+> ¿Podrían brindarme atención personalizada?
+
+- Slugs repetidos se ignoran; los inexistentes u ocultos vuelven en `missing_slugs` y el sitio los retira de la selección.
+- Sin número válido, `lines = []`. El número nunca se expone por separado.
 
 ## Imágenes demo
 

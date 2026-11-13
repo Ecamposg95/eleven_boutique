@@ -163,3 +163,23 @@ class PublicSettings(Schema):
 class EventIn(BaseModel):
     type: Literal["whatsapp_click"]
     product_slug: str
+
+
+class SelectionIn(BaseModel):
+    """Slugs saved in "Mi selección", in the visitor's order. Unknown or hidden ones are skipped."""
+
+    product_slugs: Annotated[
+        list[Annotated[str, Field(min_length=1, max_length=200)]],
+        Field(min_length=1, max_length=24),
+    ]
+
+
+class SelectionLine(Schema):
+    url: str  # wa.me listo, un mensaje con todas las piezas de esa línea
+    product_slugs: list[str]
+    boutique: bool  # true si va a la línea Boutique de casas premium, distinta de la general
+
+
+class SelectionConsult(Schema):
+    lines: list[SelectionLine]  # vacío si no hay número configurado
+    missing_slugs: list[str]  # ya no están publicadas; el sitio las quita de la selección

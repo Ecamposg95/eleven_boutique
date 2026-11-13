@@ -101,3 +101,7 @@ export type ApiErrorBody = { error: { code: string; message: string } };
 export type ConsultEvent = { type: "whatsapp_click"; product_slug: string };
 
 export type ProductSort = "recent" | "name" | "display";
+
+/** POST /selection/consult: un mensaje de WhatsApp por línea («Mi selección»). */
+export type SelectionLine = { url: string; product_slugs: string[]; boutique: boolean };
+export type SelectionConsult = { lines: SelectionLine[]; missing_slugs: string[] };

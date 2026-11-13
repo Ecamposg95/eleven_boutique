@@ -24,7 +24,7 @@ from app.models import (
 from app.schemas import public as schemas
 from app.services.text import escape_like, normalize
 from app.services.visibility import brand_visible, product_visible, record_visible
-from app.services.whatsapp import build_consult_url, normalize_number
+from app.services.whatsapp import Piece, build_consult_url, build_selection_url, normalize_number
 
 ProductSort = Literal["recent", "name", "display"]
 SEARCH_PRODUCT_LIMIT = 60
@@ -288,6 +288,49 @@ def get_product(db: Session, slug: str, settings: Settings) -> schemas.ProductDe
         seo_title=product.seo_title,
         seo_description=product.seo_description,
         published_at=product.published_at,
+    )
+
+
+def consult_selection(db: Session, slugs: list[str], settings: Settings) -> schemas.SelectionConsult:
+    """One WhatsApp message per line: premium brands may go to the boutique line."""
+    ordered = list(dict.fromkeys(slugs))
+    found = {
+        product.slug: product
+        for product in db.scalars(_visible_products(settings.demo_mode).where(Product.slug.in_(ordered)))
+    }
+    lines = {
+        False: effective_whatsapp_digits(db, settings),
+        True: effective_whatsapp_digits(db, settings, premium=True),
+    }
+    groups: dict[str, list[Product]] = {}
+    for slug in ordered:
+        product = found.get(slug)
+        digits = lines[product.brand.is_premium] if product else None
+        if digits is not None:
+            groups.setdefault(digits, []).append(product)
+
+    def piece(product: Product) -> Piece:
+        unbranded = product.brand.kind == KIND_CLASSIFICATION
+        return Piece(
+            brand_slug=None if unbranded else product.brand.slug,
+            brand_name=None if unbranded else product.brand.name,
+            name=product.name,
+            slug=product.slug,
+            sku=product.sku,
+        )
+
+    return schemas.SelectionConsult(
+        lines=[
+            schemas.SelectionLine(
+                url=build_selection_url(
+                    digits=digits, site_url=settings.site_base_url, pieces=[piece(p) for p in products]
+                ),
+                product_slugs=[p.slug for p in products],
+                boutique=digits != lines[False],
+            )
+            for digits, products in groups.items()
+        ],
+        missing_slugs=[slug for slug in ordered if slug not in found],
     )
 
 
