@@ -49,6 +49,8 @@ class FakeAtlas:
         self.requests: list[tuple[str, dict]] = []
         # ruta -> cursor desde el que responde 500
         self.fail: dict[str, int] = {}
+        # Se llama con la ruta antes de responder (p. ej. para simular el panel a media corrida).
+        self.hook = None
 
     def tick(self, minutes: int = 60) -> None:
         self.now += timedelta(minutes=minutes)
@@ -113,6 +115,8 @@ class FakeAtlas:
         path = request.url.path
         params = dict(request.url.params)
         self.requests.append((path, params))
+        if self.hook is not None:
+            self.hook(path)
         cursor = int(params.get("cursor", 0))
         if path in self.fail and cursor >= self.fail[path]:
             return httpx.Response(500, json={"detail": "boom"})
@@ -740,3 +744,46 @@ def test_manual_run_is_a_full_product_load(factory, atlas):
     assert piece(factory, "p1").status == STATUS_PUBLISHED
     # La disponibilidad sigue incremental.
     assert "updated_since" in atlas.params("/availability")[-1]
+
+
+def test_full_load_requested_mid_run_survives_an_incremental_run(factory, atlas):
+    atlas.put("p1")
+    sync(factory, atlas)
+    atlas.tick(120)
+
+    def request_reload(path):
+        if path == "/availability":
+            with factory() as s:
+                s.get(AtlasSyncState, 1).products_since = None
+                s.commit()
+
+    atlas.hook = request_reload
+    run = sync(factory, atlas, now=atlas.now)
+    assert run.status == "ok" and run.kind == "incremental"
+    assert state(factory).products_since is None
+    assert state(factory).availability_since == atlas.now
+    atlas.hook = None
+    sync(factory, atlas, now=atlas.now)
+    assert "updated_since" not in atlas.params("/products")[-1]
+
+
+def test_manual_run_archives_pieces_atlas_no_longer_returns(factory, atlas):
+    atlas.put("p1")
+    sync(factory, atlas)
+    stale_piece(factory)
+    run = sync(factory, atlas, kind="manual")
+    assert run.status == "ok" and run.kind == "manual"
+    assert run.counts["bajas"] == 1
+    assert piece(factory, "gone").status == STATUS_ARCHIVED
+    assert piece(factory, "p1").status == STATUS_PUBLISHED
+
+
+def test_manual_run_missing_half_of_twenty_archives_nothing_and_leaves_a_note(factory, atlas):
+    _load_twenty(factory, atlas)
+    for i in range(10):
+        del atlas.products[f"p{i:02d}"]
+    run = sync(factory, atlas, kind="manual")
+    assert run.status == "ok"
+    assert run.counts["bajas"] == 0 and run.counts["archivado_omitido"] == 1
+    assert "10 de 20" in run.error
+    assert all(piece(factory, f"p{i:02d}").status == STATUS_PUBLISHED for i in range(20))

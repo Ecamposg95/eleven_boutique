@@ -192,13 +192,17 @@ def _execute(db: Session, client: AtlasClient, kind: SyncKind, now: Callable[[],
         if not isinstance(exc, AtlasError):
             logger.exception("Falló la sincronización con Atlas ONE")
 
-    state = db.get(AtlasSyncState, 1)
+    # Relee el estado (y lo bloquea en Postgres): el panel pudo pedir recarga completa a media corrida.
+    state = db.get(AtlasSyncState, 1, populate_existing=True, with_for_update=True)
     if state is None:
         state = AtlasSyncState(id=1)
         db.add(state)
     state.last_run_at = started
     if error is None:
-        state.products_since = parse_time(products_time)
+        # Una incremental no pisa una recarga pedida mientras corría (`products_since` en None). Una
+        # carga completa sí: ya recorrió todo, aunque un cambio hecho durante ella espere a la siguiente.
+        if full or state.products_since is not None:
+            state.products_since = parse_time(products_time)
         state.availability_since = parse_time(availability_time)
         if full:
             state.last_full_at = started

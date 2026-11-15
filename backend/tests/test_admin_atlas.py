@@ -168,7 +168,16 @@ def test_map_patches_and_house_publication_request_a_full_load(db, client):
     reset()
     assert patch(client, f"/brands/{draft.id}", {"description": "x"}).status_code == 200
     assert since() is not None
+    # Casa sin marca de Atlas que apunte a ella: publicarla no cambia ninguna pieza de Atlas.
     assert patch(client, f"/brands/{draft.id}", {"status": "published"}).status_code == 200
+    assert since() is not None
+    assert patch(client, f"/brands/{draft.id}", {"aliases": ["Nueva Casa"]}).status_code == 200
+    assert since() is None
+    reset()
+    mapped = make_brand(db, "Ligada", status="draft")
+    db.add(AtlasBrandMap(atlas_brand_id="b2", atlas_name="Ligada", brand_id=mapped.id))
+    db.commit()
+    assert patch(client, f"/brands/{mapped.id}", {"status": "published"}).status_code == 200
     assert since() is None
 
 

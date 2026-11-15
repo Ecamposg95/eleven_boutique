@@ -6,7 +6,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.api.errors import ApiError
-from app.models import AdminUser, Brand, BrandAlias, Category, Product
+from app.models import AdminUser, AtlasBrandMap, Brand, BrandAlias, Category, Product
 from app.schemas import admin as schemas
 from app.services.admin import audit
 from app.services.admin.common import (
@@ -242,8 +242,10 @@ def update_brand(
         changes["aliases"] = [aliases_before, aliases_after]
     if changes:
         audit.record(db, user, "update", "brand", brand.id, changes)
-    if changes.keys() & {"status", "name", "aliases"}:
-        # Publicar la casa o arreglar su nombre/alias destraba piezas de Atlas en borrador.
+    mapped = db.scalar(select(AtlasBrandMap.id).where(AtlasBrandMap.brand_id == brand.id).limit(1))
+    if changes.keys() & {"name", "aliases"} or ("status" in changes and mapped is not None):
+        # Arreglar nombre/alias puede ligar una marca de Atlas; publicar una casa ligada destraba
+        # sus piezas en borrador. Las incrementales no las vuelven a traer: toca carga completa.
         request_full_load(db)
     db.commit()
     return get_brand(db, brand.id)
