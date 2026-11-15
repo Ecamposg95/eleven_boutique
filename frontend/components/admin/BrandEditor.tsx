@@ -175,7 +175,7 @@ export function BrandEditor({ brand }: { brand: Brand }) {
             <h2 id="alias-t" className="a-h2">
               Alias
             </h2>
-            <p className="a-hint max-w-prose">Otras formas de escribir la marca. Se usan en la búsqueda y para reconocerla al importar.</p>
+            <p className="a-hint max-w-prose">Otras formas de escribir la marca. Se usan en la búsqueda.</p>
             {form.aliases.length ? (
               <ul className="mt-2 flex flex-wrap gap-2">
                 {form.aliases.map((item) => (

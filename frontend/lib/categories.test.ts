@@ -27,6 +27,7 @@ const product = (url: string): ProductCard => ({
   category: { slug: "c", name: "C" },
   primary_image: { url, alt: "", is_primary: true, position: 0 },
   secondary_image: null,
+  available: true,
 });
 
 describe("categorías", () => {

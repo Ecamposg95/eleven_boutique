@@ -15,7 +15,6 @@ DEFAULT_LIMIT = 2 * MB
 # Per-file limits (20 MB) are enforced by the handlers; these bound the request as a whole.
 ROUTE_LIMITS = {
     f"{ADMIN_PREFIX}/media": 220 * MB,
-    f"{ADMIN_PREFIX}/imports/products/preview": 21 * MB,
 }
 MESSAGE = "La solicitud excede el tamaño permitido"
 

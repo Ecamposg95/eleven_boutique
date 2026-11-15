@@ -112,24 +112,6 @@ class AuditEntry(Schema):
 # --- Products --------------------------------------------------------------------------
 
 
-class ProductCreate(Input):
-    name: Name
-    brand_id: uuid.UUID
-    category_id: uuid.UUID
-    # The contract's field list leaves SKU out, but the column is required and unique and the
-    # WhatsApp message quotes it. Optional here: generated when absent.
-    sku: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)] | None = None
-    slug: Slug | None = None
-    status: Status = "draft"
-    is_featured: bool = False
-    display_order: int = 0
-    commercial_added_at: UtcDatetime | None = None
-    seo_title: ShortText | None = None
-    seo_description: LongText | None = None
-    internal_notes: LongText | None = None
-    publish_brand: bool = False
-
-
 class ProductPatch(Input):
     not_nullable = (
         "name",
@@ -140,6 +122,7 @@ class ProductPatch(Input):
         "is_featured",
         "display_order",
         "publish_brand",
+        "hidden_on_web",
     )
 
     name: Name | None = None
@@ -154,6 +137,7 @@ class ProductPatch(Input):
     seo_description: LongText | None = None
     internal_notes: LongText | None = None
     publish_brand: bool | None = None
+    hidden_on_web: bool | None = None
 
 
 class ProductBrandRef(Schema):
@@ -177,6 +161,8 @@ class ProductMediaOut(Schema):
     alt: str
     is_primary: bool
     position: int
+    # Foto que trae Atlas ONE en una pieza de Atlas: no se edita ni se borra desde el panel.
+    read_only: bool = False
 
 
 class VariantOut(Schema):
@@ -184,6 +170,7 @@ class VariantOut(Schema):
     sku: str
     color: str | None
     size: str | None
+    available: bool = True
 
 
 class AdminProduct(Schema):
@@ -207,6 +194,14 @@ class AdminProduct(Schema):
     photo_refs: list[str]
     media: list[ProductMediaOut]
     variants: list[VariantOut]
+    from_atlas: bool = False
+    available: bool = True
+    atlas_missing: str | None = None
+    hidden_on_web: bool = False
+    gender: str | None = None
+    model: str | None = None
+    material: str | None = None
+    admin_description: str | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -532,41 +527,56 @@ class AdminSettings(Schema):
 # --- Imports ---------------------------------------------------------------------------
 
 
-class ImportRowError(Schema):
-    row: int
-    sku: str | None
-    message: str
+# --- Atlas ONE -------------------------------------------------------------------------
 
 
-class ImportSample(Schema):
-    sku: str
+class AtlasRun(Schema):
+    kind: str
+    status: str
+    started_at: datetime
+    finished_at: datetime | None
+    counts: dict[str, int]
+    error: str | None
+    # Aviso de una corrida buena (p. ej. la baja nocturna se omitió); no es una falla.
+    note: str | None = None
+
+
+class AtlasDraft(Schema):
+    id: uuid.UUID
     name: str
-    brand: str
-    category: str
-    variants: int
+    atlas_missing: str | None
 
 
-class ImportPreview(Schema):
-    preview_id: uuid.UUID
-    rows: int
-    products: int
-    variants: int
-    new_products: int
-    conflicts: int
-    new_categories: list[str]
-    errors: list[ImportRowError]
-    sample: list[ImportSample]
+class AtlasStatus(Schema):
+    enabled: bool
+    last_run: AtlasRun | None
+    last_ok_at: datetime | None
+    last_error: str | None = None
+    drafts: list[AtlasDraft]
 
 
-class ImportCommit(Input):
-    preview_id: uuid.UUID
-    update_existing: bool = False
+class AtlasSyncStarted(Schema):
+    started: bool
 
 
-class ImportResult(Schema):
-    import_id: uuid.UUID
-    created: int
-    updated: int
-    skipped: int
-    errors: int
+class AtlasBrandMapOut(Schema):
+    atlas_brand_id: str
+    atlas_name: str
+    brand_id: uuid.UUID | None
 
+
+class AtlasBrandMapPatch(Input):
+    atlas_brand_id: Annotated[str, StringConstraints(min_length=1, max_length=100)]
+    # Sin "desligar": el emparejador automático volvería a ligar la fila en la siguiente corrida.
+    brand_id: uuid.UUID
+
+
+class AtlasCategoryMapOut(Schema):
+    atlas_department_id: str
+    atlas_name: str
+    category_id: uuid.UUID | None
+
+
+class AtlasCategoryMapPatch(Input):
+    atlas_department_id: Annotated[str, StringConstraints(min_length=1, max_length=100)]
+    category_id: uuid.UUID | None

@@ -23,6 +23,7 @@ const product: ProductCard = {
   category: { slug: "c", name: "C" },
   primary_image: { url: "/p.jpg", alt: "", is_primary: true, position: 0 },
   secondary_image: null,
+  available: true,
 };
 
 describe("stripEntries", () => {

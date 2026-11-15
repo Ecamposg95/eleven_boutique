@@ -151,7 +151,7 @@ export function CategoryManager({ categories }: { categories: AdminCategory[] })
   return (
     <>
       {categories.length === 0 ? (
-        <Empty message="Aún no hay categorías. Se crean aquí o al importar el catálogo." />
+        <Empty message="Aún no hay categorías. Se crean aquí o llegan con la sincronización de Atlas ONE." />
       ) : (
         <table className="a-table">
           <caption className="sr-only">Categorías</caption>
