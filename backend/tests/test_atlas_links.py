@@ -9,6 +9,7 @@ from app.models import (
     Brand,
 )
 from app.services.atlas.links import (
+    PLACEHOLDER_BRAND,
     resolve_brand,
     resolve_category,
     sync_brands,
@@ -241,3 +242,19 @@ def test_resolver_category_paths(db):
 def test_brand_without_name_skipped(db):
     sync_brands(db, [{"id": "b1", "deleted": False}])
     assert _row(db, "b1") is None
+
+
+def test_auto_link_ignores_classifications_and_placeholder(db):
+    generic = make_brand(db, "Genérica", kind=KIND_CLASSIFICATION)
+    placeholder = make_brand(db, PLACEHOLDER_BRAND, status=STATUS_DRAFT)
+    gucci = make_brand(db, "Gucci")
+    make_alias(db, make_brand(db, "Otra clasificación", kind=KIND_CLASSIFICATION), "Gucci")
+    counts = sync_brands(
+        db, [_brand("b1", "Genérica"), _brand("b2", PLACEHOLDER_BRAND), _brand("b3", "Gucci")]
+    )
+    assert counts == {"ligadas": 1, "creadas_borrador": 2}
+    assert _row(db, "b3").brand_id == gucci.id
+    for atlas_id in ("b1", "b2"):
+        linked = db.get(Brand, _row(db, atlas_id).brand_id)
+        assert linked.id not in (generic.id, placeholder.id)
+        assert linked.kind == "brand" and linked.status == STATUS_DRAFT

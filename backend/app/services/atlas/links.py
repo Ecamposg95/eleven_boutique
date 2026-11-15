@@ -1,5 +1,7 @@
 """Ligas entre marcas/departamentos de Atlas ONE y las casas/categorías de Eleven."""
 
+import uuid
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -19,13 +21,32 @@ from app.services.admin.common import unique_slug
 from app.services.brand_match import brand_index, no_brand_classification
 from app.services.text import normalize
 
+PLACEHOLDER_BRAND = "Pendiente de ligar (Atlas ONE)"
+
+
+def linkable_index(
+    db: Session,
+) -> tuple[dict[str, set[uuid.UUID]], dict[uuid.UUID, Brand]]:
+    """Como `brand_index`, pero el índice solo apunta a casas a las que se puede ligar una marca de
+    Atlas: ni clasificaciones ni la casa interna de respaldo (el panel tampoco lo permite).
+    `brands` sigue trayendo todas, para resolver «Sin marca» y mapas ya ligados.
+    """
+    index, brands = brand_index(db)
+    linkable = {
+        brand_id
+        for brand_id, brand in brands.items()
+        if brand.kind == KIND_BRAND and brand.name != PLACEHOLDER_BRAND
+    }
+    filtered = {key: owners & linkable for key, owners in index.items()}
+    return {key: owners for key, owners in filtered.items() if owners}, brands
+
 
 def sync_brands(db: Session, atlas_brands: list[dict]) -> dict[str, int]:
     """Liga marcas de Atlas a casas por nombre/alias; sin coincidencia crea una casa en borrador.
 
     Nunca modifica una casa existente. Un mapa ya ligado gana sobre el nombre.
     """
-    index, brands = brand_index(db)
+    index, _ = linkable_index(db)
     taken = set(db.scalars(select(Brand.slug))) | set(
         db.scalars(select(BrandAlias.slug))
     )
@@ -103,7 +124,7 @@ class Resolver:
 
     def __init__(self, db: Session) -> None:
         self.db = db
-        self.index, self.brands = brand_index(db)
+        self.index, self.brands = linkable_index(db)
         self.no_brand = no_brand_classification(self.brands)
         self.brand_maps = {
             r.atlas_brand_id: r for r in db.scalars(select(AtlasBrandMap))

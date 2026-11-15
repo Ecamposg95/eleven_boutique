@@ -24,9 +24,8 @@ from app.models import (
     ProductVariant,
 )
 from app.services.admin.common import unique_slug
-from app.services.atlas.links import Resolver
+from app.services.atlas.links import PLACEHOLDER_BRAND, Resolver
 
-PLACEHOLDER_BRAND = "Pendiente de ligar (Atlas ONE)"
 MAX_SKU = 100
 MAX_NAME = 300
 MAX_MISSING = 300
