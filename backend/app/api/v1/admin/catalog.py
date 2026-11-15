@@ -4,6 +4,7 @@ import uuid
 
 from fastapi import APIRouter, Response
 
+from app.api.errors import ApiError
 from app.api.v1.admin.deps import AdminOnly, AdminPageSize, CurrentUser
 from app.api.v1.deps import DbDep, PageParam, SearchParam
 from app.schemas import admin as schemas
@@ -37,9 +38,9 @@ def list_products(
     )
 
 
-@router.post("/products", response_model=schemas.AdminProduct, status_code=201)
-def create_product(body: schemas.ProductCreate, db: DbDep, user: CurrentUser):
-    return products.create_product(db, body, user)
+@router.post("/products", status_code=410)
+def create_product() -> None:
+    raise ApiError(410, "gone", "Las piezas se publican desde Atlas ONE")
 
 
 @router.post("/products/bulk", response_model=schemas.ProductBulkOut)

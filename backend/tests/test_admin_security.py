@@ -33,10 +33,12 @@ ADMIN_ONLY = [
     ("GET", "/audit"),
     ("POST", "/brands"),
     ("PATCH", f"/brands/{uuid.uuid4()}"),
-    ("POST", "/imports/products/preview"),
-    ("POST", "/imports/products"),
-    ("GET", "/imports/template"),
-    ("GET", f"/imports/{uuid.uuid4()}/report"),
+    ("GET", "/atlas/status"),
+    ("POST", "/atlas/sync"),
+    ("GET", "/atlas/brand-map"),
+    ("PATCH", "/atlas/brand-map"),
+    ("GET", "/atlas/category-map"),
+    ("PATCH", "/atlas/category-map"),
 ]
 
 
@@ -343,17 +345,9 @@ def test_body_size_limit_counts_a_stream_without_content_length(db, client):
 
 def test_anonymous_upload_is_refused_before_reading_the_form(client):
     files = {"files": ("a.jpg", b"x" * 1024)}
-    for path in ("/media", "/imports/products/preview"):
+    for path in ("/media",):
         response = client.post(BASE + path, files=files, headers=ORIGIN)
         assert response.status_code == 401, path
-
-
-def test_editor_upload_to_import_is_refused(db, client):
-    login(client, make_user(db, ROLE_EDITOR))
-    response = client.post(
-        f"{BASE}/imports/products/preview", files={"file": ("a.csv", b"SKU")}, headers=ORIGIN
-    )
-    assert response.status_code == 403
 
 
 def test_admin_responses_are_not_cacheable_or_indexable(db, client):
