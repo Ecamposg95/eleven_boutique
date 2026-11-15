@@ -28,8 +28,10 @@ type ProductCard = {
   brand: { slug: string | null; name: string | null };   // null si es "Sin marca"
   category: { slug: string; name: string };
   primary_image: Media | null; secondary_image: Media | null;
+  available: boolean;           // false = agotada: se muestra, al final de cada listado
 };
 type ProductDetail = ProductCard & {
+  variants: { color: string | null; size: string | null; available: boolean }[]; // por talla y color; [] si no tiene variantes
   gallery: Media[];
   consult_url: string | null;   // wa.me listo; null si no hay número configurado
   seo_title: string | null; seo_description: string | null; published_at: string | null;
@@ -84,6 +86,7 @@ type PublicSettings = {
 - `{url}` = `PUBLIC_SITE_URL` + `/marcas/{brand}/{slug}`.
 - Número: `site_settings.whatsapp_number`, sembrado desde `WHATSAPP_NUMBER` si existe. Se normaliza a dígitos con validación E.164 (8 a 15 dígitos); si es inválido o falta, `consult_url = null`.
 - Línea Boutique: las piezas de marcas con `is_premium` usan `site_settings.whatsapp_premium_number` (sembrado desde `WHATSAPP_PREMIUM_NUMBER`); si falta o es inválido, usan el número general. `whatsapp_enabled` es `true` si hay al menos una línea válida.
+- Pieza agotada (`available=false`): la plantilla es «Hola, ¿tienen disponible esta pieza de Eleven Boutique: {marca} — {nombre}? Referencia: {sku}. Enlace: {url}.». La selección múltiple no cambia.
 - Producto sin marca: la frase usa solo `{nombre}`, sin "{marca} — ". Su URL es `/piezas/{slug}`.
 
 ## Mi selección
@@ -103,3 +106,6 @@ type PublicSettings = {
 ## Imágenes demo
 
 El seed demo crea 12 productos (`DEMO-001`…`DEMO-012`, slug `pieza-demostracion-01`…`12`), cada uno con `/demo/pieza-NN-a.jpg` y `/demo/pieza-NN-b.jpg`. Los archivos viven en `frontend/public/demo/`, con licencia CC0 y créditos en `docs/demo-image-credits.md`. Además, `/demo/editorial-1.jpg` a `/demo/editorial-3.jpg` sirven para portada, colecciones y lookbook.
+
+
+Piezas con `hidden_on_web` (marcadas en el admin web) no aparecen en ningún listado, búsqueda, colección ni detalle (404). Ninguna respuesta pública trae `external_inventory_id` ni `atlas_missing`.

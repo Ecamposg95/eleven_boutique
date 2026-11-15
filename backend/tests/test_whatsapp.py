@@ -172,3 +172,16 @@ def test_premium_number_is_seeded_from_env_only_when_empty(db, make_settings):
     seed_site_settings(db, make_settings(whatsapp_premium_number=PREMIUM_NUMBER))
     db.commit()
     assert db.scalar(select(SiteSettings.whatsapp_premium_number)) == "+52 55 9999 0001"
+
+
+def test_sold_out_piece_uses_the_availability_question(db, make_client):
+    brand = make_brand(db, "Dolce & Gabbana")
+    make_product(
+        db, brand, make_category(db), "Camisa", slug="camisa", sku="DG-001", available=False
+    )
+    db.commit()
+    url = make_client(whatsapp_number=FAKE_NUMBER).get("/api/v1/products/camisa").json()["consult_url"]
+    assert message_of(url) == (
+        "Hola, ¿tienen disponible esta pieza de Eleven Boutique: Dolce & Gabbana — Camisa? "
+        "Referencia: DG-001. Enlace: https://eleven.example/marcas/dolce-gabbana/camisa."
+    )

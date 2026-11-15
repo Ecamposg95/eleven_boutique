@@ -394,7 +394,7 @@ def test_internal_fields_never_reach_public_responses(db, client, refs):
             lowered = key.casefold()
             assert not any(part in lowered for part in FORBIDDEN_KEY_PARTS), location
             assert "asset_id" not in lowered, location
-            assert lowered not in {"photo_refs", "variants", "storage_key", "uploaded_by_id"}
+            assert lowered not in {"photo_refs", "storage_key", "uploaded_by_id"}
         dumped = json.dumps(body)
         assert SECRET not in dumped
         assert "SKU-OCULTO" not in dumped

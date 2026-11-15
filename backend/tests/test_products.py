@@ -1,10 +1,15 @@
 import pytest
+from sqlalchemy import select
 
 from app.models import (
     KIND_CLASSIFICATION,
     STATUS_ARCHIVED,
     STATUS_DRAFT,
     STATUS_PUBLISHED,
+    Collection,
+    CollectionProduct,
+    Product,
+    ProductVariant,
 )
 from tests.factories import at, make_alias, make_brand, make_category, make_product
 
@@ -147,3 +152,94 @@ def test_published_at_is_utc_iso(db, public_client):
     make_product(db, make_brand(db), make_category(db), "Pieza", published_at=at(2026, 3, 2))
     db.commit()
     assert public_client.get("/api/v1/products/pieza").json()["published_at"] == "2026-03-02T00:00:00Z"
+
+
+def _all_keys(node) -> set[str]:
+    if isinstance(node, dict):
+        return set(node) | {k for v in node.values() for k in _all_keys(v)}
+    if isinstance(node, list):
+        return {k for v in node for k in _all_keys(v)}
+    return set()
+
+
+def test_hidden_on_web_product_is_not_public_anywhere(db, public_client):
+    brand, category = make_brand(db, "Prada"), make_category(db)
+    make_product(db, brand, category, "Oculta", hidden_on_web=True)
+    make_product(db, brand, category, "Visible")
+    collection = Collection(slug="col", title="Col", status=STATUS_PUBLISHED)
+    db.add(collection)
+    db.flush()
+    for product in db.scalars(select(Product)).all():
+        db.add(CollectionProduct(collection_id=collection.id, product_id=product.id, position=0))
+    db.commit()
+
+    assert public_client.get("/api/v1/products/oculta").status_code == 404
+    assert slugs(public_client.get("/api/v1/products")) == ["visible"]
+    assert slugs(public_client.get("/api/v1/novedades")) == []
+    found = public_client.get("/api/v1/search", params={"q": "oculta"}).json()
+    assert found["products"] == []
+    col = public_client.get("/api/v1/collections/col").json()
+    assert [p["slug"] for p in col["products"]] == ["visible"]
+    assert col["product_count"] == 1
+    assert public_client.get("/api/v1/brands/prada").json()["product_count"] == 1
+    consult = public_client.post("/api/v1/selection/consult", json={"product_slugs": ["oculta"]})
+    assert consult.json()["missing_slugs"] == ["oculta"]
+
+
+def test_sold_out_product_is_listed_last_with_available_false(db, public_client):
+    brand, category = make_brand(db, "Prada"), make_category(db)
+    make_product(db, brand, category, "Aaa Agotada", available=False, display_order=0)
+    make_product(db, brand, category, "Zzz Disponible", display_order=5)
+    db.commit()
+
+    page = public_client.get("/api/v1/products").json()
+    assert [(i["slug"], i["available"]) for i in page["items"]] == [
+        ("zzz-disponible", True),
+        ("aaa-agotada", False),
+    ]
+    assert slugs(public_client.get("/api/v1/products", params={"sort": "name"}))[-1] == "aaa-agotada"
+    found = public_client.get("/api/v1/search", params={"q": "zzz aaa"}).json()
+    assert found["products"] == []
+    found = public_client.get("/api/v1/search", params={"q": "prada"}).json()
+    assert [p["slug"] for p in found["products"]] == ["zzz-disponible", "aaa-agotada"]
+    assert public_client.get("/api/v1/products/aaa-agotada").json()["available"] is False
+
+
+def test_detail_lists_variants_with_availability(db, public_client):
+    product = make_product(db, make_brand(db), make_category(db), "Pieza")
+    make_product(db, make_brand(db, "Otra"), make_category(db, "Otra cat"), "Sin variantes")
+    db.add_all(
+        [
+            ProductVariant(product_id=product.id, sku="A-M-ROJO", color="Rojo", size="M"),
+            ProductVariant(
+                product_id=product.id, sku="A-CH-AZUL", color="Azul", size="Ch", available=False
+            ),
+            ProductVariant(product_id=product.id, sku="A-M-AZUL", color="Azul", size="M"),
+        ]
+    )
+    db.commit()
+    detail = public_client.get("/api/v1/products/pieza").json()
+    assert detail["variants"] == [
+        {"color": "Azul", "size": "Ch", "available": False},
+        {"color": "Azul", "size": "M", "available": True},
+        {"color": "Rojo", "size": "M", "available": True},
+    ]
+    assert public_client.get("/api/v1/products/sin-variantes").json()["variants"] == []
+
+
+def test_public_json_never_exposes_atlas_internals(db, public_client):
+    product = make_product(
+        db, make_brand(db), make_category(db), "Pieza", external_inventory_id="EXT-1",
+        atlas_missing=True,
+    )
+    db.add(
+        ProductVariant(
+            product_id=product.id, sku="V1", size="M", external_inventory_id="EXT-V1"
+        )
+    )
+    db.commit()
+    for path in ("/api/v1/products", "/api/v1/products/pieza", "/api/v1/novedades", "/api/v1/search?q=pieza"):
+        body = public_client.get(path)
+        assert "EXT-" not in body.text
+        keys = _all_keys(body.json())
+        assert not keys & {"external_inventory_id", "atlas_missing", "hidden_on_web"}
