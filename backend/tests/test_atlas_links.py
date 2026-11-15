@@ -258,3 +258,35 @@ def test_auto_link_ignores_classifications_and_placeholder(db):
         linked = db.get(Brand, _row(db, atlas_id).brand_id)
         assert linked.id not in (generic.id, placeholder.id)
         assert linked.kind == "brand" and linked.status == STATUS_DRAFT
+
+
+def test_atlas_sin_marca_links_to_the_classification_even_in_draft(db):
+    sm = make_brand(db, "Sin marca", kind=KIND_CLASSIFICATION, status=STATUS_DRAFT)
+    counts = sync_brands(db, [_brand("b1", "SIN MARCA")])
+    assert counts == {"ligadas": 1, "creadas_borrador": 0}
+    assert _row(db, "b1").brand_id == sm.id
+    assert db.scalar(select(Brand).where(Brand.kind == "brand")) is None
+    # Igual que una pieza sin marca: se usa la clasificación aunque esté en borrador.
+    assert resolve_brand(db, "b1") == (sm, None)
+
+
+def test_atlas_sin_marca_without_classification_waits_without_creating_a_house(db):
+    counts = sync_brands(db, [_brand("b1", "Sin marca")])
+    assert counts == {"ligadas": 0, "creadas_borrador": 0}
+    assert _row(db, "b1").brand_id is None
+    assert db.scalar(select(Brand)) is None
+    assert resolve_brand(db, "b1") == (None, "No existe la clasificación Sin marca")
+    sm = make_brand(db, "Sin marca", kind=KIND_CLASSIFICATION)
+    sync_brands(db, [_brand("b1", "Sin marca")])
+    assert _row(db, "b1").brand_id == sm.id
+
+
+def test_unlinked_reason_names_a_classification_that_owns_the_name(db):
+    generic = make_brand(db, "Genérica", kind=KIND_CLASSIFICATION)
+    db.add(AtlasBrandMap(atlas_brand_id="b1", atlas_name="Genérica"))
+    db.flush()
+    assert generic.id
+    assert resolve_brand(db, "b1") == (
+        None,
+        "casa sin ligar: Genérica (el nombre es de una clasificación)",
+    )

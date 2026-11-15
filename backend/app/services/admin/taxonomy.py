@@ -16,8 +16,8 @@ from app.services.admin.common import (
     set_asset,
     unique_slug,
 )
+from app.services.atlas.links import PLACEHOLDER_BRAND
 from app.services.atlas.sync import request_full_load
-from app.services.atlas.sync_products import PLACEHOLDER_BRAND
 from app.services.catalog import _public_aliases
 from app.services.text import normalize, slugify
 

@@ -6,6 +6,7 @@ import {
   atlasSkippedMessage,
   isAtlasLocked,
   photoControls,
+  brandMapOptions,
   splitAtlasBulk,
   unlinkedFirst,
   pollSync,
@@ -166,5 +167,16 @@ describe("photoControls", () => {
   it("piezas del panel: todo se mueve", () => {
     const media = [photo("p1", false, true), photo("p2", false)];
     expect(photoControls(media, 1)).toEqual({ movable: true, canMakePrimary: true });
+  });
+});
+
+describe("brandMapOptions", () => {
+  it("ofrece las casas y la clasificación «Sin marca», no otras clasificaciones", () => {
+    const brands = [
+      { id: "1", name: "Gucci", kind: "brand" },
+      { id: "2", name: "SIN MARCA ", kind: "classification" },
+      { id: "3", name: "Genérica", kind: "classification" },
+    ];
+    expect(brandMapOptions(brands)).toEqual([{ id: "1", name: "Gucci" }, { id: "2", name: "SIN MARCA " }]);
   });
 });

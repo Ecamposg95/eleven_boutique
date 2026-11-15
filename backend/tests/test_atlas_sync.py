@@ -255,6 +255,19 @@ def test_missing_house_and_category_join_reasons(factory, atlas):
     assert p.atlas_missing == "casa en borrador: Casa Nueva; categoría sin ligar: Zapatos"
 
 
+def test_atlas_brand_sin_marca_publishes_under_the_draft_classification(factory, atlas):
+    with factory() as s:
+        make_brand(s, "Sin marca", kind=KIND_CLASSIFICATION, status=STATUS_DRAFT)
+        s.commit()
+    atlas.brand("b9", "Sin marca")
+    atlas.put("p1", brand_id="b9", name="Cinturón")
+    run = sync(factory, atlas)
+    assert run.counts["casas_borrador"] == 0
+    p = piece(factory, "p1")
+    assert p.status == STATUS_PUBLISHED and p.atlas_missing is None
+    assert p.brand.name == "Sin marca" and p.brand.kind == KIND_CLASSIFICATION
+
+
 def test_piece_without_brand_goes_to_sin_marca(factory, atlas):
     with factory() as s:
         make_brand(s, "Sin marca", kind=KIND_CLASSIFICATION)

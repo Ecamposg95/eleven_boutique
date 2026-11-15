@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { AtlasPanel } from "@/components/admin/AtlasPanel";
 import { PageHeadStatic } from "@/components/admin/static";
+import { brandMapOptions } from "@/lib/admin/atlas";
 import { adminGet, adminGetAll, requireMe } from "@/lib/admin/server";
 import type { AdminCategory, AtlasBrandMapRow, AtlasCategoryMapRow, AtlasStatus, Brand } from "@/lib/admin/types";
 
@@ -22,7 +23,7 @@ export default async function AtlasPage() {
         initial={status}
         brandMap={brandMap}
         categoryMap={categoryMap}
-        brands={(brands ?? []).filter((brand) => brand.kind === "brand").map(({ id, name }) => ({ id, name }))}
+        brands={brandMapOptions(brands ?? [])}
         categories={(categories ?? []).map(({ id, name, parent_id }) => ({ id, name, parent_id }))}
       />
     </>

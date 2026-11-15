@@ -1,3 +1,4 @@
+import { normalize } from "@/lib/brands";
 import { AdminApiError, api } from "./client";
 import { plural } from "./format";
 import { resolvePrimary } from "./reorder";
@@ -148,4 +149,11 @@ export function photoControls(
   const primaryId = resolvePrimary(media);
   const primary = media.find((photo) => photo.id === primaryId);
   return { movable: true, canMakePrimary: item.id !== primaryId && !primary?.read_only };
+}
+
+/** Destinos del mapa de marcas: las casas y la clasificación «Sin marca» (las demás, no). */
+export function brandMapOptions(brands: readonly { id: string; name: string; kind: string }[]): { id: string; name: string }[] {
+  return brands
+    .filter((brand) => brand.kind === "brand" || (brand.kind === "classification" && normalize(brand.name) === "sin marca"))
+    .map(({ id, name }) => ({ id, name }));
 }

@@ -15,8 +15,8 @@ from app.models import (
 )
 from app.models.base import utcnow
 from app.services.admin import atlas as atlas_service
+from app.services.atlas.links import PLACEHOLDER_BRAND
 from app.services.atlas.sync import with_lock
-from app.services.atlas.sync_products import PLACEHOLDER_BRAND
 from tests.admin_helpers import BASE, ORIGIN, login, make_user
 from tests.factories import make_brand, make_category, make_product
 
@@ -124,6 +124,14 @@ def test_brand_map_patch_validates_target(db, client):
     assert patch(client, "/atlas/brand-map", {"atlas_brand_id": "zz", "brand_id": str(house.id)}).status_code == 404
     ok = patch(client, "/atlas/brand-map", {"atlas_brand_id": "b1", "brand_id": str(house.id)})
     assert ok.status_code == 200 and ok.json()["brand_id"] == str(house.id)
+
+
+def test_brand_map_accepts_the_sin_marca_classification_only(db, client):
+    sin_marca = make_brand(db, "Sin marca", kind="classification", status="draft")
+    db.add(AtlasBrandMap(atlas_brand_id="b1", atlas_name="Sin marca"))
+    db.commit()
+    ok = patch(client, "/atlas/brand-map", {"atlas_brand_id": "b1", "brand_id": str(sin_marca.id)})
+    assert ok.status_code == 200 and ok.json()["brand_id"] == str(sin_marca.id)
 
 
 def test_brand_map_cannot_be_unlinked(db, client):
