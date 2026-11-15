@@ -16,6 +16,7 @@ from app.services.admin.common import (
     set_asset,
     unique_slug,
 )
+from app.services.atlas.sync_products import PLACEHOLDER_BRAND
 from app.services.catalog import _public_aliases
 from app.services.text import normalize, slugify
 
@@ -86,7 +87,8 @@ def _single_out(db: Session, brand: Brand) -> schemas.AdminBrand:
 def list_brands(
     db: Session, *, q: str | None, status: str | None, page: int, page_size: int
 ) -> schemas.Page[schemas.AdminBrand]:
-    stmt = select(Brand).options(selectinload(Brand.aliases))
+    # La casa interna de la sincronización no se ofrece como casa a curar ni elegir.
+    stmt = select(Brand).options(selectinload(Brand.aliases)).where(Brand.name != PLACEHOLDER_BRAND)
     if status:
         stmt = stmt.where(Brand.status == status)
     brands = list(db.scalars(stmt))
@@ -206,6 +208,8 @@ def update_brand(
     db: Session, brand_id: uuid.UUID, data: schemas.BrandPatch, user: AdminUser
 ) -> schemas.AdminBrand:
     brand = _load_brand(db, brand_id)
+    if brand.name == PLACEHOLDER_BRAND:
+        raise ApiError(422, "internal_brand", "Casa interna de sincronización")
     before = audit.snapshot(brand, BRAND_FIELDS)
     aliases_before = _public_aliases(brand)
     fields = data.model_fields_set
