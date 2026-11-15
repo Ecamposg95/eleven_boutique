@@ -18,6 +18,10 @@ MAX_RETRY_AFTER = 60.0
 class AtlasError(Exception):
     """Fallo al hablar con Atlas. El mensaje nunca incluye la llave."""
 
+    def __init__(self, message: str, status: int | None = None) -> None:
+        super().__init__(message)
+        self.status = status
+
 
 class AtlasForbidden(AtlasError):
     """Atlas respondió 403 (la llave no tiene el scope necesario)."""
@@ -83,11 +87,11 @@ class AtlasClient:
             else:
                 status = response.status_code
                 if status == 403:
-                    raise AtlasForbidden("Atlas respondió 403: la llave no tiene permiso")
+                    raise AtlasForbidden("Atlas respondió 403: la llave no tiene permiso", 403)
                 if status == 429 or status >= 500:
                     failure = f"Atlas respondió {status}"
                 elif status >= 400:
-                    raise AtlasError(f"Atlas respondió {status}")
+                    raise AtlasError(f"Atlas respondió {status}", status)
                 else:
                     return response
             if attempt == MAX_RETRIES:

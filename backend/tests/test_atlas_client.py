@@ -169,3 +169,10 @@ def test_malformed_200_raises_atlas_error(response):
         list(make(lambda r: response).iter_pages("/x", None))
     assert "respuesta inválida" in str(exc.value)
     assert exc.value.__cause__ is None
+
+
+def test_4xx_error_exposes_status():
+    client = make(lambda request: httpx.Response(422, json={}))
+    with pytest.raises(AtlasError) as info:
+        client.post_lead({}, "k")
+    assert info.value.status == 422
