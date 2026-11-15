@@ -527,6 +527,8 @@ class AtlasRun(Schema):
     finished_at: datetime | None
     counts: dict[str, int]
     error: str | None
+    # Aviso de una corrida buena (p. ej. la baja nocturna se omitió); no es una falla.
+    note: str | None = None
 
 
 class AtlasDraft(Schema):
@@ -539,6 +541,7 @@ class AtlasStatus(Schema):
     enabled: bool
     last_run: AtlasRun | None
     last_ok_at: datetime | None
+    last_error: str | None = None
     drafts: list[AtlasDraft]
 
 

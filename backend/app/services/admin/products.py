@@ -252,7 +252,12 @@ def update_product(
     before = audit.snapshot(product, AUDITED_FIELDS)
     fields = data.model_fields_set
     if is_atlas(product):
-        owned = [field for field in ATLAS_OWNED if field in fields]
+        # Los formularios mandan el objeto completo: solo cuenta lo que de verdad cambia.
+        owned = [
+            field
+            for field in ATLAS_OWNED
+            if field in fields and getattr(data, field) != getattr(product, field)
+        ]
         if owned:
             raise _atlas_owned(f"{ATLAS_MESSAGE}: {', '.join(owned)}")
     _check_references(db, data.brand_id, data.category_id)

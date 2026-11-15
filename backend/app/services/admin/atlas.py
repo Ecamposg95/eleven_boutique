@@ -59,12 +59,14 @@ def status(db: Session, settings: Settings) -> schemas.AtlasStatus:
                 started_at=run.started_at,
                 finished_at=run.finished_at,
                 counts=run.counts or {},
-                error=run.error,
+                error=run.error if run.status == "error" else None,
+                note=run.error if run.status == "ok" else None,
             )
             if run
             else None
         ),
         last_ok_at=state.last_ok_at if state else None,
+        last_error=state.last_error if state else None,
         drafts=[schemas.AtlasDraft(id=row.id, name=row.name, atlas_missing=row.atlas_missing) for row in drafts],
     )
 
@@ -75,7 +77,19 @@ def lock_busy(session_factory: Callable[[], Session]) -> bool:
         return not acquired
 
 
+# Guardia de este proceso: el sondeo del candado se suelta antes de que el hilo lo tome, y dos
+# clics seguidos pasarían ambos. El candado de la base sigue cubriendo al cron de otro proceso.
+_launching = threading.Lock()
+
+
 def _run_manual(settings: Settings, session_factory: Callable[[], Session]) -> None:
+    try:
+        _run_manual_inner(settings, session_factory)
+    finally:
+        _launching.release()
+
+
+def _run_manual_inner(settings: Settings, session_factory: Callable[[], Session]) -> None:
     client = AtlasClient(settings.atlas_api_url.strip(), settings.atlas_api_key.strip())
     try:
         run_sync(session_factory, client, kind="manual")
@@ -95,9 +109,15 @@ def launch_sync(settings: Settings, session_factory: Callable[[], Session]) -> N
 def start_sync(settings: Settings, session_factory: Callable[[], Session]) -> None:
     if not is_configured(settings):
         raise ApiError(409, "atlas_not_configured", "La sincronización con Atlas ONE no está configurada")
-    if lock_busy(session_factory):
+    if not _launching.acquire(blocking=False):
         raise ApiError(409, "sync_running", "Ya hay una sincronización en curso")
-    launch_sync(settings, session_factory)
+    try:
+        if lock_busy(session_factory):
+            raise ApiError(409, "sync_running", "Ya hay una sincronización en curso")
+        launch_sync(settings, session_factory)
+    except BaseException:
+        _launching.release()
+        raise
 
 
 def list_brand_map(db: Session) -> list[schemas.AtlasBrandMapOut]:

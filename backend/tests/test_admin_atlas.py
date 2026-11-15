@@ -19,7 +19,9 @@ CONFIG = {"atlas_sync_enabled": True, "atlas_api_url": "https://atlas.example", 
 def launched(monkeypatch):
     calls = []
     monkeypatch.setattr(atlas_service, "launch_sync", lambda settings, factory: calls.append(1))
-    return calls
+    yield calls
+    if atlas_service._launching.locked():  # el hilo real la suelta; aquí no hay hilo
+        atlas_service._launching.release()
 
 
 @pytest.fixture
@@ -200,3 +202,43 @@ def test_atlas_media_is_read_only_but_panel_media_is_not(db, client):
         path = f"/products/{product.id}/media/{m['id']}"
         assert patch(client, path, {"alt": "x"}).status_code == 422
         assert client.delete(BASE + path, headers=ORIGIN).status_code == 422
+
+
+def test_ok_run_note_is_not_an_error(db, client):
+    now = utcnow()
+    db.add(
+        AtlasSyncRun(
+            started_at=now, finished_at=now, kind="full", status="ok", counts={}, error="baja omitida"
+        )
+    )
+    db.add(AtlasSyncState(id=1, last_error="viejo"))
+    db.commit()
+    body = client.get(f"{BASE}/atlas/status").json()
+    assert body["last_run"]["error"] is None and body["last_run"]["note"] == "baja omitida"
+    assert body["last_error"] == "viejo"
+    db.add(AtlasSyncRun(started_at=utcnow(), kind="manual", status="error", counts={}, error="falló"))
+    db.commit()
+    run = client.get(f"{BASE}/atlas/status").json()["last_run"]
+    assert run["error"] == "falló" and run["note"] is None
+
+
+def test_second_click_while_launching_is_409(client, launched):
+    assert client.post(f"{BASE}/atlas/sync", headers=ORIGIN).status_code == 202
+    second = client.post(f"{BASE}/atlas/sync", headers=ORIGIN)
+    assert second.status_code == 409 and second.json()["error"]["code"] == "sync_running"
+    assert launched == [1]
+
+
+def test_atlas_piece_patch_with_unchanged_owned_fields_is_ok(db, client):
+    product = atlas_piece(db)
+    body = {"name": product.name, "slug": product.slug, "status": product.status, "seo_title": "T"}
+    assert patch(client, f"/products/{product.id}", body).status_code == 200
+
+
+def test_non_atlas_piece_invalid_references_are_422(db, client):
+    brand, category = make_brand(db, "Q"), make_category(db, "R")
+    product = make_product(db, brand, category, "Normal")
+    db.commit()
+    for body in ({"brand_id": str(uuid.uuid4())}, {"category_id": str(uuid.uuid4())}):
+        response = patch(client, f"/products/{product.id}", body)
+        assert response.status_code == 422 and response.json()["error"]["code"] == "invalid_reference"
