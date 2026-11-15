@@ -177,6 +177,7 @@ def _card_fields(product: Product) -> dict:
         "category": schemas.CardCategory(slug=product.category.slug, name=product.category.name),
         "primary_image": _media(primary) if primary else None,
         "secondary_image": _media(secondary) if secondary else None,
+        "available": product.available,
     }
 
 
@@ -232,6 +233,7 @@ def list_products(
     if featured is not None:
         stmt = stmt.where(Product.is_featured.is_(featured))
 
+    stmt = stmt.order_by(Product.available.desc())  # Agotadas al final de cada orden.
     if sort == "recent":
         stmt = stmt.order_by(Product.commercial_added_at.desc().nulls_last())
     elif sort == "display":
@@ -244,7 +246,7 @@ def list_novedades(db: Session, demo_mode: bool, *, page: int, page_size: int) -
     stmt = (
         _visible_products(demo_mode)
         .where(Product.commercial_added_at.is_not(None))
-        .order_by(Product.commercial_added_at.desc(), Product.slug)
+        .order_by(Product.available.desc(), Product.commercial_added_at.desc(), Product.slug)
     )
     return _paginate(db, stmt, page, page_size)
 
@@ -275,6 +277,10 @@ def get_product(db: Session, slug: str, settings: Settings) -> schemas.ProductDe
     is_classification = product.brand.kind == KIND_CLASSIFICATION
     return schemas.ProductDetail(
         **_card_fields(product),
+        variants=[
+            schemas.VariantAvailability(color=v.color, size=v.size, available=v.available)
+            for v in sorted(product.variants, key=lambda v: (v.size or "", v.color or "", v.sku))
+        ],
         gallery=[_media(media) for media in product.media],
         consult_url=build_consult_url(
             digits=effective_whatsapp_digits(db, settings, premium=product.brand.is_premium),
@@ -284,6 +290,7 @@ def get_product(db: Session, slug: str, settings: Settings) -> schemas.ProductDe
             name=product.name,
             slug=product.slug,
             sku=product.sku,
+            available=product.available,
         ),
         seo_title=product.seo_title,
         seo_description=product.seo_description,
@@ -361,7 +368,7 @@ def _related_cards(
         _visible_products(demo_mode)
         .join(join_model, join_model.product_id == Product.id)
         .where(owner_column == owner_id)
-        .order_by(join_model.position, Product.slug)
+        .order_by(Product.available.desc(), join_model.position, Product.slug)
     )
     return [_card(product) for product in db.scalars(stmt).all()]
 
@@ -473,7 +480,7 @@ def search(db: Session, q: str | None, demo_mode: bool) -> schemas.SearchResults
                 (Brand.kind == KIND_BRAND) & _brand_name_match(query),
             )
         )
-        .order_by(Product.display_order, Product.search_text, Product.slug)
+        .order_by(Product.available.desc(), Product.display_order, Product.search_text, Product.slug)
         .limit(SEARCH_PRODUCT_LIMIT)
     )
     products = db.scalars(product_stmt).all()

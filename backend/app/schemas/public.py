@@ -81,9 +81,17 @@ class ProductCard(Schema):
     category: CardCategory
     primary_image: Media | None
     secondary_image: Media | None
+    available: bool  # false = agotada: se muestra, pero al final de cada listado
+
+
+class VariantAvailability(Schema):
+    color: str | None
+    size: str | None
+    available: bool
 
 
 class ProductDetail(ProductCard):
+    variants: list[VariantAvailability]  # vacío si la pieza no tiene variantes
     gallery: list[Media]
     consult_url: str | None
     seo_title: str | None
