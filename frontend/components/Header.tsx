@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRef, useSyncExternalStore } from "react";
+import { InstagramLink } from "./InstagramLink";
 import { NAV_GROUPS, type NavLink } from "./nav";
 import { SelectionLink } from "./SelectionLink";
 import { Wordmark } from "./Wordmark";
@@ -128,10 +129,12 @@ export function Header({
   overHero,
   categories = [],
   houses = [],
+  instagramUrl,
 }: {
   overHero: boolean;
   categories?: NavLink[];
   houses?: NavLink[];
+  instagramUrl?: string | null;
 }) {
   const pathname = usePathname();
   const scrolled = useScrolled();
@@ -299,9 +302,10 @@ export function Header({
             ))}
           </nav>
 
-          <p className="label mt-auto pt-12 text-[#5c5852]">
-            Eleven · Fashion boutique
-          </p>
+          <div className="mt-auto flex flex-col items-start gap-1 pt-12">
+            {instagramUrl ? <InstagramLink href={instagramUrl} /> : null}
+            <p className="label text-[#5c5852]">Eleven · Fashion boutique</p>
+          </div>
         </div>
       </dialog>
     </header>

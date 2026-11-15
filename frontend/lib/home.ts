@@ -147,3 +147,32 @@ export function departmentPanels(
   }
   return panels;
 }
+
+const WA_PREFIX = "https://wa.me/";
+const IG_PATTERN = /^https:\/\/(www\.)?instagram\.com\//;
+
+/**
+ * Los enlaces del bloque de atención y del pie. Solo se aceptan `https://wa.me/` para WhatsApp e
+ * `https://(www.)instagram.com/` para Instagram; cualquier otra cosa es `null`.
+ */
+export function attentionLinks(settings: PublicSettings): {
+  whatsapp: string | null;
+  boutique: string | null;
+  instagram: string | null;
+} {
+  const wa = (url: string | null | undefined) => (url?.startsWith(WA_PREFIX) ? url : null);
+  const ig = settings.instagram_url;
+  return {
+    whatsapp: wa(settings.attention?.whatsapp_url),
+    boutique: wa(settings.attention?.boutique_whatsapp_url),
+    instagram: ig && IG_PATTERN.test(ig) ? ig : null,
+  };
+}
+
+/** Foto de franja (detalle o atención) lista para `HeroPicture`; `null` sin imagen válida. */
+export function bandPhoto(image: string | null | undefined, mobile: string | null | undefined): HeroPhoto | null {
+  const src = safeImageSrc(image);
+  if (!src) return null;
+  const tel = safeImageSrc(mobile);
+  return { src, mobile: tel && tel !== src ? tel : null };
+}

@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { AttentionBlock } from "@/components/AttentionBlock";
 import { BrandWall } from "@/components/BrandWall";
 import { CatalogImage } from "@/components/CatalogImage";
 import { DepartmentTabs } from "@/components/DepartmentTabs";
+import { DetailBand } from "@/components/DetailBand";
 import { HeroSlides } from "@/components/HeroSlides";
 import { HouseShowroom } from "@/components/HouseShowroom";
 import { NewArrivals } from "@/components/NewArrivals";
@@ -366,7 +368,7 @@ export default async function HomePage() {
 
       <NewArrivals products={newest} />
 
-      {/* Task 8: la franja de detalle va aquí. */}
+      <DetailBand detail={settings.detail} />
 
       {strip.length > 0 ? <Strip entries={strip} /> : null}
 
@@ -412,7 +414,7 @@ export default async function HomePage() {
         />
       ) : null}
 
-      {/* Task 8: el bloque de atención va aquí, al final. */}
+      <AttentionBlock settings={settings} />
     </>
   );
 }

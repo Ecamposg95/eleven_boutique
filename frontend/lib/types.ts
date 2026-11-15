@@ -77,6 +77,23 @@ export type LookbookDetail = LookbookSummary & {
 /** Foto de portada: `image_url` para pantallas horizontales, `mobile_image_url` para verticales. */
 export type HeroSlideData = { image_url: string; mobile_image_url: string | null };
 
+/** Franja de detalle de portada: foto a todo lo ancho con pie opcional. */
+export type DetailSettings = {
+  image_url: string | null;
+  mobile_image_url: string | null;
+  caption: string | null;
+};
+
+/** Bloque de atención: titular, foto de fondo y enlaces de WhatsApp ya armados por la API. */
+export type AttentionSettings = {
+  headline: string;
+  subhead: string | null;
+  image_url: string | null;
+  mobile_image_url: string | null;
+  whatsapp_url: string | null; // wa.me con mensaje de atención general; null sin número
+  boutique_whatsapp_url: string | null; // Línea Boutique (casas premium)
+};
+
 export type PublicSettings = {
   demo_mode: boolean;
   whatsapp_enabled: boolean; // nunca se expone el número por separado
@@ -92,6 +109,9 @@ export type PublicSettings = {
   intro: string | null;
   boutique: { body: string | null };
   contact: { body: string | null };
+  instagram_url?: string | null; // Opcionales: una API anterior no los envía.
+  detail?: DetailSettings;
+  attention?: AttentionSettings;
 };
 
 export type Paginated<T> = {

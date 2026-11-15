@@ -1,8 +1,9 @@
 import Link from "next/link";
+import { InstagramLink } from "./InstagramLink";
 import { NAV_ITEMS } from "./nav";
 import { Wordmark } from "./Wordmark";
 
-export function Footer() {
+export function Footer({ instagramUrl }: { instagramUrl?: string | null }) {
   return (
     <footer className="inverse">
       <div className="page grid gap-10 py-14 md:grid-cols-12">
@@ -24,6 +25,7 @@ export function Footer() {
               </li>
             ))}
           </ul>
+          {instagramUrl ? <InstagramLink href={instagramUrl} className="mt-4" /> : null}
         </nav>
       </div>
     </footer>

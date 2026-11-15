@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { closingImage, departmentPanels, giantWord, stripEntries, heroPhotos } from "./home";
+import { attentionLinks, closingImage, departmentPanels, giantWord, stripEntries, heroPhotos } from "./home";
 import type { BrandSummary, Category, LookbookSummary, ProductCard, PublicSettings } from "./types";
 
 const lookbook = (slug: string): LookbookSummary => ({
@@ -191,5 +191,64 @@ describe("departmentPanels", () => {
     const ropa = cat("ropa", null, "javascript:x");
     const panels = departmentPanels([ropa], [sample(ropa, [product])]);
     expect(panels[0]?.cover).toBeNull();
+  });
+});
+
+describe("attentionLinks", () => {
+  const base = {
+    demo_mode: false,
+    whatsapp_enabled: true,
+    site_name: "Eleven",
+    hero: { image_url: null, headline: null, subhead: null },
+    intro: null,
+    boutique: { body: null },
+    contact: { body: null },
+  } satisfies PublicSettings;
+  const attention = (extra: Partial<NonNullable<PublicSettings["attention"]>>) => ({
+    headline: "Escríbenos. Te asesoramos.",
+    subhead: null,
+    image_url: null,
+    mobile_image_url: null,
+    whatsapp_url: "https://wa.me/525500000000?text=Hola",
+    boutique_whatsapp_url: "https://wa.me/525511111111",
+    ...extra,
+  });
+
+  it("devuelve los tres enlaces con datos válidos", () => {
+    expect(
+      attentionLinks({
+        ...base,
+        attention: attention({}),
+        instagram_url: "https://www.instagram.com/eleven",
+      }),
+    ).toEqual({
+      whatsapp: "https://wa.me/525500000000?text=Hola",
+      boutique: "https://wa.me/525511111111",
+      instagram: "https://www.instagram.com/eleven",
+    });
+  });
+
+  it("acepta instagram.com sin www", () => {
+    expect(attentionLinks({ ...base, instagram_url: "https://instagram.com/eleven" }).instagram).toBe(
+      "https://instagram.com/eleven",
+    );
+  });
+
+  it("un WhatsApp que no es wa.me queda en null", () => {
+    const links = attentionLinks({
+      ...base,
+      attention: attention({ whatsapp_url: "http://evil", boutique_whatsapp_url: "https://wa.me.evil.com/1" }),
+    });
+    expect(links.whatsapp).toBeNull();
+    expect(links.boutique).toBeNull();
+  });
+
+  it("un Instagram de otro sitio queda en null", () => {
+    expect(attentionLinks({ ...base, instagram_url: "https://evil.com/x" }).instagram).toBeNull();
+    expect(attentionLinks({ ...base, instagram_url: "https://instagram.com.evil.com/x" }).instagram).toBeNull();
+  });
+
+  it("sin attention (API anterior) los tres son null", () => {
+    expect(attentionLinks(base)).toEqual({ whatsapp: null, boutique: null, instagram: null });
   });
 });

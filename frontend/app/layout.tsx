@@ -5,6 +5,7 @@ import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { PublicChrome } from "@/components/PublicChrome";
 import { getBrands, getCategories, getSettings, soft } from "@/lib/api";
+import { attentionLinks } from "@/lib/home";
 import { categoryHref, stockedCategories } from "@/lib/categories";
 import { safeImageSrc } from "@/lib/images";
 import { brandHref } from "@/lib/url";
@@ -66,6 +67,7 @@ export default async function RootLayout({
     .slice(0, 12)
     .map((brand) => ({ href: brandHref(brand.slug), label: brand.name }));
   const demo = settings?.demo_mode ?? false;
+  const instagram = settings ? attentionLinks(settings).instagram : null;
 
   return (
     <html
@@ -95,10 +97,11 @@ export default async function RootLayout({
                 )}
                 categories={menuCategories}
                 houses={menuHouses}
+                instagramUrl={instagram}
               />
             </div>
           }
-          footer={<Footer />}
+          footer={<Footer instagramUrl={instagram} />}
         >
           {children}
         </PublicChrome>
