@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   categoryHref,
   categoryTiles,
+  brandOptions,
   childCategories,
   filterOptions,
   sortOptions,
@@ -122,5 +123,35 @@ describe("opciones del catálogo", () => {
         current: true,
       },
     ]);
+  });
+});
+
+describe("brandOptions", () => {
+  const brands = [
+    { slug: "prada", name: "Prada" },
+    { slug: "acne-studios", name: "Acne Studios" },
+  ];
+
+  it("pone «Todas las marcas» primero y marca como actual si no hay marca", () => {
+    const options = brandOptions("/tienda/ropa", brands, undefined, undefined);
+    expect(options[0]).toEqual({
+      href: "/tienda/ropa",
+      label: "Todas las marcas",
+      current: true,
+    });
+    expect(options).toHaveLength(3);
+    expect(options.slice(1).every((option) => !option.current)).toBe(true);
+  });
+
+  it("conserva el orden elegido en los href", () => {
+    const options = brandOptions("/tienda", brands, "prada", "recent");
+    expect(options[0]?.href).toBe("/tienda?sort=recent");
+    expect(options[0]?.current).toBe(false);
+    expect(options[1]).toEqual({
+      href: "/tienda?brand=prada&sort=recent",
+      label: "Prada",
+      current: true,
+    });
+    expect(options[2]?.href).toBe("/tienda?brand=acne-studios&sort=recent");
   });
 });

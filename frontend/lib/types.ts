@@ -26,6 +26,7 @@ export type Category = {
   name: string;
   parent_slug: string | null;
   product_count: number;
+  cover_url?: string | null; // solo departamentos
 };
 
 export type ProductCard = {

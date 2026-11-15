@@ -108,6 +108,12 @@ export const getProducts = (query?: ProductQuery) =>
 
 export const getProduct = (slug: string) => request<ProductDetail>(`/products/${seg(slug)}`);
 
+export type BrandFacet = { slug: string; name: string; product_count: number };
+
+/** Marcas con piezas, opcionalmente dentro de una categoría. */
+export const getBrandFacets = async (category?: string): Promise<BrandFacet[]> =>
+  (await requestList<ItemList<BrandFacet>>("/brand-facets", { category })).items;
+
 export const getNovedades = (query?: { page?: number; page_size?: number }) =>
   requestList<Paginated<ProductCard>>("/novedades", query);
 

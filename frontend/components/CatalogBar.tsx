@@ -19,13 +19,15 @@ function CloseIcon() {
   );
 }
 
+type Group = { title: string; options: CatalogOption[] };
+
 function Sheet({
   title,
-  options,
+  groups,
   sheet,
 }: {
   title: string;
-  options: CatalogOption[];
+  groups: Group[];
   sheet: React.RefObject<HTMLDialogElement | null>;
 }) {
   const close = () => sheet.current?.close();
@@ -50,21 +52,28 @@ function Sheet({
             Cerrar
           </button>
         </div>
-        <ul className="grid gap-x-10 gap-y-1 sm:grid-cols-2 md:grid-cols-3">
-          {options.map((option) => (
-            <li key={option.href}>
-              <Link
-                href={option.href}
-                scroll={false}
-                onClick={close}
-                aria-current={option.current ? "page" : undefined}
-                className="drawer-link label inline-flex min-h-10 items-center text-[0.8125rem] tracking-[0.14em]"
-              >
-                {option.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
+        {groups.map((group) => (
+          <section key={group.title} className="flex flex-col gap-3">
+            {groups.length > 1 ? (
+              <h3 className="label muted">{group.title}</h3>
+            ) : null}
+            <ul className="grid gap-x-10 gap-y-1 sm:grid-cols-2 md:grid-cols-3">
+              {group.options.map((option) => (
+                <li key={option.href}>
+                  <Link
+                    href={option.href}
+                    scroll={false}
+                    onClick={close}
+                    aria-current={option.current ? "page" : undefined}
+                    className="drawer-link label inline-flex min-h-10 items-center text-[0.8125rem] tracking-[0.14em]"
+                  >
+                    {option.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
       </div>
     </dialog>
   );
@@ -73,21 +82,30 @@ function Sheet({
 /**
  * Barra flotante abajo al centro con «Filtros · Ordenar». Cada botón abre una hoja inferior
  * (<dialog>: foco atrapado, Esc y retorno de foco nativos). Un grupo sin opciones no se muestra.
+ * «Filtros» reúne los grupos «Subcategoría» (`filters`) y «Marca» (`brands`).
  */
 export function CatalogBar({
   filters,
+  brands = [],
   sorts,
 }: {
   filters: CatalogOption[];
+  brands?: CatalogOption[];
   sorts: CatalogOption[];
 }) {
   const filterSheet = useRef<HTMLDialogElement>(null);
   const sortSheet = useRef<HTMLDialogElement>(null);
-  const showFilters = filters.length > 1;
+  const groups: Group[] = [
+    { title: "Subcategoría", options: filters },
+    { title: "Marca", options: brands },
+  ].filter((group) => group.options.length > 1);
+  const showFilters = groups.length > 0;
   const showSorts = sorts.length > 1;
   if (!showFilters && !showSorts) return null;
 
-  const active = filters.find((option, index) => option.current && index > 0);
+  const activeOf = (options: CatalogOption[]) =>
+    options.find((option, index) => option.current && index > 0);
+  const active = activeOf(brands) ?? activeOf(filters);
   const button =
     "label inline-flex min-h-11 cursor-pointer items-center gap-2 px-6";
 
@@ -124,10 +142,14 @@ export function CatalogBar({
         </div>
       </div>
       {showFilters ? (
-        <Sheet title="Filtros" options={filters} sheet={filterSheet} />
+        <Sheet title="Filtros" groups={groups} sheet={filterSheet} />
       ) : null}
       {showSorts ? (
-        <Sheet title="Ordenar" options={sorts} sheet={sortSheet} />
+        <Sheet
+          title="Ordenar"
+          groups={[{ title: "Ordenar", options: sorts }]}
+          sheet={sortSheet}
+        />
       ) : null}
     </>
   );

@@ -98,3 +98,45 @@ export function filterOptions(
     })),
   ];
 }
+
+/** «Todas las marcas» más una opción por marca; `?brand=` y el orden elegido se conservan. */
+export function brandOptions(
+  path: string,
+  facets: { slug: string; name: string }[],
+  current: string | undefined,
+  sort: ProductSort | undefined,
+): CatalogOption[] {
+  return [
+    {
+      href: withParams(path, { sort }),
+      label: "Todas las marcas",
+      current: !current,
+    },
+    ...facets.map((facet) => ({
+      href: withParams(path, { brand: facet.slug, sort }),
+      label: facet.name,
+      current: current === facet.slug,
+    })),
+  ];
+}
+
+/** «Todo [departamento]» más una opción por subcategoría; la subcategoría va en la ruta. */
+export function subcategoryOptions(
+  department: { slug: string; name: string },
+  children: { slug: string; name: string }[],
+  current: string | undefined,
+  params: { brand?: string; sort?: ProductSort },
+): CatalogOption[] {
+  return [
+    {
+      href: withParams(departmentHref(department.slug), params),
+      label: `Todo ${department.name}`,
+      current: !current,
+    },
+    ...children.map((child) => ({
+      href: withParams(departmentHref(department.slug, child.slug), params),
+      label: child.name,
+      current: current === child.slug,
+    })),
+  ];
+}
