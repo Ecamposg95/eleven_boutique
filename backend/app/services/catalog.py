@@ -1,8 +1,10 @@
 """Read side of the public API: queries plus the mapping to explicit response schemas."""
 
+import logging
 from typing import Literal
 
 from sqlalchemy import ColumnElement, Select, func, or_, select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, contains_eager, joinedload, selectinload
 
 from app.config import Settings
@@ -26,6 +28,8 @@ from app.schemas import public as schemas
 from app.services.text import escape_like, normalize
 from app.services.visibility import brand_visible, product_visible, record_visible
 from app.services.whatsapp import Piece, build_consult_url, build_selection_url, normalize_number
+
+logger = logging.getLogger(__name__)
 
 ProductSort = Literal["recent", "name", "display"]
 SEARCH_PRODUCT_LIMIT = 60
@@ -309,9 +313,6 @@ def consult_selection(db: Session, slugs: list[str], settings: Settings) -> sche
         digits = lines[product.brand.is_premium] if product else None
         if digits is not None:
             groups.setdefault(digits, []).append(product)
-            # Interés anónimo por pieza; se reenvía a Atlas ONE en la sincronización.
-            db.add(CatalogEvent(type="selection", product_id=product.id))
-    db.commit()
 
     def piece(product: Product) -> Piece:
         unbranded = product.brand.kind == KIND_CLASSIFICATION
@@ -323,7 +324,7 @@ def consult_selection(db: Session, slugs: list[str], settings: Settings) -> sche
             sku=product.sku,
         )
 
-    return schemas.SelectionConsult(
+    result = schemas.SelectionConsult(
         lines=[
             schemas.SelectionLine(
                 url=build_selection_url(
@@ -336,6 +337,14 @@ def consult_selection(db: Session, slugs: list[str], settings: Settings) -> sche
         ],
         missing_slugs=[slug for slug in ordered if slug not in found],
     )
+    # Interés anónimo por pieza (se reenvía a Atlas ONE); nunca debe romper la respuesta.
+    try:
+        db.add_all(CatalogEvent(type="selection", product_id=p.id) for ps in groups.values() for p in ps)
+        db.commit()
+    except SQLAlchemyError:
+        db.rollback()
+        logger.warning("no se pudieron guardar los eventos de selección", exc_info=True)
+    return result
 
 
 def find_visible_product(db: Session, slug: str, demo_mode: bool) -> Product | None:

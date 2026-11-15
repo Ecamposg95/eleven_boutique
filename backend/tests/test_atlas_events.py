@@ -91,7 +91,7 @@ def test_server_error_stops_run_but_keeps_earlier_ones(db):
 
     def handler(request):
         calls.append(1)
-        return httpx.Response(201 if len(calls) == 1 else 400, json={})
+        return httpx.Response(201 if len(calls) == 1 else 503, json={})
 
     assert forward_events(db, make(handler), NOW) == {"enviados": 1, "descartados": 0, "error": 1}
     db.refresh(first), db.refresh(second)
@@ -113,3 +113,36 @@ def test_repeat_does_not_resend(db):
     forward_events(db, client, NOW)
     assert forward_events(db, client, NOW) == {"enviados": 0, "descartados": 0, "error": 0}
     assert len(sent) == 1
+
+
+def test_400_is_discarded_and_next_event_is_sent(db):
+    bad = event(db, piece(db, "Prada", "a"), age=timedelta(hours=3))
+    good = event(db, piece(db, "Gucci", "b"), age=timedelta(hours=2))
+    calls = []
+
+    def handler(request):
+        calls.append(1)
+        return httpx.Response(400 if len(calls) == 1 else 201, json={})
+
+    assert forward_events(db, make(handler), NOW) == {"enviados": 1, "descartados": 1, "error": 0}
+    db.refresh(bad), db.refresh(good)
+    assert bad.forwarded_at and good.forwarded_at
+
+
+def test_5xx_after_retries_stops_run_leaving_rest_unmarked(db):
+    first = event(db, piece(db, "Prada", "a"), age=timedelta(hours=3))
+    second = event(db, piece(db, "Gucci", "b"), age=timedelta(hours=2))
+    assert forward_events(db, make(lambda r: httpx.Response(503, json={})), NOW) == {
+        "enviados": 0, "descartados": 0, "error": 1,
+    }
+    db.refresh(first), db.refresh(second)
+    assert first.forwarded_at is None and second.forwarded_at is None
+
+
+def test_more_than_one_batch(db):
+    p = piece(db)
+    for i in range(150):
+        event(db, p, age=timedelta(minutes=i + 1))
+    sent, handler = recorder()
+    assert forward_events(db, make(handler), NOW)["enviados"] == 150
+    assert len(sent) == 150

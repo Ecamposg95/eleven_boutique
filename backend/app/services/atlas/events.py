@@ -55,7 +55,8 @@ def forward_events(db: Session, client: AtlasClient, now: datetime) -> dict[str,
                     stop = True
                     break
                 except AtlasError as exc:
-                    if exc.status == 422:
+                    # 4xx permanente (salvo auth/límite): el evento envenena la cola, se descarta.
+                    if exc.status is not None and 400 <= exc.status < 500 and exc.status not in (401, 403, 429):
                         result["descartados"] += 1
                     else:
                         result["error"] += 1
