@@ -32,7 +32,7 @@ def sync_brands(db: Session, atlas_brands: list[dict]) -> dict[str, int]:
     maps = {row.atlas_brand_id: row for row in db.scalars(select(AtlasBrandMap))}
     counts = {"ligadas": 0, "creadas_borrador": 0}
     for item in atlas_brands:
-        if item.get("deleted") or not normalize(item["name"]):
+        if item.get("deleted") or not normalize(item.get("name") or ""):
             continue
         row = maps.get(item["id"])
         if row is None:
@@ -88,8 +88,10 @@ def sync_departments(db: Session, atlas_departments: list[dict]) -> dict[str, in
             row.category_id = None
             counts["desligadas"] += 1
     incoming = {item["id"] for item in atlas_departments}
+    # Una respuesta sin departamentos vivos (vacía o solo lápidas) no prueba ausencia.
+    live = any(not item.get("deleted") for item in atlas_departments)
     for dept_id, row in maps.items():
-        if dept_id not in incoming and row.category_id is not None:
+        if live and dept_id not in incoming and row.category_id is not None:
             row.category_id = None
             counts["desligadas"] += 1
     db.flush()

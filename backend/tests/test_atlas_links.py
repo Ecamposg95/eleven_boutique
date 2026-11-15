@@ -204,3 +204,40 @@ def test_resolver_constant_queries(db):
     finally:
         event.remove(engine, "before_cursor_execute", listener)
     assert len(seen) == 0
+
+
+def test_empty_or_tombstone_list_does_not_wipe_links(db):
+    uno, dos = make_category(db, "Uno"), make_category(db, "Dos")
+    db.add(
+        AtlasCategoryMap(atlas_department_id="d1", atlas_name="Uno", category_id=uno.id)
+    )
+    db.add(
+        AtlasCategoryMap(atlas_department_id="d2", atlas_name="Dos", category_id=dos.id)
+    )
+    db.flush()
+    assert sync_departments(db, [])["desligadas"] == 0
+    counts = sync_departments(db, [_dept("d1", "Uno", deleted=True)])
+    assert counts["desligadas"] == 1
+    rows = {r.atlas_department_id: r for r in db.scalars(select(AtlasCategoryMap))}
+    assert rows["d1"].category_id is None and rows["d2"].category_id == dos.id
+
+
+def test_resolver_category_paths(db):
+    from app.services.atlas.links import Resolver
+
+    cat = make_category(db, "Ropa")
+    db.add(
+        AtlasCategoryMap(
+            atlas_department_id="d1", atlas_name="Ropa", category_id=cat.id
+        )
+    )
+    db.add(AtlasCategoryMap(atlas_department_id="d2", atlas_name="Sueltos"))
+    db.flush()
+    resolver = Resolver(db)
+    assert resolver.category("d1") == (cat, None)
+    assert resolver.category("d2") == (None, "categoría sin ligar: Sueltos")
+
+
+def test_brand_without_name_skipped(db):
+    sync_brands(db, [{"id": "b1", "deleted": False}])
+    assert _row(db, "b1") is None
