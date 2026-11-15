@@ -110,6 +110,7 @@ def _counts() -> dict[str, int]:
         "eventos_enviados": 0,
         "eventos_descartados": 0,
         "eventos_error": 0,
+        "eventos_pendientes": 0,
         "archivado_omitido": 0,
     }
 
@@ -166,6 +167,7 @@ def _execute(db: Session, client: AtlasClient, kind: SyncKind, now: Callable[[],
         counts["eventos_enviados"] = events["enviados"]
         counts["eventos_descartados"] = events["descartados"]
         counts["eventos_error"] = events["error"]
+        counts["eventos_pendientes"] = events["pendientes"]
     except Exception as exc:
         db.rollback()
         error = _describe(exc)

@@ -22,6 +22,7 @@ export function describeCounts(counts: Record<string, number>): string[] {
   if (n("borradores")) out.push(plural(n("borradores"), "borrador", "borradores"));
   if (n("disponibilidad")) out.push(`${n("disponibilidad")} con disponibilidad actualizada`);
   if (n("eventos_enviados")) out.push(plural(n("eventos_enviados"), "evento enviado", "eventos enviados"));
+  if (n("eventos_pendientes")) out.push(plural(n("eventos_pendientes"), "evento en espera", "eventos en espera"));
   if (n("archivado_omitido")) out.push("Archivado omitido");
   return out;
 }

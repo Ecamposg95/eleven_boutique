@@ -40,7 +40,7 @@ def piece(db, brand_name="Hermès", ext="inv-1", **brand):
 def test_premium_click_goes_to_boutique(db):
     e = event(db, piece(db, is_premium=True))
     sent, handler = recorder()
-    assert forward_events(db, make(handler), NOW) == {"enviados": 1, "descartados": 0, "error": 0}
+    assert forward_events(db, make(handler), NOW) == {"enviados": 1, "descartados": 0, "error": 0, "pendientes": 0}
     [(payload, key)] = sent
     assert payload == {
         "source": "web_whatsapp_click",
@@ -69,7 +69,7 @@ def test_old_event_without_external_id_or_product_are_discarded_unsent(db):
     local = event(db, make_product(db, make_brand(db, "Gucci"), make_category(db, "C2"), "L", slug="l"))
     orphan = event(db, None)
     sent, handler = recorder()
-    assert forward_events(db, make(handler), NOW) == {"enviados": 0, "descartados": 3, "error": 0}
+    assert forward_events(db, make(handler), NOW) == {"enviados": 0, "descartados": 3, "error": 0, "pendientes": 0}
     assert sent == []
     for e in (old, local, orphan):
         db.refresh(e)
@@ -79,7 +79,7 @@ def test_old_event_without_external_id_or_product_are_discarded_unsent(db):
 def test_forbidden_leaves_events_unmarked_and_does_not_raise(db):
     e = event(db, piece(db))
     sent, handler = recorder(403)
-    assert forward_events(db, make(handler), NOW) == {"enviados": 0, "descartados": 0, "error": 1}
+    assert forward_events(db, make(handler), NOW) == {"enviados": 0, "descartados": 0, "error": 1, "pendientes": 1}
     db.refresh(e)
     assert e.forwarded_at is None
 
@@ -93,7 +93,7 @@ def test_server_error_stops_run_but_keeps_earlier_ones(db):
         calls.append(1)
         return httpx.Response(201 if len(calls) == 1 else 503, json={})
 
-    assert forward_events(db, make(handler), NOW) == {"enviados": 1, "descartados": 0, "error": 1}
+    assert forward_events(db, make(handler), NOW) == {"enviados": 1, "descartados": 0, "error": 1, "pendientes": 1}
     db.refresh(first), db.refresh(second)
     assert first.forwarded_at is not None and second.forwarded_at is None
 
@@ -101,7 +101,7 @@ def test_server_error_stops_run_but_keeps_earlier_ones(db):
 def test_422_discards_the_event(db):
     e = event(db, piece(db))
     sent, handler = recorder(422)
-    assert forward_events(db, make(handler), NOW) == {"enviados": 0, "descartados": 1, "error": 0}
+    assert forward_events(db, make(handler), NOW) == {"enviados": 0, "descartados": 1, "error": 0, "pendientes": 0}
     db.refresh(e)
     assert e.forwarded_at is not None
 
@@ -111,7 +111,7 @@ def test_repeat_does_not_resend(db):
     sent, handler = recorder()
     client = make(handler)
     forward_events(db, client, NOW)
-    assert forward_events(db, client, NOW) == {"enviados": 0, "descartados": 0, "error": 0}
+    assert forward_events(db, client, NOW) == {"enviados": 0, "descartados": 0, "error": 0, "pendientes": 0}
     assert len(sent) == 1
 
 
@@ -124,7 +124,7 @@ def test_400_is_discarded_and_next_event_is_sent(db):
         calls.append(1)
         return httpx.Response(400 if len(calls) == 1 else 201, json={})
 
-    assert forward_events(db, make(handler), NOW) == {"enviados": 1, "descartados": 1, "error": 0}
+    assert forward_events(db, make(handler), NOW) == {"enviados": 1, "descartados": 1, "error": 0, "pendientes": 0}
     db.refresh(bad), db.refresh(good)
     assert bad.forwarded_at and good.forwarded_at
 
@@ -133,16 +133,48 @@ def test_5xx_after_retries_stops_run_leaving_rest_unmarked(db):
     first = event(db, piece(db, "Prada", "a"), age=timedelta(hours=3))
     second = event(db, piece(db, "Gucci", "b"), age=timedelta(hours=2))
     assert forward_events(db, make(lambda r: httpx.Response(503, json={})), NOW) == {
-        "enviados": 0, "descartados": 0, "error": 1,
+        "enviados": 0, "descartados": 0, "error": 1, "pendientes": 2,
     }
     db.refresh(first), db.refresh(second)
     assert first.forwarded_at is None and second.forwarded_at is None
 
 
-def test_more_than_one_batch(db):
+def test_at_most_100_posts_per_run_rest_waits(db):
     p = piece(db)
     for i in range(150):
         event(db, p, age=timedelta(minutes=i + 1))
     sent, handler = recorder()
-    assert forward_events(db, make(handler), NOW)["enviados"] == 150
+    client = make(handler)
+    first = forward_events(db, client, NOW)
+    assert (first["enviados"], first["pendientes"]) == (100, 50)
+    assert len(sent) == 100
+    second = forward_events(db, client, NOW)
+    assert (second["enviados"], second["pendientes"]) == (50, 0)
     assert len(sent) == 150
+
+
+def test_discards_do_not_count_toward_the_cap(db):
+    p = piece(db)
+    orphan = piece(db, "Prada", "x")
+    orphan.external_inventory_id = None
+    db.commit()
+    for i in range(30):
+        event(db, orphan, age=timedelta(minutes=200 + i))
+    for i in range(100):
+        event(db, p, age=timedelta(minutes=i + 1))
+    sent, handler = recorder()
+    assert forward_events(db, make(handler), NOW) == {
+        "enviados": 100, "descartados": 30, "error": 0, "pendientes": 0,
+    }
+
+
+def test_404_stops_and_keeps_events_queued(db):
+    first = event(db, piece(db, "Prada", "a"), age=timedelta(hours=3))
+    second = event(db, piece(db, "Gucci", "b"), age=timedelta(hours=2))
+    sent, handler = recorder(404)
+    assert forward_events(db, make(handler), NOW) == {
+        "enviados": 0, "descartados": 0, "error": 1, "pendientes": 2,
+    }
+    assert len(sent) == 1
+    db.refresh(first), db.refresh(second)
+    assert first.forwarded_at is None and second.forwarded_at is None

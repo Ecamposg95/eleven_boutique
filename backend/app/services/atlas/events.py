@@ -2,13 +2,16 @@
 
 from datetime import datetime, timedelta
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models import KIND_CLASSIFICATION, CatalogEvent
 from app.services.atlas.client import AtlasClient, AtlasError, AtlasForbidden, fmt_since
 
 BATCH = 100
+# Atlas admite 120 llamadas por minuto por llave y el reenvío corre dentro del candado de la
+# sincronización: un rezago grande no debe frenar el catálogo. El resto espera a la siguiente corrida.
+MAX_POSTS_PER_RUN = 100
 # Atlas rechaza (422) fechas de hace más de 7 días; se descarta con 1 h de margen.
 MAX_AGE = timedelta(days=7) - timedelta(hours=1)
 SOURCES = {"whatsapp_click": "web_whatsapp_click", "selection": "web_selection"}
@@ -31,8 +34,18 @@ def _payload(event: CatalogEvent, now: datetime) -> dict | None:
     }
 
 
+def _pending(db: Session) -> int:
+    return db.scalar(
+        select(func.count())
+        .select_from(CatalogEvent)
+        .where(CatalogEvent.type.in_(SOURCES), CatalogEvent.forwarded_at.is_(None))
+    ) or 0
+
+
 def forward_events(db: Session, client: AtlasClient, now: datetime) -> dict[str, int]:
-    result = {"enviados": 0, "descartados": 0, "error": 0}
+    """Reenvía en orden de llegada, a lo más MAX_POSTS_PER_RUN llamadas; los descartes no cuentan."""
+    result = {"enviados": 0, "descartados": 0, "error": 0, "pendientes": 0}
+    posts = 0
     while True:
         batch = db.scalars(
             select(CatalogEvent)
@@ -48,6 +61,10 @@ def forward_events(db: Session, client: AtlasClient, now: datetime) -> dict[str,
             if payload is None:
                 result["descartados"] += 1
             else:
+                if posts >= MAX_POSTS_PER_RUN:
+                    stop = True
+                    break
+                posts += 1
                 try:
                     client.post_lead(payload, str(event.id))
                 except AtlasForbidden:
@@ -55,8 +72,14 @@ def forward_events(db: Session, client: AtlasClient, now: datetime) -> dict[str,
                     stop = True
                     break
                 except AtlasError as exc:
-                    # 4xx permanente (salvo auth/límite): el evento envenena la cola, se descarta.
-                    if exc.status is not None and 400 <= exc.status < 500 and exc.status not in (401, 403, 429):
+                    # 4xx permanente (salvo auth, canal apagado o límite): el evento envenena la
+                    # cola, se descarta. 401/403/404 son de configuración: el evento espera.
+                    if exc.status is not None and 400 <= exc.status < 500 and exc.status not in (
+                        401,
+                        403,
+                        404,
+                        429,
+                    ):
                         result["descartados"] += 1
                     else:
                         result["error"] += 1
@@ -67,4 +90,5 @@ def forward_events(db: Session, client: AtlasClient, now: datetime) -> dict[str,
             event.forwarded_at = now
         db.commit()
         if stop:
+            result["pendientes"] = _pending(db)
             return result

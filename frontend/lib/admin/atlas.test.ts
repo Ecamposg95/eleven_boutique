@@ -28,6 +28,7 @@ describe("describeCounts", () => {
   });
   it("sin cambios", () => expect(describeCounts({ creadas: 0 })).toEqual([]));
   it("archivadas", () => expect(describeCounts({ bajas: 2 })).toEqual(["2 archivadas"]));
+  it("eventos en espera", () => expect(describeCounts({ eventos_pendientes: 40 })).toEqual(["40 eventos en espera"]));
 });
 
 describe("startSync", () => {
