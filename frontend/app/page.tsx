@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BrandWall } from "@/components/BrandWall";
 import { CatalogImage } from "@/components/CatalogImage";
-import { CategoryRail } from "@/components/CategoryRail";
+import { DepartmentTabs } from "@/components/DepartmentTabs";
 import { HeroSlides } from "@/components/HeroSlides";
 import { HouseShowroom } from "@/components/HouseShowroom";
-import { ProductCard } from "@/components/ProductCard";
+import { NewArrivals } from "@/components/NewArrivals";
 import { Reveal } from "@/components/Reveal";
 import { firstParagraph } from "@/components/TextBody";
 import {
@@ -20,13 +20,14 @@ import {
 } from "@/lib/api";
 import {
   closingImage,
+  departmentPanels,
   giantWord,
   heroPhotos,
   stripEntries,
   type HeroPhoto,
   type StripEntry,
 } from "@/lib/home";
-import { categoryTiles, stockedCategories } from "@/lib/categories";
+import { topCategories } from "@/lib/categories";
 import { safeImageSrc } from "@/lib/images";
 import { splitShowroom } from "@/lib/showroom";
 import { DEFAULT_DESCRIPTION, SITE_NAME } from "@/lib/seo";
@@ -61,7 +62,10 @@ function HeroText({
         </p>
       ) : null}
       <span aria-hidden="true" className="mt-6 block h-px w-8 bg-current" />
-      <Link href="/tienda/marcas" className="label cta mt-3 self-start">
+      <Link href="/tienda" className="label cta mt-3 self-start">
+        Entrar a la tienda
+      </Link>
+      <Link href="/tienda/marcas" className="label cta muted self-start">
         Explorar marcas
       </Link>
     </>
@@ -297,29 +301,35 @@ function Closing({ body, image }: { body: string; image: string | null }) {
   );
 }
 
-/** Una pieza de muestra y el total por categoría principal; si el catálogo falla, no hay carrusel. */
+/**
+ * Hasta ocho piezas y el total por departamento principal; los que tienen portada entran aunque
+ * no tengan piezas. Si el catálogo falla, no hay departamentos.
+ */
 async function categorySamples() {
   const categories = await soft(getCategories());
-  if (!categories) return [];
-  return Promise.all(
-    stockedCategories(categories).map(async (category) => {
-      const page = await soft(
-        getProducts({ category: category.slug, page_size: 4 }),
-      );
-      return { category, total: page?.total ?? 0, items: page?.items ?? [] };
-    }),
+  if (!categories) return null;
+  const samples = await Promise.all(
+    topCategories(categories)
+      .filter((category) => category.product_count > 0 || category.cover_url)
+      .map(async (category) => {
+        const page = await soft(
+          getProducts({ category: category.slug, page_size: 8 }),
+        );
+        return { category, total: page?.total ?? 0, items: page?.items ?? [] };
+      }),
   );
+  return { categories, samples };
 }
 
 export default async function HomePage() {
   // Sin ajustes no hay portada posible: lo recoge app/error.tsx.
   const settings = await getSettings();
   // Cada sección es opcional: si su dato falla, se oculta como si estuviera vacía.
-  const [brands, featuredBrands, novedades, collections, lookbooks, samples] =
+  const [brands, featuredBrands, novedades, collections, lookbooks, sampled] =
     await Promise.all([
       soft(getBrands()),
       soft(getBrands({ featured: true })),
-      soft(getNovedades({ page_size: 4 })),
+      soft(getNovedades({ page_size: 12 })),
       soft(getCollections()),
       soft(getLookbooks()),
       categorySamples(),
@@ -334,7 +344,9 @@ export default async function HomePage() {
   const newest = novedades?.items ?? [];
   const { stars, rest } = splitShowroom(allBrands, featuredBrands ?? []);
   const boutique = settings.boutique.body?.trim();
-  const tiles = categoryTiles(newest, samples);
+  const panels = sampled
+    ? departmentPanels(sampled.categories, sampled.samples)
+    : [];
   const strip = stripEntries({
     lookbooks: allLookbooks,
     novedades: newest,
@@ -350,7 +362,11 @@ export default async function HomePage() {
         <TypeHero settings={settings} />
       )}
 
-      {tiles.length > 1 ? <CategoryRail tiles={tiles} /> : null}
+      <DepartmentTabs panels={panels} />
+
+      <NewArrivals products={newest} />
+
+      {/* Task 8: la franja de detalle va aquí. */}
 
       {strip.length > 0 ? <Strip entries={strip} /> : null}
 
@@ -365,27 +381,6 @@ export default async function HomePage() {
               {settings.intro}
             </p>
           </Reveal>
-        </section>
-      ) : null}
-
-      {newest.length > 0 ? (
-        <section aria-labelledby="novedades-t" className="section page pt-0">
-          <SectionHead
-            id="novedades-t"
-            title="Novedades"
-            href="/tienda?sort=recent"
-            action="Ver todas"
-          />
-          <ul className="grid grid-cols-2 gap-x-3 gap-y-10 md:grid-cols-4">
-            {newest.slice(0, 4).map((product) => (
-              <li key={product.slug}>
-                <ProductCard
-                  product={product}
-                  sizes="(min-width: 1600px) 360px, (min-width: 768px) 25vw, 50vw"
-                />
-              </li>
-            ))}
-          </ul>
         </section>
       ) : null}
 
@@ -416,6 +411,8 @@ export default async function HomePage() {
           )}
         />
       ) : null}
+
+      {/* Task 8: el bloque de atención va aquí, al final. */}
     </>
   );
 }

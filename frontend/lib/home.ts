@@ -1,6 +1,8 @@
 import { safeImageSrc } from "./images";
+import { departmentHref } from "./url";
 import type {
   BrandSummary,
+  Category,
   CollectionSummary,
   LookbookSummary,
   ProductCard,
@@ -108,4 +110,40 @@ export function heroPhotos(hero: PublicSettings["hero"]): HeroPhoto[] {
     photos.push({ src, mobile: mobile && mobile !== src ? mobile : null });
   }
   return photos;
+}
+
+export type DepartmentPanel = {
+  slug: string;
+  name: string;
+  href: string;
+  cover: string | null;
+  products: ProductCard[];
+  total: number;
+};
+
+/**
+ * Un panel por departamento principal, en el orden del catálogo. Entra si tiene piezas o portada;
+ * sin ninguna de las dos no hay nada que mostrar.
+ */
+export function departmentPanels(
+  categories: Category[],
+  samples: { category: Category; items: ProductCard[]; total: number }[],
+): DepartmentPanel[] {
+  const panels: DepartmentPanel[] = [];
+  for (const category of categories) {
+    if (category.parent_slug) continue;
+    const sample = samples.find((s) => s.category.slug === category.slug);
+    const products = sample?.items ?? [];
+    const cover = safeImageSrc(category.cover_url);
+    if (products.length === 0 && !cover) continue;
+    panels.push({
+      slug: category.slug,
+      name: category.name,
+      href: departmentHref(category.slug),
+      cover,
+      products,
+      total: sample?.total ?? 0,
+    });
+  }
+  return panels;
 }
