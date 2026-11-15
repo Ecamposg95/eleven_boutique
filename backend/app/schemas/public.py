@@ -62,6 +62,13 @@ class Category(Schema):
     name: str
     parent_slug: str | None
     product_count: int  # Visible products; a parent's count includes its children.
+    cover_url: str | None
+
+
+class BrandFacet(Schema):
+    slug: str
+    name: str
+    product_count: int
 
 
 class CardBrand(Schema):
@@ -156,6 +163,21 @@ class BodyText(Schema):
     body: str | None
 
 
+class DetailBand(Schema):
+    image_url: str | None
+    mobile_image_url: str | None
+    caption: str | None
+
+
+class Attention(Schema):
+    headline: str
+    subhead: str | None
+    image_url: str | None
+    mobile_image_url: str | None
+    whatsapp_url: str | None  # wa.me with the general message; null without a general number
+    boutique_whatsapp_url: str | None  # only when the premium line differs from the general one
+
+
 class PublicSettings(Schema):
     demo_mode: bool
     whatsapp_enabled: bool
@@ -164,6 +186,9 @@ class PublicSettings(Schema):
     intro: str | None
     boutique: BodyText
     contact: BodyText
+    instagram_url: str | None
+    detail: DetailBand
+    attention: Attention
 
 
 class EventIn(BaseModel):

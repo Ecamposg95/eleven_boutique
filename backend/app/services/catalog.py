@@ -24,11 +24,18 @@ from app.models import (
 from app.schemas import public as schemas
 from app.services.text import escape_like, normalize
 from app.services.visibility import brand_visible, product_visible, record_visible
-from app.services.whatsapp import Piece, build_consult_url, build_selection_url, normalize_number
+from app.services.whatsapp import (
+    Piece,
+    build_consult_url,
+    build_general_url,
+    build_selection_url,
+    normalize_number,
+)
 
 ProductSort = Literal["recent", "name", "display"]
 SEARCH_PRODUCT_LIMIT = 60
 DEFAULT_SITE_NAME = "Eleven Boutique"
+DEFAULT_ATTENTION_HEADLINE = "Escríbenos. Te asesoramos."
 
 
 def _contains(column, normalized_query: str) -> ColumnElement[bool]:
@@ -141,9 +148,27 @@ def list_categories(db: Session, demo_mode: bool) -> list[schemas.Category]:
             name=category.name,
             parent_slug=slug_by_id.get(category.parent_id),
             product_count=totals.get(category.id, 0),
+            cover_url=category.cover_url,
         )
         for category in categories
     ]
+
+
+def list_brand_facets(
+    db: Session, demo_mode: bool, *, category: str | None = None
+) -> list[schemas.BrandFacet]:
+    """Visible brands with visible pieces in the category and its children (all, without one)."""
+    stmt = (
+        select(Brand.slug, Brand.name, func.count())
+        .select_from(Product)
+        .join(Product.brand)
+        .where(product_visible(demo_mode), brand_visible(demo_mode))
+        .group_by(Brand.id, Brand.slug, Brand.name)
+    )
+    if category:
+        stmt = stmt.where(Product.category_id.in_(_category_and_children(Category.slug == category)))
+    rows = sorted(db.execute(stmt).all(), key=lambda row: normalize(row.name))
+    return [schemas.BrandFacet(slug=r.slug, name=r.name, product_count=r[2]) for r in rows]
 
 
 def _category_and_children(column_match: ColumnElement[bool]) -> Select:
@@ -524,4 +549,24 @@ def public_settings(db: Session, settings: Settings) -> schemas.PublicSettings:
         intro=pick("intro"),
         boutique=schemas.BodyText(body=pick("boutique_body")),
         contact=schemas.BodyText(body=pick("contact_body")),
+        instagram_url=pick("instagram_url"),
+        detail=schemas.DetailBand(
+            image_url=pick("detail_image_url"),
+            mobile_image_url=pick("detail_mobile_image_url"),
+            caption=pick("detail_caption"),
+        ),
+        attention=_attention(db, settings, pick),
+    )
+
+
+def _attention(db: Session, settings: Settings, pick) -> schemas.Attention:
+    general = effective_whatsapp_digits(db, settings)
+    premium = effective_whatsapp_digits(db, settings, premium=True)
+    return schemas.Attention(
+        headline=pick("attention_headline") or DEFAULT_ATTENTION_HEADLINE,
+        subhead=pick("attention_subhead"),
+        image_url=pick("attention_image_url"),
+        mobile_image_url=pick("attention_mobile_image_url"),
+        whatsapp_url=build_general_url(general) if general else None,
+        boutique_whatsapp_url=build_general_url(premium) if premium and premium != general else None,
     )

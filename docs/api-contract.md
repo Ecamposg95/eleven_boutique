@@ -21,7 +21,7 @@ type BrandSummary = {
 };
 type BrandDetail = BrandSummary & { description: string | null; editorial_image_url: string | null };
 
-type Category = { slug: string; name: string; parent_slug: string | null; product_count: number }; // piezas visibles; la principal suma las de sus hijas
+type Category = { slug: string; name: string; parent_slug: string | null; product_count: number; cover_url: string | null }; // piezas visibles; la principal suma las de sus hijas
 
 type ProductCard = {
   slug: string; name: string;
@@ -52,7 +52,17 @@ type PublicSettings = {
   intro: string | null;
   boutique: { body: string | null };
   contact: { body: string | null };
+  instagram_url: string | null;
+  detail: { image_url: string | null; mobile_image_url: string | null; caption: string | null };
+  attention: {
+    headline: string;                       // por defecto «Escríbenos. Te asesoramos.»
+    subhead: string | null;
+    image_url: string | null; mobile_image_url: string | null;
+    whatsapp_url: string | null;            // wa.me con el mensaje general; null sin número general
+    boutique_whatsapp_url: string | null;   // solo si la línea premium existe y difiere de la general
+  };
 };
+type BrandFacet = { slug: string; name: string; product_count: number };
 ```
 
 ## Endpoints
@@ -63,6 +73,7 @@ type PublicSettings = {
 | GET | `/brands` | `{items: BrandSummary[]}` | Sin paginar, orden alfabético por `name`. `?featured=true`, `?q=` (nombre y alias) |
 | GET | `/brands/{slug}` | `BrandDetail` | También resuelve slugs de alias (`bape` → la marca) |
 | GET | `/categories` | `{items: Category[]}` | |
+| GET | `/brand-facets` | `{items: BrandFacet[]}` | `?category=` (slug; incluye sus hijas). Solo marcas visibles con piezas visibles, orden por `name`; sin «Sin marca» |
 | GET | `/products` | paginado `ProductCard` | `?brand=`, `?category=`, `?featured=true`, `?sort=recent\|name\|display` (default `display`) |
 | GET | `/products/{slug}` | `ProductDetail` | |
 | GET | `/novedades` | paginado `ProductCard` | Por `commercial_added_at` desc; excluye productos sin esa fecha |

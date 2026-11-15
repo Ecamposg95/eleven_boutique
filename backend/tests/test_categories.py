@@ -30,12 +30,13 @@ def test_endpoint_returns_the_tree_in_order(db, public_client):
     seed_categories(db)
     db.commit()
     items = public_client.get("/api/v1/categories").json()["items"]
-    assert items[0] == {"slug": "ropa", "name": "Ropa", "parent_slug": None, "product_count": 0}
+    assert items[0] == {"slug": "ropa", "name": "Ropa", "parent_slug": None, "product_count": 0, "cover_url": None}
     assert items[1] == {
         "slug": "camisetas",
         "name": "Camisetas",
         "parent_slug": "ropa",
         "product_count": 0,
+        "cover_url": None,
     }
     by_name = {item["name"]: item for item in items}
     for parent, children in EXPECTED.items():

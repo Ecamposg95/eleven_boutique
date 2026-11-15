@@ -1,3 +1,4 @@
+import re
 from urllib.parse import parse_qs, urlsplit
 
 import pytest
@@ -117,10 +118,15 @@ def test_invalid_stored_number_does_not_fall_back_to_env(db, make_client):
     assert client.get("/api/v1/products/pieza").json()["consult_url"] is None
 
 
+def outside_links(text: str) -> str:
+    """The number may only appear inside the wa.me links the API builds."""
+    return re.sub(r"https://wa\.me/[^\"]*", "", text)
+
+
 def test_number_is_not_exposed_in_settings(make_client):
     body = make_client(whatsapp_number=FAKE_NUMBER).get("/api/v1/site-settings/public")
     assert body.json()["whatsapp_enabled"] is True
-    assert FAKE_DIGITS not in body.text and "0000" not in body.text
+    assert FAKE_DIGITS not in outside_links(body.text) and "0000" not in outside_links(body.text)
 
 
 # --- Premium line ----------------------------------------------------------------------
@@ -160,7 +166,7 @@ def test_only_premium_line_configured(db, make_client):
     assert consult_url(client, "playera") is None
     body = client.get("/api/v1/site-settings/public")
     assert body.json()["whatsapp_enabled"] is True
-    assert PREMIUM_DIGITS not in body.text
+    assert PREMIUM_DIGITS not in outside_links(body.text)
 
 
 def test_premium_number_is_seeded_from_env_only_when_empty(db, make_settings):

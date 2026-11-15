@@ -30,6 +30,11 @@ def list_categories(db: DbDep, settings: SettingsDep):
     return {"items": catalog.list_categories(db, settings.demo_mode)}
 
 
+@router.get("/brand-facets", response_model=schemas.Items[schemas.BrandFacet])
+def list_brand_facets(db: DbDep, settings: SettingsDep, category: str | None = None):
+    return {"items": catalog.list_brand_facets(db, settings.demo_mode, category=category)}
+
+
 @router.get("/products", response_model=schemas.Page[schemas.ProductCard])
 def list_products(
     db: DbDep,

@@ -37,6 +37,13 @@ def _wa_url(digits: str, message: str) -> str:
     return f"https://wa.me/{digits}?text={quote(message, safe='')}"
 
 
+GENERAL_MESSAGE = "Hola, me gustaría recibir atención personalizada de Eleven Boutique."
+
+
+def build_general_url(digits: str) -> str:
+    return _wa_url(digits, GENERAL_MESSAGE)
+
+
 def build_consult_url(
     *,
     digits: str | None,

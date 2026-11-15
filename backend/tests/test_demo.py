@@ -19,6 +19,7 @@ from app.models import (
     ProductMedia,
     SiteSettings,
 )
+from app.services.base_seed import DEFAULT_INSTAGRAM_URL
 from app.services.demo_seed import DemoModeRequired, seed_demo
 from tests.factories import make_brand, make_category, make_product
 
@@ -199,6 +200,16 @@ def test_public_settings_have_no_copy_without_demo_mode(seeded, public_client):
         "intro": None,
         "boutique": {"body": None},
         "contact": {"body": None},
+        "instagram_url": DEFAULT_INSTAGRAM_URL,
+        "detail": {"image_url": None, "mobile_image_url": None, "caption": None},
+        "attention": {
+            "headline": "Escríbenos. Te asesoramos.",
+            "subhead": None,
+            "image_url": None,
+            "mobile_image_url": None,
+            "whatsapp_url": None,
+            "boutique_whatsapp_url": None,
+        },
     }
 
 
