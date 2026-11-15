@@ -552,6 +552,50 @@ def test_nightly_with_failure_mid_load_archives_nothing(factory, atlas):
     assert state(factory).last_full_at == mx(13, 3, 5)
 
 
+def _load_twenty(factory, atlas) -> None:
+    for i in range(20):
+        atlas.put(f"p{i:02d}")
+    assert sync(factory, atlas).counts["creadas"] == 20
+
+
+def test_empty_full_load_archives_nothing(factory, atlas):
+    atlas.put("p1")
+    sync(factory, atlas)
+    atlas.products.clear()
+    run = sync(factory, atlas, kind="full")
+    assert run.status == "ok"
+    assert run.counts["bajas"] == 0
+    assert run.counts["archivado_omitido"] == 1
+    assert "archivado omitido" in run.error
+    assert piece(factory, "p1").status == STATUS_PUBLISHED
+    assert state(factory).last_error is None
+
+
+def test_full_load_missing_half_of_twenty_archives_nothing(factory, atlas):
+    _load_twenty(factory, atlas)
+    for i in range(10):
+        del atlas.products[f"p{i:02d}"]
+    run = sync(factory, atlas, kind="full")
+    assert run.status == "ok"
+    assert run.counts["bajas"] == 0
+    assert run.counts["archivado_omitido"] == 1
+    assert "10 de 20" in run.error
+    assert all(piece(factory, f"p{i:02d}").status == STATUS_PUBLISHED for i in range(20))
+
+
+def test_full_load_missing_two_of_twenty_archives_them(factory, atlas):
+    _load_twenty(factory, atlas)
+    del atlas.products["p00"], atlas.products["p01"]
+    run = sync(factory, atlas, kind="full")
+    assert run.status == "ok"
+    assert run.counts["bajas"] == 2
+    assert run.counts["archivado_omitido"] == 0
+    assert run.error is None
+    assert piece(factory, "p00").status == STATUS_ARCHIVED
+    assert piece(factory, "p01").status == STATUS_ARCHIVED
+    assert piece(factory, "p02").status == STATUS_PUBLISHED
+
+
 def test_explicit_full_kind_reloads_everything(factory, atlas):
     atlas.put("p1")
     sync(factory, atlas)
