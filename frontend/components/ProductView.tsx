@@ -3,8 +3,10 @@ import { jsonLd, SITE_URL } from "@/lib/seo";
 import type { Media, ProductDetail } from "@/lib/types";
 import { brandHref, productHref } from "@/lib/url";
 import { ConsultButton } from "./ConsultButton";
+import { sizesOf } from "@/lib/sizes";
 import { ProductGallery } from "./ProductGallery";
 import { SaveButton } from "./SaveButton";
+import { SoldOutLabel } from "./SoldOutLabel";
 
 function orderedGallery(product: ProductDetail): Media[] {
   const images = product.gallery.length
@@ -30,6 +32,7 @@ function productSchema(product: ProductDetail, images: Media[]) {
 
 export function ProductView({ product, demoMode }: { product: ProductDetail; demoMode: boolean }) {
   const images = orderedGallery(product);
+  const sizes = sizesOf(product.variants);
   return (
     <article className="page grid gap-8 pb-24 pt-8 lg:grid-cols-12 lg:gap-x-6 lg:pt-12">
       <script
@@ -45,6 +48,25 @@ export function ProductView({ product, demoMode }: { product: ProductDetail; dem
           </p>
         ) : null}
         <h1 className="display mt-2 text-68">{product.name}</h1>
+        {product.available ? null : <SoldOutLabel className="mt-4 text-17" />}
+        {sizes.length ? (
+          <div className="mt-6">
+            <p className="label muted">Tallas</p>
+            <ul className="mt-2 flex flex-wrap gap-2">
+              {sizes.map(({ size, available }) => (
+                <li
+                  key={size}
+                  aria-label={available ? size : `${size}, agotada`}
+                  className={`min-w-11 border border-bronze px-3 py-2 text-center text-15 ${
+                    available ? "" : "muted line-through"
+                  }`}
+                >
+                  {size}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
         <div className="mt-8">
           {product.consult_url ? (
             <>
