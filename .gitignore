@@ -21,3 +21,7 @@ test-results/
 
 # Bocetos de diseño
 .superpowers/
+
+# Agentes
+.worktrees/
+.superpowers/
