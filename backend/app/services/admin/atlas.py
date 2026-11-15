@@ -131,14 +131,13 @@ def patch_brand_map(
     row = db.scalar(select(AtlasBrandMap).where(AtlasBrandMap.atlas_brand_id == data.atlas_brand_id))
     if row is None:
         raise not_found("Casa de Atlas ONE no encontrada")
-    if data.brand_id is not None:
-        brand = db.get(Brand, data.brand_id)
-        if brand is None:
-            raise invalid_reference("La marca indicada no existe")
-        if brand.name == PLACEHOLDER_BRAND:
-            raise invalid_reference("Casa interna de sincronización")
-        if brand.kind != KIND_BRAND:
-            raise invalid_reference("Solo se puede enlazar a una marca, no a una clasificación")
+    brand = db.get(Brand, data.brand_id)
+    if brand is None:
+        raise invalid_reference("La marca indicada no existe")
+    if brand.name == PLACEHOLDER_BRAND:
+        raise invalid_reference("Casa interna de sincronización")
+    if brand.kind != KIND_BRAND:
+        raise invalid_reference("Solo se puede enlazar a una marca, no a una clasificación")
     if row.brand_id != data.brand_id:
         audit.record(
             db, user, "update", "atlas_brand_map", row.id, {"brand_id": [row.brand_id, data.brand_id]}

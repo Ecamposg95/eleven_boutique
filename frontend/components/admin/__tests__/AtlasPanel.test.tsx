@@ -61,6 +61,17 @@ describe("AtlasPanel y mapas", () => {
     expect(html).toContain("Ropa › Camisas");
     expect(html).toContain("Sin ligar");
   });
+  it("una marca ligada no se puede desligar (la liga automática la volvería a ligar)", () => {
+    const html = renderToStaticMarkup(<AtlasMaps {...props} categoryMap={[]} />);
+    expect(html).not.toContain("Sin ligar");
+  });
+  it("una marca sin ligar pide elegir casa sin ofrecer «Sin ligar»", () => {
+    const html = renderToStaticMarkup(
+      <AtlasMaps {...props} categoryMap={[]} brandMap={[{ atlas_brand_id: "11", atlas_name: "DOBLE", brand_id: null }]} />,
+    );
+    expect(html).toContain("Elegir casa");
+    expect(html).not.toContain("Sin ligar");
+  });
 });
 
 describe("ReadOnlyField", () => {

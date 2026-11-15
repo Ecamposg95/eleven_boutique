@@ -557,7 +557,8 @@ class AtlasBrandMapOut(Schema):
 
 class AtlasBrandMapPatch(Input):
     atlas_brand_id: Annotated[str, StringConstraints(min_length=1, max_length=100)]
-    brand_id: uuid.UUID | None
+    # Sin "desligar": el emparejador automático volvería a ligar la fila en la siguiente corrida.
+    brand_id: uuid.UUID
 
 
 class AtlasCategoryMapOut(Schema):

@@ -55,7 +55,7 @@ def test_editor_is_refused_everywhere(editor):
     assert editor.get(f"{BASE}/atlas/status").status_code == 403
     assert editor.post(f"{BASE}/atlas/sync", headers=ORIGIN).status_code == 403
     assert editor.get(f"{BASE}/atlas/brand-map").status_code == 403
-    assert patch(editor, "/atlas/brand-map", {"atlas_brand_id": "a", "brand_id": None}).status_code == 403
+    assert patch(editor, "/atlas/brand-map", {"atlas_brand_id": "a", "brand_id": str(uuid.uuid4())}).status_code == 403
     assert patch(editor, "/atlas/category-map", {"atlas_department_id": "a", "category_id": None}).status_code == 403
 
 
@@ -113,10 +113,18 @@ def test_brand_map_patch_validates_target(db, client):
     ]
     for bad in (uuid.uuid4(), classification.id, placeholder.id):
         assert patch(client, "/atlas/brand-map", {"atlas_brand_id": "b1", "brand_id": str(bad)}).status_code == 422
-    assert patch(client, "/atlas/brand-map", {"atlas_brand_id": "zz", "brand_id": None}).status_code == 404
+    assert patch(client, "/atlas/brand-map", {"atlas_brand_id": "zz", "brand_id": str(house.id)}).status_code == 404
     ok = patch(client, "/atlas/brand-map", {"atlas_brand_id": "b1", "brand_id": str(house.id)})
     assert ok.status_code == 200 and ok.json()["brand_id"] == str(house.id)
-    assert patch(client, "/atlas/brand-map", {"atlas_brand_id": "b1", "brand_id": None}).json()["brand_id"] is None
+
+
+def test_brand_map_cannot_be_unlinked(db, client):
+    """El emparejador automático volvería a ligar una fila sin casa: desligar no se sostiene."""
+    house = make_brand(db, "Gucci")
+    db.add(AtlasBrandMap(atlas_brand_id="b1", atlas_name="Gucci", brand_id=house.id))
+    db.commit()
+    assert patch(client, "/atlas/brand-map", {"atlas_brand_id": "b1", "brand_id": None}).status_code == 422
+    assert client.get(f"{BASE}/atlas/brand-map").json()[0]["brand_id"] == str(house.id)
 
 
 def test_category_map_patch_validates_target(db, client):

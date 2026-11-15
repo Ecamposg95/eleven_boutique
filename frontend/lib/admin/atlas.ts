@@ -104,7 +104,7 @@ export const atlasSkippedMessage = (count: number) =>
   count === 1 ? "1 pieza viene de Atlas ONE y no se cambió" : `${plural(count, "pieza", "piezas")} vienen de Atlas ONE y no se cambiaron`;
 export const fetchAtlasStatus = () => api<AtlasStatus>("/atlas/status");
 
-export const saveBrandMap = (atlas_brand_id: string, brand_id: string | null) =>
+export const saveBrandMap = (atlas_brand_id: string, brand_id: string) =>
   api<AtlasBrandMapRow>("/atlas/brand-map", { method: "PATCH", json: { atlas_brand_id, brand_id } });
 
 export const saveCategoryMap = (atlas_department_id: string, category_id: string | null) =>
