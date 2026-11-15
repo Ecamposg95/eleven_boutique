@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { categoryPaths, saveBrandMap, saveCategoryMap } from "@/lib/admin/atlas";
+import { categoryPaths, saveBrandMap, saveCategoryMap, unlinkedFirst } from "@/lib/admin/atlas";
 import { errorText } from "@/lib/admin/client";
 import type { AdminCategory, AtlasBrandMapRow, AtlasCategoryMapRow, Brand } from "@/lib/admin/types";
 import { Notice } from "./ui";
@@ -27,6 +27,12 @@ function MapRow({
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const id = `map-${rowKey}`;
+  // Si el valor del servidor cambia, la fila lo sigue (ajuste durante el render, sin efecto).
+  const [seen, setSeen] = useState(value);
+  if (seen !== value) {
+    setSeen(value);
+    setCurrent(value ?? "");
+  }
 
   const change = async (next: string) => {
     const previous = current;
@@ -109,7 +115,7 @@ export function AtlasMaps({
         title="Marcas"
         caption="Marcas de Atlas ONE y su casa en el sitio"
         hint="Las piezas de una marca sin ligar quedan en borrador hasta que la ligue a una casa del sitio."
-        rows={brandMap.map((row) => (
+        rows={unlinkedFirst(brandMap, (row) => row.brand_id).map((row) => (
           <MapRow
             key={row.atlas_brand_id}
             rowKey={`b-${row.atlas_brand_id}`}
@@ -124,7 +130,7 @@ export function AtlasMaps({
         title="Categorías"
         caption="Departamentos de Atlas ONE y su categoría en el sitio"
         hint="Las piezas de un departamento sin ligar quedan en borrador hasta que lo ligue a una categoría."
-        rows={categoryMap.map((row) => (
+        rows={unlinkedFirst(categoryMap, (row) => row.category_id).map((row) => (
           <MapRow
             key={row.atlas_department_id}
             rowKey={`c-${row.atlas_department_id}`}

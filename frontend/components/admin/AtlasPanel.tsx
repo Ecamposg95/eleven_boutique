@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { describeCounts, fetchAtlasStatus, pollSync, startSync } from "@/lib/admin/atlas";
-import { errorText } from "@/lib/admin/client";
+import { useEffect, useRef, useState } from "react";
+import { POLL_ERROR_MESSAGE, describeCounts, fetchAtlasStatus, pollSync, startSync } from "@/lib/admin/atlas";
 import { formatDateTime } from "@/lib/admin/format";
 import type { AdminCategory, AtlasBrandMapRow, AtlasCategoryMapRow, AtlasStatus, Brand } from "@/lib/admin/types";
 import { AtlasMaps } from "./AtlasMaps";
@@ -90,6 +89,10 @@ export function AtlasPanel({
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Al salir de la pantalla se deja de consultar.
+  const abort = useRef<AbortController | null>(null);
+  useEffect(() => () => abort.current?.abort(), []);
+
   const sync = async () => {
     setBusy(true);
     setMessage(null);
@@ -102,19 +105,23 @@ export function AtlasPanel({
       return;
     }
     setMessage("Sincronizando con Atlas ONE…");
+    const controller = new AbortController();
+    abort.current = controller;
     try {
-      const done = await pollSync({ fetchStatus: fetchAtlasStatus, before });
+      const done = await pollSync({ fetchStatus: fetchAtlasStatus, before, signal: controller.signal });
+      if (controller.signal.aborted) return;
       if (done) {
         setStatus(done);
         setMessage(done.last_run?.error ? null : "Sincronización terminada.");
       } else {
         setMessage("La sincronización sigue en curso. Recargue la página en unos minutos para ver el resultado.");
       }
-    } catch (cause) {
+    } catch {
+      if (controller.signal.aborted) return;
       setMessage(null);
-      setError(errorText(cause));
+      setError(POLL_ERROR_MESSAGE);
     } finally {
-      setBusy(false);
+      if (!controller.signal.aborted) setBusy(false);
     }
   };
 

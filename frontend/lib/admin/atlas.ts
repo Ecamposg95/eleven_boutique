@@ -51,23 +51,56 @@ export async function pollSync({
   fetchStatus,
   before,
   sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+  now = Date.now,
   intervalMs = 3000,
   maxMs = 120000,
+  signal,
 }: {
   fetchStatus: () => Promise<AtlasStatus>;
   before: string | null;
   sleep?: (ms: number) => Promise<void>;
+  now?: () => number;
   intervalMs?: number;
   maxMs?: number;
+  /** Al abortar (p. ej. al salir de la pantalla) no se vuelve a consultar. */
+  signal?: AbortSignal;
 }): Promise<AtlasStatus | null> {
-  for (let elapsed = 0; elapsed < maxMs; elapsed += intervalMs) {
+  const deadline = now() + maxMs;
+  while (now() < deadline) {
+    if (signal?.aborted) return null;
     const status = await fetchStatus();
+    if (signal?.aborted) return null;
     if (runFinished(status, before)) return status;
     await sleep(intervalMs);
   }
   return null;
 }
 
+export const POLL_ERROR_MESSAGE = "No se pudo consultar el estado; la sincronización puede seguir en curso.";
+
+/** Mapas: primero lo que falta ligar, luego por nombre de Atlas (es). */
+export function unlinkedFirst<T extends { atlas_name: string }>(rows: readonly T[], linked: (row: T) => string | null): T[] {
+  return [...rows].sort((a, b) => {
+    const gap = Number(linked(a) !== null) - Number(linked(b) !== null);
+    return gap || a.atlas_name.localeCompare(b.atlas_name, "es");
+  });
+}
+
+const STATUS_BULK = new Set(["publish", "unpublish", "archive"]);
+
+/** Publicar, despublicar y archivar los decide Atlas ONE: esas piezas no se mandan al servidor. */
+export function splitAtlasBulk(
+  action: string,
+  ids: readonly string[],
+  isAtlas: (id: string) => boolean,
+): { send: string[]; skipped: number } {
+  if (!STATUS_BULK.has(action)) return { send: [...ids], skipped: 0 };
+  const send = ids.filter((id) => !isAtlas(id));
+  return { send, skipped: ids.length - send.length };
+}
+
+export const atlasSkippedMessage = (count: number) =>
+  count === 1 ? "1 pieza viene de Atlas ONE y no se cambió" : `${plural(count, "pieza", "piezas")} vienen de Atlas ONE y no se cambiaron`;
 export const fetchAtlasStatus = () => api<AtlasStatus>("/atlas/status");
 
 export const saveBrandMap = (atlas_brand_id: string, brand_id: string | null) =>
@@ -87,7 +120,7 @@ export function categoryPaths(list: readonly Pick<AdminCategory, "id" | "name" |
 }
 
 // Piezas de Atlas ONE: estos campos son suyos y el servidor los rechaza (422 atlas_owned) si cambian.
-export const ATLAS_OWNED_FIELDS = ["name", "slug", "brand_id", "category_id", "status"] as const;
+export const ATLAS_OWNED_FIELDS = ["name", "slug", "brand_id", "category_id"] as const;
 export type AtlasOwnedField = (typeof ATLAS_OWNED_FIELDS)[number];
 
 export const isAtlasLocked = (product: Pick<Product, "from_atlas">, field: string): boolean =>

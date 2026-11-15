@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useOptimistic, useRef, useState, useTransition } from "react";
+import { atlasSkippedMessage, splitAtlasBulk } from "@/lib/admin/atlas";
 import { AdminApiError, api, errorText } from "@/lib/admin/client";
 import { formatNumber, plural } from "@/lib/admin/format";
 import { type BulkRowInfo, type BulkSummary, chunk, primaryImageUrl, summarizeBulk } from "@/lib/admin/rules";
@@ -31,7 +32,7 @@ export type ProductFilters = {
   page: number;
 };
 
-type Outcome = { label: string; doneOne: string; done: string; ok: number; failed: BulkSummary["failed"]; skipped: { brand: string; count: number }[] };
+type Outcome = { label: string; doneOne: string; done: string; ok: number; failed: BulkSummary["failed"]; skipped: { brand: string; count: number }[]; atlasSkipped: number };
 
 function queryOf(filters: ProductFilters) {
   return {
@@ -72,7 +73,7 @@ export function ProductTable({
   const [confirm, confirmDialog] = useConfirm();
   // La selección sobrevive al cambio de página: aquí queda con qué nombre mostrar cada fila.
   const known = useRef(new Map<string, BulkRowInfo>());
-  for (const row of items) known.current.set(row.id, { id: row.id, name: row.name, brandName: row.brand.name });
+  for (const row of items) known.current.set(row.id, { id: row.id, name: row.name, brandName: row.brand.name, fromAtlas: Boolean(row.from_atlas) });
 
   const hrefWith = (change: Partial<ProductFilters>) => {
     const next = { ...filters, page: 1, ...change };
@@ -137,7 +138,7 @@ export function ProductTable({
         const batch = await api<{ items: Product[]; total: number }>(`/products?${params}`);
         for (const row of batch.items) {
           ids.add(row.id);
-          known.current.set(row.id, { id: row.id, name: row.name, brandName: row.brand.name });
+          known.current.set(row.id, { id: row.id, name: row.name, brandName: row.brand.name, fromAtlas: Boolean(row.from_atlas) });
         }
         if (batch.items.length === 0 || page * ALL_PAGE >= batch.total) break;
       }
@@ -167,8 +168,11 @@ export function ProductTable({
     return results;
   };
 
+  const isAtlas = (id: string) => Boolean(known.current.get(id)?.fromAtlas);
+  const atlasOnly = selected.size > 0 && [...selected].every(isAtlas);
+
   const run = async ({ action, label, doneOne, done }: (typeof ACTIONS)[number]) => {
-    const ids = [...selected];
+    const { send: ids, skipped: atlasSkipped } = splitAtlasBulk(action, [...selected], isAtlas);
     if (ids.length === 0) return;
     if (action === "archive") {
       const accepted = await confirm({
@@ -210,7 +214,7 @@ export function ProductTable({
     }
 
     setBusy(null);
-    setOutcome({ label, doneOne, done, ok, failed, skipped });
+    setOutcome({ label, doneOne, done, ok, failed, skipped, atlasSkipped });
     // Lo que falló queda seleccionado para corregirlo y reintentar.
     setSelected((current) => new Set([...current].filter((id) => !succeeded.has(id))));
     startTransition(() => router.refresh());
@@ -329,6 +333,7 @@ export function ProductTable({
               Cerrar
             </button>
           </div>
+          {outcome.atlasSkipped ? <p className="mt-1">{atlasSkippedMessage(outcome.atlasSkipped)}.</p> : null}
           {outcome.skipped.map((item) => (
             <p key={item.brand} className="mt-1">
               {plural(item.count, "producto", "productos")} de {item.brand} sin cambios: la marca sigue sin publicar.
@@ -463,7 +468,8 @@ export function ProductTable({
                 key={item.action}
                 type="button"
                 className={`a-btn a-btn-small shrink-0 ${item.action === "publish" ? "a-btn-primary" : ""}`}
-                disabled={working || selected.size === 0}
+                disabled={working || selected.size === 0 || (atlasOnly && splitAtlasBulk(item.action, ["x"], () => true).skipped > 0)}
+                title={atlasOnly && splitAtlasBulk(item.action, ["x"], () => true).skipped > 0 ? "Atlas ONE decide el estado de estas piezas" : undefined}
                 onClick={() => void run(item)}
               >
                 {item.label}

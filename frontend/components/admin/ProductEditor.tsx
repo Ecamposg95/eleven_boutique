@@ -236,18 +236,18 @@ function PhotoManager({
                 {item.read_only ? (
                   <p className="a-hint">Viene de Atlas ONE</p>
                 ) : (
-                <div className="mt-2">
-                  <label htmlFor={`alt-${item.id}`} className="a-label">
-                    Texto alternativo
-                  </label>
-                  <input
-                    id={`alt-${item.id}`}
-                    key={item.alt}
-                    className="a-input"
-                    defaultValue={item.alt}
-                    onBlur={(event) => void saveAlt(item, event.target)}
-                  />
-                </div>
+                  <div className="mt-2">
+                    <label htmlFor={`alt-${item.id}`} className="a-label">
+                      Texto alternativo
+                    </label>
+                    <input
+                      id={`alt-${item.id}`}
+                      key={item.alt}
+                      className="a-input"
+                      defaultValue={item.alt}
+                      onBlur={(event) => void saveAlt(item, event.target)}
+                    />
+                  </div>
                 )}
               </li>
             ))}

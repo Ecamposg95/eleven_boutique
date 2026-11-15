@@ -41,7 +41,7 @@ export function missingForPublish(product: {
   return missing;
 }
 
-export type BulkRowInfo = { id: string; name: string; brandName: string | null };
+export type BulkRowInfo = { id: string; name: string; brandName: string | null; fromAtlas?: boolean };
 export type BulkSummary = {
   ok: string[];
   failed: { id: string; name: string; message: string }[];

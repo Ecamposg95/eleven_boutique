@@ -3,7 +3,10 @@ import {
   categoryPaths,
   describeCounts,
   editorialPayload,
+  atlasSkippedMessage,
   isAtlasLocked,
+  splitAtlasBulk,
+  unlinkedFirst,
   pollSync,
   runFinished,
   startSync,
@@ -60,11 +63,26 @@ describe("runFinished / pollSync", () => {
     expect(await pollSync({ fetchStatus, before: "2026-11-14T10:00:00Z", sleep, intervalMs: 1, maxMs: 100 })).toBe(fresh);
     expect(fetchStatus).toHaveBeenCalledTimes(2);
   });
-  it("se rinde tras el límite", async () => {
+  it("se rinde por reloj, no por número de vueltas", async () => {
     const fetchStatus = vi.fn().mockResolvedValue(status(run()));
-    const sleep = vi.fn(async () => {});
-    expect(await pollSync({ fetchStatus, before: "2026-11-14T10:00:00Z", sleep, intervalMs: 10, maxMs: 30 })).toBeNull();
-    expect(fetchStatus).toHaveBeenCalledTimes(3);
+    let clock = 0;
+    const sleep = vi.fn(async (ms: number) => { clock += ms + 5; });
+    expect(await pollSync({ fetchStatus, before: "2026-11-14T10:00:00Z", sleep, now: () => clock, intervalMs: 10, maxMs: 30 })).toBeNull();
+    expect(fetchStatus).toHaveBeenCalledTimes(2);
+  });
+  it("una señal abortada no consulta más", async () => {
+    const fetchStatus = vi.fn().mockResolvedValue(status(run()));
+    const controller = new AbortController();
+    controller.abort();
+    expect(await pollSync({ fetchStatus, before: null, signal: controller.signal })).toBeNull();
+    expect(fetchStatus).not.toHaveBeenCalled();
+  });
+  it("abortar durante la espera corta el ciclo", async () => {
+    const controller = new AbortController();
+    const fetchStatus = vi.fn().mockResolvedValue(status(run()));
+    const sleep = vi.fn(async () => { controller.abort(); });
+    expect(await pollSync({ fetchStatus, before: "2026-11-14T10:00:00Z", sleep, signal: controller.signal })).toBeNull();
+    expect(fetchStatus).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -97,5 +115,30 @@ describe("categoryPaths", () => {
     expect(categoryPaths(list)).toEqual([
       { id: "1", name: "Ropa" }, { id: "2", name: "Ropa › Camisas" }, { id: "3", name: "Ropa › Camisas › Lino" },
     ]);
+  });
+});
+
+describe("unlinkedFirst", () => {
+  it("sin ligar primero y luego por nombre", () => {
+    const rows = [
+      { atlas_name: "Zeta", brand_id: "1" }, { atlas_name: "Ñandú", brand_id: null },
+      { atlas_name: "Alfa", brand_id: "2" }, { atlas_name: "Beta", brand_id: null },
+    ];
+    expect(unlinkedFirst(rows, (r) => r.brand_id).map((r) => r.atlas_name)).toEqual(["Beta", "Ñandú", "Alfa", "Zeta"]);
+  });
+});
+
+describe("splitAtlasBulk", () => {
+  const isAtlas = (id: string) => id.startsWith("a");
+  it("publicar/archivar omiten piezas de Atlas y cuentan las omitidas", () => {
+    expect(splitAtlasBulk("publish", ["a1", "m1", "a2"], isAtlas)).toEqual({ send: ["m1"], skipped: 2 });
+    expect(splitAtlasBulk("archive", ["a1"], isAtlas)).toEqual({ send: [], skipped: 1 });
+  });
+  it("destacar sigue aplicando a todas", () => {
+    expect(splitAtlasBulk("feature", ["a1", "m1"], isAtlas)).toEqual({ send: ["a1", "m1"], skipped: 0 });
+  });
+  it("mensaje", () => {
+    expect(atlasSkippedMessage(2)).toBe("2 piezas vienen de Atlas ONE y no se cambiaron");
+    expect(atlasSkippedMessage(1)).toBe("1 pieza viene de Atlas ONE y no se cambió");
   });
 });
