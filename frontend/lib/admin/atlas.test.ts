@@ -5,6 +5,7 @@ import {
   editorialPayload,
   atlasSkippedMessage,
   isAtlasLocked,
+  photoControls,
   splitAtlasBulk,
   unlinkedFirst,
   pollSync,
@@ -141,5 +142,29 @@ describe("splitAtlasBulk", () => {
   it("mensaje", () => {
     expect(atlasSkippedMessage(2)).toBe("2 piezas vienen de Atlas ONE y no se cambiaron");
     expect(atlasSkippedMessage(1)).toBe("1 pieza viene de Atlas ONE y no se cambió");
+  });
+});
+
+describe("photoControls", () => {
+  const photo = (id: string, read_only: boolean, is_primary = false) => ({
+    id, read_only, is_primary, media_asset_id: read_only ? null : `a-${id}`, url: `/${id}.jpg`, alt: "", position: 0,
+  });
+
+  it("las fotos de Atlas no se mueven ni se hacen principales", () => {
+    const media = [photo("a1", true), photo("a2", true, true), photo("p1", false)];
+    expect(photoControls(media, 0)).toEqual({ movable: false, canMakePrimary: false });
+    expect(photoControls(media, 1)).toEqual({ movable: false, canMakePrimary: false });
+    // La principal es de Atlas: tampoco se cambia por una del panel.
+    expect(photoControls(media, 2)).toEqual({ movable: true, canMakePrimary: false });
+  });
+  it("con la principal en el panel, otra del panel puede serlo", () => {
+    const media = [photo("a1", true), photo("p1", false, true), photo("p2", false)];
+    expect(photoControls(media, 0)).toEqual({ movable: false, canMakePrimary: false });
+    expect(photoControls(media, 1)).toEqual({ movable: true, canMakePrimary: false });
+    expect(photoControls(media, 2)).toEqual({ movable: true, canMakePrimary: true });
+  });
+  it("piezas del panel: todo se mueve", () => {
+    const media = [photo("p1", false, true), photo("p2", false)];
+    expect(photoControls(media, 1)).toEqual({ movable: true, canMakePrimary: true });
   });
 });

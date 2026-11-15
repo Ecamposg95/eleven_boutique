@@ -394,6 +394,23 @@ def add_media(
     return _refreshed(db, product.id)
 
 
+def _guard_atlas_order(product: Product, data: schemas.ProductMediaOrder) -> None:
+    """Atlas manda en el orden de sus fotos y en la principal; la sincronización desharía el cambio.
+
+    Las fotos del panel sí se mueven (entre ellas y entre las de Atlas): la sincronización respeta
+    sus posiciones y, si una es la principal, no se la quita.
+    """
+    current = sorted(product.media, key=lambda link: link.position)
+    atlas_ids = {link.id for link in current if link.media_asset_id is None}
+    if [i for i in data.order if i in atlas_ids] != [link.id for link in current if link.id in atlas_ids]:
+        raise _atlas_owned("El orden de las fotos de Atlas ONE se cambia en Atlas ONE")
+    primary = next((link for link in current if link.is_primary), current[0] if current else None)
+    if data.primary_id is None or primary is None or data.primary_id == primary.id:
+        return
+    if primary.id in atlas_ids or data.primary_id in atlas_ids:
+        raise _atlas_owned("La foto principal de una pieza de Atlas ONE se elige en Atlas ONE")
+
+
 def reorder_media(
     db: Session, product_id: uuid.UUID, data: schemas.ProductMediaOrder, user: AdminUser
 ) -> schemas.AdminProduct:
@@ -403,6 +420,8 @@ def reorder_media(
         raise ApiError(422, "invalid_order", "El orden debe incluir cada foto de la pieza una vez")
     if data.primary_id is not None and data.primary_id not in links:
         raise ApiError(422, "invalid_order", "La foto principal no pertenece a esta pieza")
+    if is_atlas(product):
+        _guard_atlas_order(product, data)
 
     before = [str(link.id) for link in product.media]
     # Two steps, because (product_id, position) is unique at every point.

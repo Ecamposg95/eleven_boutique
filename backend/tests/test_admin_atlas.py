@@ -4,7 +4,15 @@ import uuid
 
 import pytest
 
-from app.models import ROLE_EDITOR, AtlasBrandMap, AtlasCategoryMap, AtlasSyncRun, AtlasSyncState, ProductMedia
+from app.models import (
+    ROLE_EDITOR,
+    AtlasBrandMap,
+    AtlasCategoryMap,
+    AtlasSyncRun,
+    AtlasSyncState,
+    MediaAsset,
+    ProductMedia,
+)
 from app.models.base import utcnow
 from app.services.admin import atlas as atlas_service
 from app.services.atlas.sync import with_lock
@@ -250,3 +258,62 @@ def test_non_atlas_piece_invalid_references_are_422(db, client):
     for body in ({"brand_id": str(uuid.uuid4())}, {"category_id": str(uuid.uuid4())}):
         response = patch(client, f"/products/{product.id}", body)
         assert response.status_code == 422 and response.json()["error"]["code"] == "invalid_reference"
+
+
+def _photos(db):
+    """Pieza de Atlas con dos fotos de Atlas (la segunda principal) y una del panel al final."""
+    brand, category = make_brand(db, "Casa"), make_category(db, "Bolsas")
+    product = make_product(db, brand, category, "Pieza Atlas", external_inventory_id="inv-1")
+    for link in db.query(ProductMedia).filter_by(product_id=product.id):
+        db.delete(link)
+    db.flush()
+    asset = MediaAsset(
+        storage_key="k.jpg", url="https://cdn/k.jpg", filename="k.jpg",
+        content_type="image/jpeg", width=1, height=1, size_bytes=1,
+    )
+    db.add(asset)
+    db.flush()
+    a1 = ProductMedia(product_id=product.id, url="https://atlas/1.jpg", alt="1", position=0)
+    a2 = ProductMedia(product_id=product.id, url="https://atlas/2.jpg", alt="2", position=1, is_primary=True)
+    panel = ProductMedia(product_id=product.id, url=asset.url, alt="p", position=2, media_asset_id=asset.id)
+    db.add_all([a1, a2, panel])
+    db.commit()
+    return product, str(a1.id), str(a2.id), str(panel.id)
+
+
+def test_atlas_photos_keep_their_order_and_main(db, client):
+    product, a1, a2, panel = _photos(db)
+    path = f"/products/{product.id}/media"
+    for body in (
+        {"order": [a2, a1, panel], "primary_id": a2},  # reordena fotos de Atlas
+        {"order": [a1, a2, panel], "primary_id": a1},  # otra principal de Atlas
+        {"order": [a1, a2, panel], "primary_id": panel},  # quita la principal de Atlas
+    ):
+        response = patch(client, path, body)
+        assert response.status_code == 422, body
+        assert response.json()["error"]["code"] == "atlas_owned"
+    ok = patch(client, path, {"order": [panel, a1, a2], "primary_id": a2})
+    assert ok.status_code == 200, ok.text
+    assert [m["id"] for m in ok.json()["media"]] == [panel, a1, a2]
+    assert patch(client, path, {"order": [a1, panel, a2]}).status_code == 200
+
+
+def test_panel_main_photo_can_move_between_panel_photos(db, client):
+    product, a1, a2, panel = _photos(db)
+    db.get(ProductMedia, uuid.UUID(a2)).is_primary = False
+    db.get(ProductMedia, uuid.UUID(panel)).is_primary = True
+    other = MediaAsset(
+        storage_key="o.jpg", url="https://cdn/o.jpg", filename="o.jpg",
+        content_type="image/jpeg", width=1, height=1, size_bytes=1,
+    )
+    db.add(other)
+    db.flush()
+    second = ProductMedia(product_id=product.id, url=other.url, alt="o", position=3, media_asset_id=other.id)
+    db.add(second)
+    db.commit()
+    path = f"/products/{product.id}/media"
+    body = {"order": [a1, a2, panel, str(second.id)], "primary_id": str(second.id)}
+    assert patch(client, path, body).status_code == 200
+    # Volver a una foto de Atlas tampoco: la sincronización elegiría la suya.
+    body["primary_id"] = a1
+    assert patch(client, path, body).status_code == 422

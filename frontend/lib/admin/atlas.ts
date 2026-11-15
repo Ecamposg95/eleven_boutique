@@ -1,11 +1,13 @@
 import { AdminApiError, api } from "./client";
 import { plural } from "./format";
+import { resolvePrimary } from "./reorder";
 import type {
   AdminCategory,
   AtlasBrandMapRow,
   AtlasCategoryMapRow,
   AtlasStatus,
   Product,
+  ProductMediaItem,
 } from "./types";
 
 // Lógica de la pantalla Atlas ONE y de las piezas de solo lectura, sin React, para poder probarla.
@@ -131,4 +133,19 @@ export const isAtlasLocked = (product: Pick<Product, "from_atlas">, field: strin
 export function editorialPayload<T extends Record<string, unknown>>(product: Pick<Product, "from_atlas">, values: T): Partial<T> {
   if (!product.from_atlas) return values;
   return Object.fromEntries(Object.entries(values).filter(([key]) => !isAtlasLocked(product, key))) as Partial<T>;
+}
+
+/**
+ * Controles de una foto en la galería. Atlas ONE manda en el orden de sus fotos y en la principal
+ * (el servidor rechaza cambiarlos y la sincronización los desharía); las del panel se mueven libres.
+ */
+export function photoControls(
+  media: readonly Pick<ProductMediaItem, "id" | "is_primary" | "read_only">[],
+  index: number,
+): { movable: boolean; canMakePrimary: boolean } {
+  const item = media[index];
+  if (!item || item.read_only) return { movable: false, canMakePrimary: false };
+  const primaryId = resolvePrimary(media);
+  const primary = media.find((photo) => photo.id === primaryId);
+  return { movable: true, canMakePrimary: item.id !== primaryId && !primary?.read_only };
 }

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useRef, useState } from "react";
 import { AdminApiError, api, errorText, uploadMedia } from "@/lib/admin/client";
-import { editorialPayload } from "@/lib/admin/atlas";
+import { editorialPayload, photoControls } from "@/lib/admin/atlas";
 import { formatDateTime } from "@/lib/admin/format";
 import { mediaOrderPayload, moveItem, setPrimary } from "@/lib/admin/reorder";
 import { missingForPublish } from "@/lib/admin/rules";
@@ -203,54 +203,64 @@ function PhotoManager({
       ) : (
         <>
           <p className="a-hint">Arrastre una foto para cambiar el orden, o use los botones de mover. La principal es la que se ve en listados.</p>
+          {media.some((item) => item.read_only) ? (
+            <p className="a-hint">El orden y la principal de las fotos de Atlas ONE se cambian en Atlas ONE.</p>
+          ) : null}
           <ol className="mt-3 grid grid-cols-[repeat(auto-fill,minmax(11rem,1fr))] gap-4">
-            {media.map((item, index) => (
-              <li key={item.id} data-photo={item.id} {...targetProps(index)}>
-                <div className="a-drag relative aspect-[4/5] bg-charcoal" {...handleProps(index)}>
-                  <Thumb src={item.url} alt={item.alt} size="100%" sizes="240px" />
-                  {item.id === primaryId ? (
-                    <span className="absolute left-0 top-0 bg-ivory px-2 py-0.5 text-ink">Principal</span>
-                  ) : null}
-                </div>
-                <p className="muted mt-1">
-                  Posición {index + 1} de {media.length}
-                </p>
-                <div className="mt-1 grid grid-cols-2 gap-1">
-                  <button type="button" className="a-btn a-btn-quiet a-btn-small" aria-disabled={index === 0} aria-label={`Mover antes la foto ${index + 1}`} onClick={() => move(index, index - 1)}>
-                    Antes
-                  </button>
-                  <button type="button" className="a-btn a-btn-quiet a-btn-small" aria-disabled={index === media.length - 1} aria-label={`Mover después la foto ${index + 1}`} onClick={() => move(index, index + 1)}>
-                    Después
-                  </button>
-                  {item.id !== primaryId ? (
-                    <button type="button" className="a-btn a-btn-quiet a-btn-small col-span-2" onClick={() => void persist(setPrimary(media, item.id), `Foto ${index + 1} marcada como principal.`)}>
-                      Hacer principal
-                    </button>
-                  ) : null}
-                  {item.read_only ? null : (
-                    <button type="button" className="a-btn a-btn-quiet a-btn-small col-span-2" onClick={() => void remove(item)}>
-                      Quitar
-                    </button>
-                  )}
-                </div>
-                {item.read_only ? (
-                  <p className="a-hint">Viene de Atlas ONE</p>
-                ) : (
-                  <div className="mt-2">
-                    <label htmlFor={`alt-${item.id}`} className="a-label">
-                      Texto alternativo
-                    </label>
-                    <input
-                      id={`alt-${item.id}`}
-                      key={item.alt}
-                      className="a-input"
-                      defaultValue={item.alt}
-                      onBlur={(event) => void saveAlt(item, event.target)}
-                    />
+            {media.map((item, index) => {
+              const { movable, canMakePrimary } = photoControls(media, index);
+              return (
+                <li key={item.id} data-photo={item.id} {...targetProps(index)}>
+                  <div className={`${movable ? "a-drag " : ""}relative aspect-[4/5] bg-charcoal`} {...(movable ? handleProps(index) : {})}>
+                    <Thumb src={item.url} alt={item.alt} size="100%" sizes="240px" />
+                    {item.id === primaryId ? (
+                      <span className="absolute left-0 top-0 bg-ivory px-2 py-0.5 text-ink">Principal</span>
+                    ) : null}
                   </div>
-                )}
-              </li>
-            ))}
+                  <p className="muted mt-1">
+                    Posición {index + 1} de {media.length}
+                  </p>
+                  <div className="mt-1 grid grid-cols-2 gap-1">
+                    {movable ? (
+                      <>
+                        <button type="button" className="a-btn a-btn-quiet a-btn-small" aria-disabled={index === 0} aria-label={`Mover antes la foto ${index + 1}`} onClick={() => move(index, index - 1)}>
+                          Antes
+                        </button>
+                        <button type="button" className="a-btn a-btn-quiet a-btn-small" aria-disabled={index === media.length - 1} aria-label={`Mover después la foto ${index + 1}`} onClick={() => move(index, index + 1)}>
+                          Después
+                        </button>
+                      </>
+                    ) : null}
+                    {canMakePrimary ? (
+                      <button type="button" className="a-btn a-btn-quiet a-btn-small col-span-2" onClick={() => void persist(setPrimary(media, item.id), `Foto ${index + 1} marcada como principal.`)}>
+                        Hacer principal
+                      </button>
+                    ) : null}
+                    {item.read_only ? null : (
+                      <button type="button" className="a-btn a-btn-quiet a-btn-small col-span-2" onClick={() => void remove(item)}>
+                        Quitar
+                      </button>
+                    )}
+                  </div>
+                  {item.read_only ? (
+                    <p className="a-hint">Viene de Atlas ONE</p>
+                  ) : (
+                    <div className="mt-2">
+                      <label htmlFor={`alt-${item.id}`} className="a-label">
+                        Texto alternativo
+                      </label>
+                      <input
+                        id={`alt-${item.id}`}
+                        key={item.alt}
+                        className="a-input"
+                        defaultValue={item.alt}
+                        onBlur={(event) => void saveAlt(item, event.target)}
+                      />
+                    </div>
+                  )}
+                </li>
+              );
+            })}
           </ol>
         </>
       )}
