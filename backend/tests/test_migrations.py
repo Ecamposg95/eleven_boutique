@@ -48,7 +48,15 @@ ASSET_FK_COLUMNS = {
     "product_media": {"media_asset_id"},
     "collections": {"cover_asset_id"},
     "lookbooks": {"cover_asset_id"},
-    "site_settings": {"hero_asset_id", "hero_mobile_asset_id"},
+    "site_settings": {
+        "hero_asset_id",
+        "hero_mobile_asset_id",
+        "detail_asset_id",
+        "detail_mobile_asset_id",
+        "attention_asset_id",
+        "attention_mobile_asset_id",
+    },
+    "categories": {"cover_asset_id"},
 }
 NEW_COLUMNS = {
     "products": {"photo_refs"},
@@ -56,7 +64,24 @@ NEW_COLUMNS = {
     "product_media": {"media_asset_id"},
     "collections": {"cover_asset_id"},
     "lookbooks": {"cover_asset_id"},
-    "site_settings": {"hero_asset_id", "hero_mobile_asset_id", "hero_mobile_image_url"},
+    "site_settings": {
+        "hero_asset_id",
+        "hero_mobile_asset_id",
+        "hero_mobile_image_url",
+        "instagram_url",
+        "detail_asset_id",
+        "detail_image_url",
+        "detail_mobile_asset_id",
+        "detail_mobile_image_url",
+        "detail_caption",
+        "attention_asset_id",
+        "attention_image_url",
+        "attention_mobile_asset_id",
+        "attention_mobile_image_url",
+        "attention_headline",
+        "attention_subhead",
+    },
+    "categories": {"cover_asset_id", "cover_url"},
 }
 
 
@@ -324,3 +349,22 @@ def test_0002_renders_for_postgres_in_both_directions():
     assert "DROP CONSTRAINT fk_brands_logo_asset_id_media_assets" in ddl
     assert "ALTER TABLE products DROP COLUMN photo_refs" in ddl
     assert "PRAGMA" not in ddl
+
+
+def test_instagram_default_is_backfilled(tmp_path):
+    url = f"sqlite:///{tmp_path / 'data.db'}"
+    config = alembic_config(url)
+    command.upgrade(config, "0004")
+    engine = make_engine(url)
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                "INSERT INTO site_settings (id, is_demo, created_at, updated_at)"
+                f" VALUES ('{SETTINGS}', 0, '{STAMP}', '{STAMP}')"
+            )
+        )
+    command.upgrade(config, "head")
+    with engine.connect() as connection:
+        value = connection.execute(text("SELECT instagram_url FROM site_settings")).scalar()
+    engine.dispose()
+    assert value == "https://www.instagram.com/eleven.fashionboutique/"

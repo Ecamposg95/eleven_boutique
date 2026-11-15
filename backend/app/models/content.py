@@ -128,6 +128,27 @@ class SiteSettings(IdMixin, TimestampMixin, Base):
     intro: Mapped[str | None] = mapped_column(Text)
     boutique_body: Mapped[str | None] = mapped_column(Text)
     contact_body: Mapped[str | None] = mapped_column(Text)
+    instagram_url: Mapped[str | None] = mapped_column(String(500))
+    # Detail and attention banners: desktop + mobile image, each with its asset (URL mirrors it).
+    detail_image_url: Mapped[str | None] = mapped_column(String(500))
+    detail_mobile_image_url: Mapped[str | None] = mapped_column(String(500))
+    detail_asset_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("media_assets.id", ondelete="RESTRICT"), index=True
+    )
+    detail_mobile_asset_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("media_assets.id", ondelete="RESTRICT"), index=True
+    )
+    detail_caption: Mapped[str | None] = mapped_column(Text)
+    attention_image_url: Mapped[str | None] = mapped_column(String(500))
+    attention_mobile_image_url: Mapped[str | None] = mapped_column(String(500))
+    attention_asset_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("media_assets.id", ondelete="RESTRICT"), index=True
+    )
+    attention_mobile_asset_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("media_assets.id", ondelete="RESTRICT"), index=True
+    )
+    attention_headline: Mapped[str | None] = mapped_column(Text)
+    attention_subhead: Mapped[str | None] = mapped_column(Text)
 
 
 class CatalogEvent(Base):

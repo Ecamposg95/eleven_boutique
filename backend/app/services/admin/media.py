@@ -15,6 +15,7 @@ from app.models import (
     STATUS_ARCHIVED,
     AdminUser,
     Brand,
+    Category,
     Collection,
     Lookbook,
     LookbookBlock,
@@ -39,6 +40,11 @@ _URL_COLUMNS = (
     Lookbook.cover_url,
     SiteSettings.hero_image_url,
     SiteSettings.hero_mobile_image_url,
+    Category.cover_url,
+    SiteSettings.detail_image_url,
+    SiteSettings.detail_mobile_image_url,
+    SiteSettings.attention_image_url,
+    SiteSettings.attention_mobile_image_url,
 )
 _MISSING = "Imagen no encontrada"
 

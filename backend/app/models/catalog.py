@@ -109,6 +109,11 @@ class Category(IdMixin, TimestampMixin, Base):
     )
     display_order: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     search_text: Mapped[str] = mapped_column(String(500), index=True)
+    # Department cover; when the asset is set, cover_url holds its URL.
+    cover_url: Mapped[str | None] = mapped_column(String(500))
+    cover_asset_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("media_assets.id", ondelete="RESTRICT"), index=True
+    )
 
     parent: Mapped["Category | None"] = relationship(remote_side="Category.id")
 
