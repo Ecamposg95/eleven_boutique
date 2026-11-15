@@ -360,14 +360,7 @@ export function ProductTable({
             }
           />
         ) : (
-          <Empty
-            message="Aún no hay productos. El catálogo se carga desde un archivo de Excel o CSV."
-            action={
-              <Link href="/admin/importar" prefetch={false} className="a-btn">
-                Importar catálogo
-              </Link>
-            }
-          />
+          <Empty message="Aún no hay productos. Las piezas llegan de Atlas ONE con la sincronización: revise la pantalla Atlas ONE." />
         )
       ) : (
         <div className="mt-2" aria-busy={pending}>
@@ -394,6 +387,9 @@ export function ProductTable({
                 <th scope="col" className="max-xl:hidden">
                   Fotos
                 </th>
+                <th scope="col" className="max-lg:hidden">
+                  Disponibilidad
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -419,6 +415,10 @@ export function ProductTable({
                     </Link>
                     <span className="muted block break-all">{row.sku}</span>
                     {row.is_featured ? <span className="muted block">Destacado</span> : null}
+                    {row.hidden_on_web ? <span className="muted block">Oculta en la web</span> : null}
+                    {row.from_atlas && row.status === "draft" && row.atlas_missing ? (
+                      <span className="muted block">Borrador: {row.atlas_missing}</span>
+                    ) : null}
                     {/* En pantallas angostas las columnas ocultas se resumen aquí. */}
                     <span className="block md:hidden">{row.brand.name}</span>
                     <span className="block sm:hidden">
@@ -431,6 +431,7 @@ export function ProductTable({
                     <StatusLabel status={row.status} />
                   </td>
                   <td className="max-xl:hidden">{row.media.length}</td>
+                  <td className="max-lg:hidden">{row.from_atlas ? (row.available === false ? "Agotada" : "Disponible") : ""}</td>
                 </tr>
               ))}
             </tbody>

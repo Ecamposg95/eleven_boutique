@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useRef, useState } from "react";
 import { AdminApiError, api, errorText, uploadMedia } from "@/lib/admin/client";
+import { editorialPayload } from "@/lib/admin/atlas";
 import { formatDateTime } from "@/lib/admin/format";
 import { mediaOrderPayload, moveItem, setPrimary } from "@/lib/admin/reorder";
 import { missingForPublish } from "@/lib/admin/rules";
@@ -11,7 +12,7 @@ import type { AdminCategory, Brand, MediaAsset, Product, ProductMediaItem, Statu
 import { createUploadQueue, validateImageFile } from "@/lib/admin/upload-queue";
 import { productHref } from "@/lib/url";
 import { MediaPicker } from "./MediaPicker";
-import { CheckField, Notice, PageHead, SelectField, StatusLabel, TextAreaField, TextField, Thumb, useConfirm, useDragReorder, useUnsavedWarning } from "./ui";
+import { CheckField, ReadOnlyField, Notice, PageHead, SelectField, StatusLabel, TextAreaField, TextField, Thumb, useConfirm, useDragReorder, useUnsavedWarning } from "./ui";
 
 type FormValues = {
   name: string;
@@ -24,6 +25,7 @@ type FormValues = {
   seo_title: string;
   seo_description: string;
   internal_notes: string;
+  hidden_on_web: boolean;
 };
 
 function toForm(product: Product): FormValues {
@@ -38,6 +40,7 @@ function toForm(product: Product): FormValues {
     seo_title: product.seo_title ?? "",
     seo_description: product.seo_description ?? "",
     internal_notes: product.internal_notes ?? "",
+    hidden_on_web: product.hidden_on_web ?? false,
   };
 }
 
@@ -191,7 +194,7 @@ function PhotoManager({
         </div>
       ) : null}
       {product.photo_refs?.length ? (
-        <p className="a-hint">Referencia de foto en el archivo importado: {product.photo_refs.join(", ")}</p>
+        <p className="a-hint">Referencia de foto heredada: {product.photo_refs.join(", ")}</p>
       ) : null}
       {media.length === 0 ? (
         <p className="mt-3 border border-dashed border-bronze p-5">
@@ -224,10 +227,15 @@ function PhotoManager({
                       Hacer principal
                     </button>
                   ) : null}
-                  <button type="button" className="a-btn a-btn-quiet a-btn-small col-span-2" onClick={() => void remove(item)}>
-                    Quitar
-                  </button>
+                  {item.read_only ? null : (
+                    <button type="button" className="a-btn a-btn-quiet a-btn-small col-span-2" onClick={() => void remove(item)}>
+                      Quitar
+                    </button>
+                  )}
                 </div>
+                {item.read_only ? (
+                  <p className="a-hint">Viene de Atlas ONE</p>
+                ) : (
                 <div className="mt-2">
                   <label htmlFor={`alt-${item.id}`} className="a-label">
                     Texto alternativo
@@ -240,6 +248,7 @@ function PhotoManager({
                     onBlur={(event) => void saveAlt(item, event.target)}
                   />
                 </div>
+                )}
               </li>
             ))}
           </ol>
@@ -280,7 +289,8 @@ export function ProductEditor({
     setMessage(null);
   };
 
-  const payload = () => ({
+  const fromAtlas = Boolean(product.from_atlas);
+  const payload = () => editorialPayload(product, {
     name: form.name.trim(),
     slug: form.slug.trim(),
     // El servidor no admite null aquí; validate() exige ambos.
@@ -293,14 +303,17 @@ export function ProductEditor({
     seo_title: form.seo_title.trim() || null,
     seo_description: form.seo_description.trim() || null,
     internal_notes: form.internal_notes.trim() || null,
+    hidden_on_web: form.hidden_on_web,
   });
 
   const validate = () => {
     const next: Record<string, string> = {};
-    if (!form.name.trim()) next.name = "Escriba el nombre.";
-    if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(form.slug.trim())) next.slug = "Use minúsculas, números y guiones, sin espacios.";
-    if (!form.brand_id) next.brand_id = "Elija una marca o «Sin marca».";
-    if (!form.category_id) next.category_id = "Elija una categoría.";
+    if (!fromAtlas) {
+      if (!form.name.trim()) next.name = "Escriba el nombre.";
+      if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(form.slug.trim())) next.slug = "Use minúsculas, números y guiones, sin espacios.";
+      if (!form.brand_id) next.brand_id = "Elija una marca o «Sin marca».";
+      if (!form.category_id) next.category_id = "Elija una categoría.";
+    }
     if (form.display_order && !/^-?\d+$/.test(form.display_order)) next.display_order = "Use un número entero.";
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -383,7 +396,13 @@ export function ProductEditor({
               <StatusLabel status={status} />
             </p>
             {product.published_at ? <p className="muted mt-1">Publicado por primera vez: {formatDateTime(product.published_at)}</p> : null}
-            {status !== "published" && missing.length ? (
+            {fromAtlas ? (
+              <p className="a-hint">El estado lo decide Atlas ONE: la pieza se publica sola cuando tiene todo.</p>
+            ) : null}
+            {fromAtlas && status === "draft" ? (
+              <p className="font-medium text-sand">{product.atlas_missing ?? "Falta algo en Atlas ONE."}</p>
+            ) : null}
+            {!fromAtlas && status !== "published" && missing.length ? (
               <ul id="faltantes" className="mt-3 space-y-1">
                 {missing.map((item) => (
                   <li key={item} className="font-medium text-sand">
@@ -393,7 +412,7 @@ export function ProductEditor({
               </ul>
             ) : null}
             <div className="mt-3 flex flex-wrap gap-2">
-              {status !== "published" ? (
+              {fromAtlas ? null : status !== "published" ? (
                 <button
                   type="button"
                   className="a-btn a-btn-primary"
@@ -410,7 +429,7 @@ export function ProductEditor({
                   Despublicar
                 </button>
               )}
-              {status !== "archived" ? (
+              {!fromAtlas && status !== "archived" ? (
                 <button
                   type="button"
                   className="a-btn a-btn-quiet"
@@ -445,6 +464,22 @@ export function ProductEditor({
             </h2>
             {product.sku ? <p className="muted mt-1">SKU base: {product.sku}</p> : null}
             <div className="mt-3 grid gap-4 md:grid-cols-2">
+              {fromAtlas ? (
+                <>
+                  <p className="a-hint md:col-span-2">
+                    <strong>Viene de Atlas ONE.</strong> Nombre, marca y categoría se cambian en Atlas ONE; aquí solo se ven.
+                  </p>
+                  <ReadOnlyField label="Nombre" value={product.name} className="md:col-span-2" />
+                  <ReadOnlyField label="Marca" value={product.brand.name} />
+                  <ReadOnlyField label="Categoría" value={categories?.find((category) => category.id === product.category_id)?.name ?? product.category.name} />
+                  <ReadOnlyField label="Dirección web (slug)" value={product.slug} />
+                  {product.gender ? <ReadOnlyField label="Género" value={product.gender} /> : null}
+                  {product.model ? <ReadOnlyField label="Modelo" value={product.model} /> : null}
+                  {product.material ? <ReadOnlyField label="Material" value={product.material} /> : null}
+                  {product.admin_description ? <ReadOnlyField label="Descripción" value={product.admin_description} className="md:col-span-2" /> : null}
+                </>
+              ) : (
+                <>
               <TextField label="Nombre" value={form.name} onChange={(value) => set("name", value)} error={errors.name} required className="md:col-span-2" />
               <SelectField label="Marca" value={form.brand_id} onChange={(value) => set("brand_id", value)} error={errors.brand_id} disabled={!brands}
                 hint={!brands ? "Este usuario no puede cambiar la marca." : undefined}>
@@ -464,9 +499,12 @@ export function ProductEditor({
                 ))}
               </SelectField>
               <TextField label="Dirección web (slug)" value={form.slug} onChange={(value) => set("slug", value)} error={errors.slug} hint="Cambiarla rompe los enlaces ya compartidos." />
+                </>
+              )}
               <TextField label="Orden de aparición" inputMode="numeric" value={form.display_order} onChange={(value) => set("display_order", value)} error={errors.display_order} hint="Los números menores aparecen primero." />
               <TextField label="Fecha de ingreso comercial" type="date" value={form.commercial_added_at} onChange={(value) => set("commercial_added_at", value)} error={errors.commercial_added_at} hint="Ordena la sección Novedades." />
               <CheckField label="Destacado en la portada" checked={form.is_featured} onChange={(value) => set("is_featured", value)} className="self-end" />
+              <CheckField label="Ocultar en la web" checked={form.hidden_on_web} onChange={(value) => set("hidden_on_web", value)} hint="La pieza deja de verse en el sitio sin cambiar su estado." className="self-end" />
               <TextField label="Título para buscadores" value={form.seo_title} onChange={(value) => set("seo_title", value)} error={errors.seo_title} className="md:col-span-2" />
               <TextAreaField label="Descripción para buscadores" rows={2} value={form.seo_description} onChange={(value) => set("seo_description", value)} error={errors.seo_description} className="md:col-span-2" />
               <TextAreaField label="Notas internas" rows={3} value={form.internal_notes} onChange={(value) => set("internal_notes", value)} error={errors.internal_notes} hint="No se muestran en el sitio." className="md:col-span-2" />
@@ -495,7 +533,7 @@ export function ProductEditor({
               <p className="mt-2">Este producto no tiene variantes.</p>
             ) : (
               <>
-                <p className="a-hint">Vienen del archivo importado. Para cambiarlas, actualice el archivo y vuelva a importar.</p>
+                <p className="a-hint">{fromAtlas ? "Vienen de Atlas ONE. Se cambian allá." : "No se editan desde aquí."}</p>
                 <div className="mt-2 overflow-x-auto">
                   <table className="a-table">
                     <thead>
@@ -503,6 +541,7 @@ export function ProductEditor({
                         <th scope="col">SKU</th>
                         <th scope="col">Talla</th>
                         <th scope="col">Color</th>
+                        {fromAtlas ? <th scope="col">Disponibilidad</th> : null}
                       </tr>
                     </thead>
                     <tbody>
@@ -511,6 +550,7 @@ export function ProductEditor({
                           <td className="break-all">{variant.sku}</td>
                           <td>{variant.size ?? ""}</td>
                           <td>{variant.color ?? ""}</td>
+                          {fromAtlas ? <td>{variant.available === false ? "Agotada" : "Disponible"}</td> : null}
                         </tr>
                       ))}
                     </tbody>
