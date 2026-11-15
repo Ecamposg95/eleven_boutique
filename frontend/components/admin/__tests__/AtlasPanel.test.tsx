@@ -41,6 +41,9 @@ describe("AtlasDrafts", () => {
     expect(html).toContain("Camisa lino");
     expect(html).toContain("Falta la foto");
     expect(html).toContain("/admin/productos/p1");
+    expect(html).toContain("ligar su marca o su categoría aquí");
+    expect(html).toContain("Sincronizar ahora");
+    expect(html).not.toContain("hasta que Atlas ONE tenga");
   });
 });
 

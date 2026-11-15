@@ -89,6 +89,17 @@ def is_nightly_due(state: AtlasSyncState | None, now: datetime) -> bool:
     return state is None or state.last_full_at is None or state.last_full_at < cutoff
 
 
+def request_full_load(db: Session) -> None:
+    """La próxima corrida recorre todas las piezas (no confirma: va en la transacción de quien llama).
+
+    Ligar un departamento o una casa, o publicar una casa, cambia el estado de piezas que Atlas no
+    volverá a mandar en una incremental; sin esto seguirían en borrador hasta la nocturna.
+    """
+    state = db.get(AtlasSyncState, 1)
+    if state is not None:
+        state.products_since = None
+
+
 def _describe(exc: Exception) -> str:
     """Texto corto para la bitácora. AtlasError ya viene sin la llave."""
     if isinstance(exc, AtlasError):
@@ -126,7 +137,14 @@ def _execute(db: Session, client: AtlasClient, kind: SyncKind, now: Callable[[],
     started = now()
     counts = _counts()
     state = db.get(AtlasSyncState, 1)
-    full = kind == "full" or state is None or state.products_since is None or is_nightly_due(state, started)
+    # "Sincronizar ahora" recorre todas las piezas: es el botón para reevaluar borradores. Sin
+    # `products_since` (primera corrida o el panel pidió recarga) también es carga completa.
+    full = (
+        kind in ("full", "manual")
+        or state is None
+        or state.products_since is None
+        or is_nightly_due(state, started)
+    )
     products_since = None if full else state.products_since - OVERLAP
     availability_since = (
         state.availability_since - OVERLAP if state is not None and state.availability_since else None

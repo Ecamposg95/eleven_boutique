@@ -16,6 +16,7 @@ from app.services.admin.common import (
     set_asset,
     unique_slug,
 )
+from app.services.atlas.sync import request_full_load
 from app.services.atlas.sync_products import PLACEHOLDER_BRAND
 from app.services.catalog import _public_aliases
 from app.services.text import normalize, slugify
@@ -241,6 +242,9 @@ def update_brand(
         changes["aliases"] = [aliases_before, aliases_after]
     if changes:
         audit.record(db, user, "update", "brand", brand.id, changes)
+    if changes.keys() & {"status", "name", "aliases"}:
+        # Publicar la casa o arreglar su nombre/alias destraba piezas de Atlas en borrador.
+        request_full_load(db)
     db.commit()
     return get_brand(db, brand.id)
 

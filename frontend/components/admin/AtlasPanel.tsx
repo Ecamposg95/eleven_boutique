@@ -54,7 +54,10 @@ export function AtlasDrafts({ status }: { status: AtlasStatus }) {
         <p className="mt-2">Ninguna pieza de Atlas ONE está detenida en borrador.</p>
       ) : (
         <>
-          <p className="a-hint">Estas piezas no se ven en el sitio hasta que Atlas ONE tenga lo que les falta.</p>
+          <p className="a-hint">
+            Estas piezas no se ven en el sitio. Casi siempre basta ligar su marca o su categoría aquí abajo (o publicar
+            la casa); si falta algo en la pieza, complétela en Atlas ONE. Luego use «Sincronizar ahora».
+          </p>
           <ul className="mt-2">
             {status.drafts.map((draft) => (
               <li key={draft.id} className="border-t border-bronze/30 py-1.5">

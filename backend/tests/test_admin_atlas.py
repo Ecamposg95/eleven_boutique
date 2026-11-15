@@ -135,6 +135,35 @@ def test_brand_map_cannot_be_unlinked(db, client):
     assert client.get(f"{BASE}/atlas/brand-map").json()[0]["brand_id"] == str(house.id)
 
 
+def test_map_patches_and_house_publication_request_a_full_load(db, client):
+    house = make_brand(db, "Gucci")
+    draft = make_brand(db, "Nueva", status="draft")
+    category = make_category(db, "Bolsas")
+    db.add(AtlasBrandMap(atlas_brand_id="b1", atlas_name="Gucci"))
+    db.add(AtlasCategoryMap(atlas_department_id="d1", atlas_name="Bolsos"))
+    db.add(AtlasSyncState(id=1, products_since=utcnow()))
+    db.commit()
+
+    def since():
+        db.expire_all()
+        return db.get(AtlasSyncState, 1).products_since
+
+    def reset():
+        db.get(AtlasSyncState, 1).products_since = utcnow()
+        db.commit()
+
+    assert patch(client, "/atlas/brand-map", {"atlas_brand_id": "b1", "brand_id": str(house.id)}).status_code == 200
+    assert since() is None
+    reset()
+    assert patch(client, "/atlas/category-map", {"atlas_department_id": "d1", "category_id": str(category.id)}).status_code == 200
+    assert since() is None
+    reset()
+    assert patch(client, f"/brands/{draft.id}", {"description": "x"}).status_code == 200
+    assert since() is not None
+    assert patch(client, f"/brands/{draft.id}", {"status": "published"}).status_code == 200
+    assert since() is None
+
+
 def test_category_map_patch_validates_target(db, client):
     category = make_category(db, "Bolsas")
     db.add(AtlasCategoryMap(atlas_department_id="d1", atlas_name="Bolsos"))

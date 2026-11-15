@@ -26,7 +26,7 @@ from app.services.admin import audit
 from app.services.admin.common import invalid_reference, not_found
 from app.services.atlas.client import AtlasClient
 from app.services.atlas.sync_products import PLACEHOLDER_BRAND
-from app.services.atlas.sync import run_sync, with_lock
+from app.services.atlas.sync import request_full_load, run_sync, with_lock
 
 logger = logging.getLogger(__name__)
 
@@ -143,6 +143,7 @@ def patch_brand_map(
             db, user, "update", "atlas_brand_map", row.id, {"brand_id": [row.brand_id, data.brand_id]}
         )
         row.brand_id = data.brand_id
+        request_full_load(db)
         db.commit()
     return schemas.AtlasBrandMapOut.model_validate(row, from_attributes=True)
 
@@ -172,5 +173,6 @@ def patch_category_map(
             {"category_id": [row.category_id, data.category_id]},
         )
         row.category_id = data.category_id
+        request_full_load(db)
         db.commit()
     return schemas.AtlasCategoryMapOut.model_validate(row, from_attributes=True)

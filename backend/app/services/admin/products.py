@@ -25,6 +25,7 @@ from app.models.base import utcnow
 from app.schemas import admin as schemas
 from app.services.admin import audit
 from app.services.admin.common import invalid_reference, not_found, paginate
+from app.services.atlas.sync import request_full_load
 from app.services.text import escape_like, normalize
 
 ProductSort = Literal["updated", "recent", "name", "display", "sku"]
@@ -223,6 +224,8 @@ def _prepare_publication(db: Session, product: Product, publish_brand: bool, use
             {"status": [brand.status, STATUS_PUBLISHED], "product_id": [None, str(product.id)]},
         )
         brand.status = STATUS_PUBLISHED
+        # Sus piezas de Atlas en borrador se reevalúan en la próxima corrida.
+        request_full_load(db)
 
 
 def _publish_stamp(product: Product) -> None:

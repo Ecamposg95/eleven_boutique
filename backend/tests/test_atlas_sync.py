@@ -15,6 +15,7 @@ from app.models import (
     STATUS_DRAFT,
     STATUS_PUBLISHED,
     AtlasCategoryMap,
+    Brand,
     AtlasSyncRun,
     AtlasSyncState,
     MediaAsset,
@@ -22,8 +23,12 @@ from app.models import (
     ProductMedia,
     ProductVariant,
 )
+from app.schemas.admin import AtlasBrandMapPatch, AtlasCategoryMapPatch, BrandPatch
+from app.services.admin.atlas import patch_brand_map, patch_category_map
+from app.services.admin.taxonomy import update_brand
 from app.services.atlas.client import AtlasClient, fmt_since
 from app.services.atlas.sync import is_nightly_due, run_sync, with_lock
+from tests.admin_helpers import make_user
 from tests.factories import make_brand, make_category, make_product
 
 # 12:00 en Ciudad de México.
@@ -651,3 +656,74 @@ def test_script_exit_code_follows_run_status(monkeypatch, make_settings, atlas, 
         assert s.scalar(select(AtlasSyncRun.kind)) == "full"
     atlas.fail["/products"] = 0
     assert sync_atlas.main([]) == 1
+
+
+# --- Reevaluación de borradores tras arreglar la causa en el panel ---------------------------
+
+
+def test_linking_category_in_panel_republishes_on_next_incremental(factory, atlas):
+    atlas.department("d2", "Zapatos")
+    atlas.put("p1", department_id="d2")
+    atlas.tick(120)
+    sync(factory, atlas, now=atlas.now)
+    assert piece(factory, "p1").status == STATUS_DRAFT
+
+    with factory() as s:
+        zapatos = make_category(s, "Zapatos")
+        patch_category_map(s, AtlasCategoryMapPatch(atlas_department_id="d2", category_id=zapatos.id), make_user(s))
+    assert state(factory).products_since is None
+    atlas.tick(120)
+    run = sync(factory, atlas, now=atlas.now)
+    assert "updated_since" not in atlas.params("/products")[-1]
+    assert run.kind == "full"
+    p = piece(factory, "p1")
+    assert p.status == STATUS_PUBLISHED and p.atlas_missing is None
+
+
+def test_repointing_brand_in_panel_republishes_on_next_incremental(factory, atlas):
+    atlas.brand("b2", "Casa Nueva")
+    atlas.put("p1", brand_id="b2")
+    atlas.tick(120)
+    sync(factory, atlas, now=atlas.now)
+    assert piece(factory, "p1").atlas_missing == "casa en borrador: Casa Nueva"
+
+    with factory() as s:
+        hermes = next(b for b in s.scalars(select(Brand)) if b.name == "Hermès")
+        patch_brand_map(s, AtlasBrandMapPatch(atlas_brand_id="b2", brand_id=hermes.id), make_user(s))
+    atlas.tick(120)
+    sync(factory, atlas, now=atlas.now)
+    p = piece(factory, "p1")
+    assert p.status == STATUS_PUBLISHED and p.brand.name == "Hermès"
+
+
+def test_publishing_draft_house_republishes_its_pieces_on_next_incremental(factory, atlas):
+    atlas.brand("b2", "Casa Nueva")
+    atlas.put("p1", brand_id="b2")
+    atlas.tick(120)
+    sync(factory, atlas, now=atlas.now)
+    assert piece(factory, "p1").status == STATUS_DRAFT
+
+    with factory() as s:
+        casa = next(b for b in s.scalars(select(Brand)) if b.name == "Casa Nueva")
+        update_brand(s, casa.id, BrandPatch(status=STATUS_PUBLISHED), make_user(s))
+    atlas.tick(120)
+    sync(factory, atlas, now=atlas.now)
+    assert piece(factory, "p1").status == STATUS_PUBLISHED
+
+
+def test_manual_run_is_a_full_product_load(factory, atlas):
+    atlas.department("d2", "Zapatos")
+    atlas.put("p1", department_id="d2")
+    atlas.tick(120)
+    sync(factory, atlas, now=atlas.now)
+    with factory() as s:
+        zapatos = make_category(s, "Zapatos")
+        s.scalar(select(AtlasCategoryMap).where(AtlasCategoryMap.atlas_department_id == "d2")).category_id = zapatos.id
+        s.commit()
+    atlas.tick(120)
+    run = sync(factory, atlas, kind="manual", now=atlas.now)
+    assert run.kind == "manual" and run.status == "ok"
+    assert "updated_since" not in atlas.params("/products")[-1]
+    assert piece(factory, "p1").status == STATUS_PUBLISHED
+    # La disponibilidad sigue incremental.
+    assert "updated_since" in atlas.params("/availability")[-1]
