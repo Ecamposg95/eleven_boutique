@@ -318,10 +318,10 @@ def test_media_in_a_gallery_cannot_be_deleted_until_unlinked(db, client):
     assert client.delete(f"{BASE}/media/{item['id']}", headers=ORIGIN).status_code == 204
 
 
-@pytest.mark.parametrize("kind", ["brand", "collection", "lookbook_cover", "lookbook_block", "hero", "hero_gallery"])
+@pytest.mark.parametrize("kind", ["brand", "collection", "lookbook_cover", "lookbook_block", "hero", "hero_gallery", "category_cover", "detail", "attention"])
 def test_media_used_elsewhere_cannot_be_deleted(db, client, kind):
     item = upload_one(client)
-    brand, _ = catalog_refs(db)
+    brand, category = catalog_refs(db)
     calls = {
         "brand": ("PATCH", f"/brands/{brand.id}", {"logo_asset_id": item["id"]}),
         "collection": ("POST", "/collections", {"title": "C", "cover_asset_id": item["id"]}),
@@ -333,6 +333,9 @@ def test_media_used_elsewhere_cannot_be_deleted(db, client, kind):
         ),
         "hero": ("PATCH", "/settings", {"hero_mobile_asset_id": item["id"]}),
         "hero_gallery": ("PATCH", "/settings", {"hero_gallery_asset_ids": [item["id"]]}),
+        "category_cover": ("PATCH", f"/categories/{category.id}", {"cover_asset_id": item["id"]}),
+        "detail": ("PATCH", "/settings", {"detail_asset_id": item["id"]}),
+        "attention": ("PATCH", "/settings", {"attention_mobile_asset_id": item["id"]}),
     }
     method, path, body = calls[kind]
     assert client.request(method, BASE + path, json=body, headers=ORIGIN).status_code in (200, 201)

@@ -2,6 +2,7 @@
 
 import uuid
 from datetime import timedelta
+from urllib.parse import urlsplit
 
 from sqlalchemy import exists, func, or_, select
 from sqlalchemy.orm import Session
@@ -255,13 +256,32 @@ def archive_record(db: Session, kind: _Kind, record_id: uuid.UUID, user: AdminUs
 
 # --- Settings --------------------------------------------------------------------------
 
-_TEXT_SETTINGS = ("hero_headline", "hero_subhead", "intro", "boutique_body", "contact_body")
+_TEXT_SETTINGS = (
+    "hero_headline",
+    "hero_subhead",
+    "intro",
+    "boutique_body",
+    "contact_body",
+    "detail_caption",
+    "attention_headline",
+    "attention_subhead",
+)
+# (asset field, URL field) of every settings photo besides the hero pair, which has its own tests.
+_PHOTO_SETTINGS = (
+    ("detail_asset_id", "detail_image_url"),
+    ("detail_mobile_asset_id", "detail_mobile_image_url"),
+    ("attention_asset_id", "attention_image_url"),
+    ("attention_mobile_asset_id", "attention_mobile_image_url"),
+)
+_INSTAGRAM_HOSTS = ("instagram.com", "www.instagram.com")
 _AUDITED_SETTINGS = (
     "whatsapp_number",
     "whatsapp_premium_number",
     "hero_asset_id",
     "hero_mobile_asset_id",
     "hero_gallery",
+    "instagram_url",
+    *(asset for asset, _ in _PHOTO_SETTINGS),
     *_TEXT_SETTINGS,
 )
 
@@ -284,7 +304,30 @@ def _settings_out(row: SiteSettings | None) -> schemas.AdminSettings:
         intro=row.intro if row else None,
         boutique_body=row.boutique_body if row else None,
         contact_body=row.contact_body if row else None,
+        instagram_url=row.instagram_url if row else None,
+        detail_asset_id=row.detail_asset_id if row else None,
+        detail_image_url=row.detail_image_url if row else None,
+        detail_mobile_asset_id=row.detail_mobile_asset_id if row else None,
+        detail_mobile_image_url=row.detail_mobile_image_url if row else None,
+        detail_caption=row.detail_caption if row else None,
+        attention_asset_id=row.attention_asset_id if row else None,
+        attention_image_url=row.attention_image_url if row else None,
+        attention_mobile_asset_id=row.attention_mobile_asset_id if row else None,
+        attention_mobile_image_url=row.attention_mobile_image_url if row else None,
+        attention_headline=row.attention_headline if row else None,
+        attention_subhead=row.attention_subhead if row else None,
     )
+
+
+def _instagram_url(value: str | None) -> str | None:
+    """Blank clears it; otherwise an https link to Instagram itself, nothing else."""
+    value = (value or "").strip()
+    if not value:
+        return None
+    parts = urlsplit(value)
+    if parts.scheme != "https" or parts.hostname not in _INSTAGRAM_HOSTS or parts.username or parts.password:
+        raise ApiError(422, "invalid_instagram_url", "El enlace debe ser de instagram.com (https)")
+    return value
 
 
 def _hero_gallery(
@@ -336,6 +379,11 @@ def update_settings(db: Session, data: schemas.SettingsPatch, user: AdminUser) -
             "hero_mobile_image_url",
             asset_or_error(db, data.hero_mobile_asset_id),
         )
+    for asset_field, url_field in _PHOTO_SETTINGS:
+        if asset_field in fields:
+            set_asset(row, asset_field, url_field, asset_or_error(db, getattr(data, asset_field)))
+    if "instagram_url" in fields:
+        row.instagram_url = _instagram_url(data.instagram_url)
     if "hero_gallery_slides" in fields:
         row.hero_gallery = _hero_gallery(
             db, [(slide.asset_id, slide.mobile_asset_id) for slide in data.hero_gallery_slides or []]

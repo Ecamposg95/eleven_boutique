@@ -6,7 +6,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.api.errors import ApiError
-from app.models import AdminUser, Brand, BrandAlias, Category, Product
+from app.models import AdminUser, Brand, BrandAlias, Category, MediaAsset, Product
 from app.schemas import admin as schemas
 from app.services.admin import audit
 from app.services.admin.common import (
@@ -243,7 +243,7 @@ def update_brand(
 
 # --- Categories ------------------------------------------------------------------------
 
-CATEGORY_FIELDS = ("name", "slug", "parent_id", "display_order")
+CATEGORY_FIELDS = ("name", "slug", "parent_id", "display_order", "cover_asset_id")
 
 
 def _category_out(category: Category, count: int) -> schemas.AdminCategory:
@@ -253,6 +253,8 @@ def _category_out(category: Category, count: int) -> schemas.AdminCategory:
         slug=category.slug,
         parent_id=category.parent_id,
         display_order=category.display_order,
+        cover_asset_id=category.cover_asset_id,
+        cover_url=category.cover_url,
         product_count=count,
     )
 
@@ -285,10 +287,21 @@ def _check_parent(db: Session, parent_id: uuid.UUID | None, own_id: uuid.UUID | 
         current = parent.parent_id
 
 
+def _category_cover(
+    db: Session, cover_asset_id: uuid.UUID | None, parent_id: uuid.UUID | None
+) -> MediaAsset | None:
+    """Only top-level departments carry a cover photo."""
+    asset = asset_or_error(db, cover_asset_id)
+    if asset is not None and parent_id is not None:
+        raise invalid_reference("Solo los departamentos principales llevan foto de portada")
+    return asset
+
+
 def create_category(
     db: Session, data: schemas.CategoryCreate, user: AdminUser
 ) -> schemas.AdminCategory:
     _check_parent(db, data.parent_id, None)
+    cover = _category_cover(db, data.cover_asset_id, data.parent_id)
     if data.slug:
         _check_category_slug(db, data.slug, None)
         slug = data.slug
@@ -297,6 +310,7 @@ def create_category(
     category = Category(
         name=data.name, slug=slug, parent_id=data.parent_id, display_order=data.display_order
     )
+    set_asset(category, "cover_asset_id", "cover_url", cover)
     db.add(category)
     db.flush()
     audit.record(
@@ -321,8 +335,13 @@ def update_category(
         _check_parent(db, data.parent_id, category.id)
     if data.slug:
         _check_category_slug(db, data.slug, category.id)
+    if "cover_asset_id" in fields:
+        cover = _category_cover(
+            db, data.cover_asset_id, data.parent_id if "parent_id" in fields else category.parent_id
+        )
+        set_asset(category, "cover_asset_id", "cover_url", cover)
     for field in CATEGORY_FIELDS:
-        if field in fields:
+        if field in fields and field != "cover_asset_id":
             setattr(category, field, getattr(data, field))
     changes = audit.diff(before, audit.snapshot(category, CATEGORY_FIELDS))
     if changes:

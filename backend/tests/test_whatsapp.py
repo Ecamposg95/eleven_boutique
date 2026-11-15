@@ -4,7 +4,7 @@ import pytest
 from sqlalchemy import select
 
 from app.models import KIND_CLASSIFICATION, SiteSettings
-from app.services.base_seed import seed_site_settings
+from app.services.base_seed import DEFAULT_INSTAGRAM_URL, seed_site_settings
 from app.services.whatsapp import build_consult_url, normalize_number
 from tests.factories import make_brand, make_category, make_product
 
@@ -172,3 +172,13 @@ def test_premium_number_is_seeded_from_env_only_when_empty(db, make_settings):
     seed_site_settings(db, make_settings(whatsapp_premium_number=PREMIUM_NUMBER))
     db.commit()
     assert db.scalar(select(SiteSettings.whatsapp_premium_number)) == "+52 55 9999 0001"
+
+
+def test_new_real_settings_row_gets_the_default_instagram_and_keeps_an_operator_choice(db, make_settings):
+    row = seed_site_settings(db, make_settings())
+    db.commit()
+    assert row.instagram_url == DEFAULT_INSTAGRAM_URL == "https://www.instagram.com/eleven.fashionboutique/"
+    row.instagram_url = None  # The operator cleared it: a re-seed must not bring it back.
+    seed_site_settings(db, make_settings())
+    db.commit()
+    assert db.scalar(select(SiteSettings.instagram_url)) is None

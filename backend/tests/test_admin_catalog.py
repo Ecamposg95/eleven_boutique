@@ -518,6 +518,24 @@ def test_category_crud(client):
     assert public["hija"] == "raiz-nueva"
 
 
+def test_category_cover_round_trip_only_on_top_level(client):
+    item = upload_one(client)
+    parent = post(client, "/categories", {"name": "Raíz Foto"}).json()
+    child = post(client, "/categories", {"name": "Hija Foto", "parent_id": parent["id"]}).json()
+    saved = patch(client, f"/categories/{parent['id']}", {"cover_asset_id": item["id"]})
+    assert saved.status_code == 200, saved.text
+    assert saved.json()["cover_asset_id"] == item["id"] and saved.json()["cover_url"] == item["url"]
+    listed = {c["id"]: c for c in client.get(f"{BASE}/categories").json()["items"]}
+    assert listed[parent["id"]]["cover_url"] == item["url"]
+    rejected = patch(client, f"/categories/{child['id']}", {"cover_asset_id": item["id"]})
+    assert rejected.status_code == 422 and error_code(rejected) == "invalid_reference"
+    assert patch(client, f"/categories/{child['id']}", {"cover_asset_id": None}).status_code == 200
+    created = post(client, "/categories", {"name": "Con Foto", "cover_asset_id": item["id"]}).json()
+    assert created["cover_url"] == item["url"]
+    cleared = patch(client, f"/categories/{parent['id']}", {"cover_asset_id": None}).json()
+    assert cleared["cover_asset_id"] is None and cleared["cover_url"] is None
+
+
 def test_category_delete_is_409_with_children_or_products(db, client, refs):
     parent = post(client, "/categories", {"name": "Padre"}).json()
     child = post(client, "/categories", {"name": "Hija", "parent_id": parent["id"]}).json()
@@ -735,6 +753,56 @@ def test_settings_premium_number_round_trip_and_validation(client):
     response = patch(client, "/settings", {"whatsapp_premium_number": "123"})
     assert response.status_code == 422 and error_code(response) == "invalid_whatsapp_number"
     assert patch(client, "/settings", {"whatsapp_premium_number": None}).json()["whatsapp_premium_number"] is None
+
+
+def test_settings_detail_attention_and_instagram_round_trip(db, client):
+    detail, detail_m, att, att_m = (upload_one(client) for _ in range(4))
+    body = {
+        "instagram_url": "https://www.instagram.com/eleven.fashionboutique/",
+        "detail_asset_id": detail["id"],
+        "detail_mobile_asset_id": detail_m["id"],
+        "detail_caption": "El detalle",
+        "attention_asset_id": att["id"],
+        "attention_mobile_asset_id": att_m["id"],
+        "attention_headline": "Atención personal",
+        "attention_subhead": "Te acompañamos.",
+    }
+    response = patch(client, "/settings", body)
+    assert response.status_code == 200, response.text
+    saved = response.json()
+    assert client.get(f"{BASE}/settings").json() == saved
+    for key, value in body.items():
+        assert saved[key] == value
+    assert saved["detail_image_url"] == detail["url"]
+    assert saved["detail_mobile_image_url"] == detail_m["url"]
+    assert saved["attention_image_url"] == att["url"]
+    assert saved["attention_mobile_image_url"] == att_m["url"]
+    cleared = patch(client, "/settings", {"detail_asset_id": None, "attention_mobile_asset_id": None}).json()
+    assert cleared["detail_image_url"] is None and cleared["attention_mobile_image_url"] is None
+    audited = db.scalars(select(AuditLog).where(AuditLog.entity == "site_settings")).all()
+    assert any("instagram_url" in row.changes and "detail_caption" in row.changes for row in audited)
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://evil.example/x",
+        "https://instagram.com.evil.example/x",
+        "https://user@evil.example/instagram.com",
+        "http://instagram.com/x",
+        "javascript:alert(1)",
+    ],
+)
+def test_settings_rejects_non_instagram_url(client, url):
+    response = patch(client, "/settings", {"instagram_url": url})
+    assert response.status_code == 422 and error_code(response) == "invalid_instagram_url"
+
+
+def test_settings_instagram_url_is_normalized(client):
+    saved = patch(client, "/settings", {"instagram_url": "  https://instagram.com/eleven  "}).json()
+    assert saved["instagram_url"] == "https://instagram.com/eleven"
+    assert patch(client, "/settings", {"instagram_url": ""}).json()["instagram_url"] is None
+    assert patch(client, "/settings", {"instagram_url": "   "}).json()["instagram_url"] is None
 
 
 def test_brand_premium_flag_round_trip(client):

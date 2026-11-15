@@ -384,6 +384,7 @@ class CategoryCreate(Input):
     slug: Slug | None = None
     parent_id: uuid.UUID | None = None
     display_order: int = 0
+    cover_asset_id: uuid.UUID | None = None
 
 
 class CategoryPatch(Input):
@@ -393,6 +394,7 @@ class CategoryPatch(Input):
     slug: Slug | None = None
     parent_id: uuid.UUID | None = None
     display_order: int | None = None
+    cover_asset_id: uuid.UUID | None = None
 
 
 class AdminCategory(Schema):
@@ -401,6 +403,8 @@ class AdminCategory(Schema):
     slug: str
     parent_id: uuid.UUID | None
     display_order: int
+    cover_asset_id: uuid.UUID | None
+    cover_url: str | None
     product_count: int
 
 
@@ -512,6 +516,14 @@ class SettingsPatch(Input):
     intro: LongText | None = None
     boutique_body: LongText | None = None
     contact_body: LongText | None = None
+    instagram_url: Annotated[str, StringConstraints(max_length=500)] | None = None
+    detail_asset_id: uuid.UUID | None = None
+    detail_mobile_asset_id: uuid.UUID | None = None
+    detail_caption: ShortText | None = None
+    attention_asset_id: uuid.UUID | None = None
+    attention_mobile_asset_id: uuid.UUID | None = None
+    attention_headline: LongText | None = None
+    attention_subhead: LongText | None = None
 
 
 class AdminSettings(Schema):
@@ -527,6 +539,18 @@ class AdminSettings(Schema):
     intro: str | None
     boutique_body: str | None
     contact_body: str | None
+    instagram_url: str | None
+    detail_asset_id: uuid.UUID | None
+    detail_image_url: str | None
+    detail_mobile_asset_id: uuid.UUID | None
+    detail_mobile_image_url: str | None
+    detail_caption: str | None
+    attention_asset_id: uuid.UUID | None
+    attention_image_url: str | None
+    attention_mobile_asset_id: uuid.UUID | None
+    attention_mobile_image_url: str | None
+    attention_headline: str | None
+    attention_subhead: str | None
 
 
 # --- Imports ---------------------------------------------------------------------------
