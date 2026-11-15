@@ -68,6 +68,7 @@ def test_retries_5xx_then_succeeds_with_retry_after():
     assert list(make(handler, sleeps).iter_pages("/x", None)) == [([], "T")]
     assert len(calls) == 3
     assert sleeps[0] == 7
+    assert sleeps[1] == 2.0
     assert len(sleeps) == 2
 
 
@@ -94,6 +95,7 @@ def test_401_raises_without_key_in_message():
     assert KEY not in str(exc.value)
     assert KEY not in repr(exc.value)
     assert "401" in str(exc.value)
+    assert exc.value.__cause__ is None and exc.value.__context__ is None
 
 
 def test_client_repr_hides_key():
@@ -107,6 +109,7 @@ def test_network_error_does_not_leak_key():
     with pytest.raises(AtlasError) as exc:
         list(make(handler, []).iter_pages("/x", None))
     assert KEY not in str(exc.value)
+    assert exc.value.__cause__ is None and exc.value.__context__ is None
 
 
 def test_post_lead_sends_idempotency_key_and_returns_status():
@@ -129,3 +132,40 @@ def test_post_lead_403_is_forbidden():
         make(lambda r: httpx.Response(403)).post_lead({}, "k")
     assert isinstance(exc.value, AtlasError)
     assert KEY not in str(exc.value)
+
+
+def test_retried_post_lead_reuses_idempotency_key():
+    keys = []
+
+    def handler(request):
+        keys.append(request.headers["Idempotency-Key"])
+        return httpx.Response(503) if len(keys) < 3 else httpx.Response(201, json={})
+
+    assert make(handler, []).post_lead({}, "same-key") == 201
+    assert keys == ["same-key"] * 3
+
+
+def test_failure_on_page_two_raises_atlas_error():
+    def handler(request):
+        if "cursor" not in request.url.params:
+            return httpx.Response(200, json={"items": [], "next_cursor": "c2", "server_time": "T"})
+        return httpx.Response(401)
+
+    with pytest.raises(AtlasError):
+        list(make(handler).iter_pages("/x", None))
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        httpx.Response(200, content=b"<html>no json</html>"),
+        httpx.Response(200, json={"items": [], "next_cursor": None}),
+        httpx.Response(200, json={"server_time": "T"}),
+        httpx.Response(200, json=[1, 2]),
+    ],
+)
+def test_malformed_200_raises_atlas_error(response):
+    with pytest.raises(AtlasError) as exc:
+        list(make(lambda r: response).iter_pages("/x", None))
+    assert "respuesta inválida" in str(exc.value)
+    assert exc.value.__cause__ is None

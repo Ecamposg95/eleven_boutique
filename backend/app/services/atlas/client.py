@@ -104,11 +104,19 @@ class AtlasClient:
             params["updated_since"] = fmt_since(updated_since)
         first_server_time: str | None = None
         while True:
-            body = self._request("GET", path, params=params).json()
+            response = self._request("GET", path, params=params)
+            try:
+                body = response.json()
+                items = body["items"]
+                server_time = body["server_time"]
+                cursor = body.get("next_cursor")
+                if not isinstance(items, list) or not isinstance(server_time, str):
+                    raise ValueError("forma inesperada")
+            except (ValueError, KeyError, TypeError, AttributeError):
+                raise AtlasError("respuesta inválida") from None
             if first_server_time is None:
-                first_server_time = body["server_time"]
-            yield body["items"], first_server_time
-            cursor = body.get("next_cursor")
+                first_server_time = server_time
+            yield items, first_server_time
             if not cursor:
                 return
             params["cursor"] = cursor
