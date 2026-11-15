@@ -324,7 +324,6 @@ def test_atlas_photos_keep_their_order_and_main(db, client):
     for body in (
         {"order": [a2, a1, panel], "primary_id": a2},  # reordena fotos de Atlas
         {"order": [a1, a2, panel], "primary_id": a1},  # otra principal de Atlas
-        {"order": [a1, a2, panel], "primary_id": panel},  # quita la principal de Atlas
     ):
         response = patch(client, path, body)
         assert response.status_code == 422, body
@@ -333,9 +332,13 @@ def test_atlas_photos_keep_their_order_and_main(db, client):
     assert ok.status_code == 200, ok.text
     assert [m["id"] for m in ok.json()["media"]] == [panel, a1, a2]
     assert patch(client, path, {"order": [a1, panel, a2]}).status_code == 200
+    # Una foto del panel sí puede ser la principal: la sincronización la respeta.
+    ok = patch(client, path, {"order": [a1, panel, a2], "primary_id": panel})
+    assert ok.status_code == 200
+    assert [m["id"] for m in ok.json()["media"] if m["is_primary"]] == [panel]
 
 
-def test_panel_main_photo_can_move_between_panel_photos(db, client):
+def test_panel_main_photo_can_move_between_panel_photos_and_back_to_atlas(db, client):
     product, a1, a2, panel = _photos(db)
     db.get(ProductMedia, uuid.UUID(a2)).is_primary = False
     db.get(ProductMedia, uuid.UUID(panel)).is_primary = True
@@ -347,10 +350,13 @@ def test_panel_main_photo_can_move_between_panel_photos(db, client):
     db.flush()
     second = ProductMedia(product_id=product.id, url=other.url, alt="o", position=3, media_asset_id=other.id)
     db.add(second)
+    db.add(AtlasSyncState(id=1, products_since=utcnow()))
     db.commit()
     path = f"/products/{product.id}/media"
     body = {"order": [a1, a2, panel, str(second.id)], "primary_id": str(second.id)}
     assert patch(client, path, body).status_code == 200
-    # Volver a una foto de Atlas tampoco: la sincronización elegiría la suya.
-    body["primary_id"] = a1
-    assert patch(client, path, body).status_code == 422
+    # Volver a la de Atlas: la acepta y pide recarga completa, que confirma la principal de Atlas.
+    body["primary_id"] = a2
+    assert patch(client, path, body).status_code == 200
+    db.expire_all()
+    assert db.get(AtlasSyncState, 1).products_since is None

@@ -204,7 +204,7 @@ function PhotoManager({
         <>
           <p className="a-hint">Arrastre una foto para cambiar el orden, o use los botones de mover. La principal es la que se ve en listados.</p>
           {media.some((item) => item.read_only) ? (
-            <p className="a-hint">El orden y la principal de las fotos de Atlas ONE se cambian en Atlas ONE.</p>
+            <p className="a-hint">El orden de las fotos de Atlas ONE y cuál de ellas es la principal se cambian en Atlas ONE; una foto del panel sí puede ser la principal.</p>
           ) : null}
           <ol className="mt-3 grid grid-cols-[repeat(auto-fill,minmax(11rem,1fr))] gap-4">
             {media.map((item, index) => {
@@ -233,7 +233,7 @@ function PhotoManager({
                     ) : null}
                     {canMakePrimary ? (
                       <button type="button" className="a-btn a-btn-quiet a-btn-small col-span-2" onClick={() => void persist(setPrimary(media, item.id), `Foto ${index + 1} marcada como principal.`)}>
-                        Hacer principal
+                        {item.read_only ? "Volver a la principal de Atlas ONE" : "Hacer principal"}
                       </button>
                     ) : null}
                     {item.read_only ? null : (

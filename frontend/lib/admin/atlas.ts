@@ -137,18 +137,24 @@ export function editorialPayload<T extends Record<string, unknown>>(product: Pic
 }
 
 /**
- * Controles de una foto en la galería. Atlas ONE manda en el orden de sus fotos y en la principal
- * (el servidor rechaza cambiarlos y la sincronización los desharía); las del panel se mueven libres.
+ * Controles de una foto en la galería. Atlas ONE manda en el orden de sus fotos y en cuál de ellas es
+ * la principal (el servidor rechaza cambiarlos); las del panel se mueven libres y pueden ser la
+ * principal. Con una del panel como principal no se sabe cuál marca Atlas: la primera de Atlas
+ * ofrece volver y la sincronización deja la que Atlas diga.
  */
 export function photoControls(
   media: readonly Pick<ProductMediaItem, "id" | "is_primary" | "read_only">[],
   index: number,
 ): { movable: boolean; canMakePrimary: boolean } {
   const item = media[index];
-  if (!item || item.read_only) return { movable: false, canMakePrimary: false };
+  if (!item) return { movable: false, canMakePrimary: false };
   const primaryId = resolvePrimary(media);
   const primary = media.find((photo) => photo.id === primaryId);
-  return { movable: true, canMakePrimary: item.id !== primaryId && !primary?.read_only };
+  if (item.read_only) {
+    const firstAtlas = media.find((photo) => photo.read_only);
+    return { movable: false, canMakePrimary: !primary?.read_only && firstAtlas?.id === item.id };
+  }
+  return { movable: true, canMakePrimary: item.id !== primaryId };
 }
 
 /** Destinos del mapa de marcas: las casas y la clasificación «Sin marca» (las demás, no). */

@@ -151,16 +151,17 @@ describe("photoControls", () => {
     id, read_only, is_primary, media_asset_id: read_only ? null : `a-${id}`, url: `/${id}.jpg`, alt: "", position: 0,
   });
 
-  it("las fotos de Atlas no se mueven ni se hacen principales", () => {
+  it("las fotos de Atlas no se mueven; con la principal de Atlas, solo las del panel pueden serlo", () => {
     const media = [photo("a1", true), photo("a2", true, true), photo("p1", false)];
     expect(photoControls(media, 0)).toEqual({ movable: false, canMakePrimary: false });
     expect(photoControls(media, 1)).toEqual({ movable: false, canMakePrimary: false });
-    // La principal es de Atlas: tampoco se cambia por una del panel.
-    expect(photoControls(media, 2)).toEqual({ movable: true, canMakePrimary: false });
+    expect(photoControls(media, 2)).toEqual({ movable: true, canMakePrimary: true });
   });
-  it("con la principal en el panel, otra del panel puede serlo", () => {
-    const media = [photo("a1", true), photo("p1", false, true), photo("p2", false)];
-    expect(photoControls(media, 0)).toEqual({ movable: false, canMakePrimary: false });
+  it("con la principal en el panel, otra del panel puede serlo y se puede volver a la de Atlas", () => {
+    const media = [photo("a1", true), photo("p1", false, true), photo("p2", false), photo("a2", true)];
+    // Solo un botón para volver: la sincronización deja la principal que marque Atlas.
+    expect(photoControls(media, 0)).toEqual({ movable: false, canMakePrimary: true });
+    expect(photoControls(media, 3)).toEqual({ movable: false, canMakePrimary: false });
     expect(photoControls(media, 1)).toEqual({ movable: true, canMakePrimary: false });
     expect(photoControls(media, 2)).toEqual({ movable: true, canMakePrimary: true });
   });
