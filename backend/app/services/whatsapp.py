@@ -29,8 +29,8 @@ class Piece:
     def link(self, site_url: str) -> str:
         base = site_url.rstrip("/")
         if self.brand_slug is None:
-            return f"{base}/piezas/{self.slug}"
-        return f"{base}/marcas/{self.brand_slug}/{self.slug}"
+            return f"{base}/tienda/piezas/{self.slug}"
+        return f"{base}/tienda/marcas/{self.brand_slug}/{self.slug}"
 
 
 def _wa_url(digits: str, message: str) -> str:

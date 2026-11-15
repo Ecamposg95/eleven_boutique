@@ -92,10 +92,10 @@ type BrandFacet = { slug: string; name: string; product_count: number };
 
 > Hola, me interesa conocer más sobre esta pieza de Eleven Boutique: {marca} — {nombre}. Referencia: {sku}. Enlace: {url}. ¿Podrían brindarme atención personalizada?
 
-- `{url}` = `PUBLIC_SITE_URL` + `/marcas/{brand}/{slug}`.
+- `{url}` = `PUBLIC_SITE_URL` + `/tienda/marcas/{brand}/{slug}`.
 - Número: `site_settings.whatsapp_number`, sembrado desde `WHATSAPP_NUMBER` si existe. Se normaliza a dígitos con validación E.164 (8 a 15 dígitos); si es inválido o falta, `consult_url = null`.
 - Línea Boutique: las piezas de marcas con `is_premium` usan `site_settings.whatsapp_premium_number` (sembrado desde `WHATSAPP_PREMIUM_NUMBER`); si falta o es inválido, usan el número general. `whatsapp_enabled` es `true` si hay al menos una línea válida.
-- Producto sin marca: la frase usa solo `{nombre}`, sin "{marca} — ". Su URL es `/piezas/{slug}`.
+- Producto sin marca: la frase usa solo `{nombre}`, sin "{marca} — ". Su URL es `/tienda/piezas/{slug}`.
 
 ## Mi selección
 

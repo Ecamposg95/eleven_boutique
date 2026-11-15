@@ -30,9 +30,9 @@ def test_several_pieces_go_in_one_message_in_the_visitors_order(db, make_client)
     assert line["url"].startswith(f"https://wa.me/{DIGITS}?text=")
     assert message_of(line["url"]) == (
         "Hola, me interesa conocer más sobre estas piezas de Eleven Boutique:\n\n"
-        "1. Prada — Mocasín. Referencia: P-2. Enlace: https://eleven.example/marcas/prada/mocasin\n"
-        "2. Pañuelo. Referencia: X-1. Enlace: https://eleven.example/piezas/panuelo\n"
-        "3. Prada — Bolso. Referencia: P-1. Enlace: https://eleven.example/marcas/prada/bolso\n\n"
+        "1. Prada — Mocasín. Referencia: P-2. Enlace: https://eleven.example/tienda/marcas/prada/mocasin\n"
+        "2. Pañuelo. Referencia: X-1. Enlace: https://eleven.example/tienda/piezas/panuelo\n"
+        "3. Prada — Bolso. Referencia: P-1. Enlace: https://eleven.example/tienda/marcas/prada/bolso\n\n"
         "¿Podrían brindarme atención personalizada?"
     )
 

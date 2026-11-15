@@ -49,13 +49,13 @@ def test_exact_template_and_encoding(db, make_client):
         "Hola%2C%20me%20interesa%20conocer%20m%C3%A1s%20sobre%20esta%20pieza%20de%20Eleven%20Boutique"
         "%3A%20Dolce%20%26%20Gabbana%20%E2%80%94%20Camisa%20L%C3%ADnea%20%C3%91."
         "%20Referencia%3A%20DG-001."
-        "%20Enlace%3A%20https%3A%2F%2Feleven.example%2Fmarcas%2Fdolce-gabbana%2Fcamisa."
+        "%20Enlace%3A%20https%3A%2F%2Feleven.example%2Ftienda%2Fmarcas%2Fdolce-gabbana%2Fcamisa."
         "%20%C2%BFPodr%C3%ADan%20brindarme%20atenci%C3%B3n%20personalizada%3F"
     )
     assert message_of(url) == (
         "Hola, me interesa conocer más sobre esta pieza de Eleven Boutique: "
         "Dolce & Gabbana — Camisa Línea Ñ. Referencia: DG-001. "
-        "Enlace: https://eleven.example/marcas/dolce-gabbana/camisa. "
+        "Enlace: https://eleven.example/tienda/marcas/dolce-gabbana/camisa. "
         "¿Podrían brindarme atención personalizada?"
     )
 
@@ -67,7 +67,7 @@ def test_sin_marca_variant(db, make_client):
     url = make_client(whatsapp_number=FAKE_NUMBER).get("/api/v1/products/panuelo").json()["consult_url"]
     assert message_of(url) == (
         "Hola, me interesa conocer más sobre esta pieza de Eleven Boutique: Pañuelo. "
-        "Referencia: X-1. Enlace: https://eleven.example/piezas/panuelo. "
+        "Referencia: X-1. Enlace: https://eleven.example/tienda/piezas/panuelo. "
         "¿Podrían brindarme atención personalizada?"
     )
 
@@ -82,7 +82,7 @@ def test_trailing_slash_in_site_url_is_ignored():
         slug="bolso",
         sku="P-1",
     )
-    assert "https://eleven.example/marcas/prada/bolso." in message_of(url)
+    assert "https://eleven.example/tienda/marcas/prada/bolso." in message_of(url)
 
 
 @pytest.mark.parametrize("number", ["", "123", "+05 55 0000 0000", "no-es-numero"])
