@@ -12,6 +12,8 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     false,
+    text,
+    true,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
@@ -120,7 +122,16 @@ class Category(IdMixin, TimestampMixin, Base):
 
 class Product(IdMixin, TimestampMixin, Base):
     __tablename__ = "products"
-    __table_args__ = (status_check(),)
+    __table_args__ = (
+        status_check(),
+        Index(
+            "uq_products_external_inventory_id",
+            "external_inventory_id",
+            unique=True,
+            sqlite_where=text("external_inventory_id IS NOT NULL"),
+            postgresql_where=text("external_inventory_id IS NOT NULL"),
+        ),
+    )
 
     sku: Mapped[str] = mapped_column(String(100), unique=True)
     slug: Mapped[str] = mapped_column(String(200), unique=True)
@@ -145,12 +156,21 @@ class Product(IdMixin, TimestampMixin, Base):
     # Internal: never add these to a public schema, except the seo_* pair the contract exposes.
     admin_description: Mapped[str | None] = mapped_column(Text)
     internal_notes: Mapped[str | None] = mapped_column(Text)
+    # Id de la pieza en Atlas ONE; único cuando existe (índice parcial, ver __table_args__).
     external_inventory_id: Mapped[str | None] = mapped_column(String(200))
     supplier_ref: Mapped[str | None] = mapped_column(String(200))
     seo_title: Mapped[str | None] = mapped_column(String(300))
     seo_description: Mapped[str | None] = mapped_column(Text)
     # Atomic references such as "Foto 12" or "Foto mujer 5", used to match uploaded photos.
     photo_refs: Mapped[list[str]] = mapped_column(JSON, default=list, server_default="[]")
+    # Sincronización con Atlas ONE: disponibilidad, lo que impide publicar y datos de la ficha.
+    available: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true())
+    atlas_missing: Mapped[str | None] = mapped_column(String(300))
+    # Solo el admin de la web lo prende; la sincronización nunca lo toca.
+    hidden_on_web: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
+    gender: Mapped[str | None] = mapped_column(String(50))
+    model: Mapped[str | None] = mapped_column(String(200))
+    material: Mapped[str | None] = mapped_column(String(200))
 
     brand: Mapped[Brand] = relationship()
     category: Mapped[Category] = relationship()
@@ -197,6 +217,15 @@ class ProductVariant(IdMixin, TimestampMixin, Base):
     """One catalog row. Holds no price, stock or barcode, by design."""
 
     __tablename__ = "product_variants"
+    __table_args__ = (
+        Index(
+            "uq_product_variants_external_inventory_id",
+            "external_inventory_id",
+            unique=True,
+            sqlite_where=text("external_inventory_id IS NOT NULL"),
+            postgresql_where=text("external_inventory_id IS NOT NULL"),
+        ),
+    )
 
     product_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("products.id", ondelete="CASCADE"), index=True
@@ -204,6 +233,8 @@ class ProductVariant(IdMixin, TimestampMixin, Base):
     sku: Mapped[str] = mapped_column(String(100), unique=True)
     color: Mapped[str | None] = mapped_column(String(100))
     size: Mapped[str | None] = mapped_column(String(50))
+    external_inventory_id: Mapped[str | None] = mapped_column(String(200))
+    available: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true())
 
     product: Mapped[Product] = relationship(back_populates="variants")
 

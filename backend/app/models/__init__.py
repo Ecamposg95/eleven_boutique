@@ -12,6 +12,7 @@ from app.models.admin import (
     ImportRun,
     LoginAttempt,
 )
+from app.models.atlas import AtlasBrandMap, AtlasCategoryMap, AtlasSyncRun, AtlasSyncState
 from app.models.base import STATUS_ARCHIVED, STATUS_DRAFT, STATUS_PUBLISHED, Base
 from app.models.catalog import (
     KIND_BRAND,
@@ -39,6 +40,10 @@ from app.models.content import (
 )
 
 __all__ = [
+    "AtlasBrandMap",
+    "AtlasCategoryMap",
+    "AtlasSyncRun",
+    "AtlasSyncState",
     "AdminSession",
     "AdminUser",
     "AuditLog",

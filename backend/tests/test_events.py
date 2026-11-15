@@ -63,7 +63,7 @@ def test_no_pii_columns(database_url):
     engine = make_engine(database_url)
     columns = {column["name"] for column in inspect(engine).get_columns("catalog_events")}
     engine.dispose()
-    assert columns == {"id", "type", "product_id", "occurred_at"}
+    assert columns == {"id", "type", "product_id", "occurred_at", "forwarded_at"}
 
 
 def test_deleting_a_product_keeps_the_event(db, public_client):
