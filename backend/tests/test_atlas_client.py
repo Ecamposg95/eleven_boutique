@@ -176,3 +176,20 @@ def test_4xx_error_exposes_status():
     with pytest.raises(AtlasError) as info:
         client.post_lead({}, "k")
     assert info.value.status == 422
+
+
+@pytest.mark.parametrize(
+    ("status", "message"),
+    [
+        (401, "La llave de Atlas ONE no es válida (401)"),
+        (404, "Canal de Atlas ONE apagado o URL incorrecta (404)"),
+    ],
+)
+def test_auth_and_not_found_have_clear_messages_without_key(status, message):
+    client = make(lambda request: httpx.Response(status, json={"detail": KEY}))
+    for call in (lambda: list(client.iter_pages("/products", None)), lambda: client.post_lead({}, "k")):
+        with pytest.raises(AtlasError) as info:
+            call()
+        assert str(info.value) == message
+        assert info.value.status == status
+        assert KEY not in str(info.value) and "Bearer" not in str(info.value)

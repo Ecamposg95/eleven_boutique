@@ -86,8 +86,12 @@ class AtlasClient:
                 failure = f"error de red ({type(exc).__name__})"
             else:
                 status = response.status_code
+                if status == 401:
+                    raise AtlasError("La llave de Atlas ONE no es válida (401)", 401)
                 if status == 403:
                     raise AtlasForbidden("Atlas respondió 403: la llave no tiene permiso", 403)
+                if status == 404:
+                    raise AtlasError("Canal de Atlas ONE apagado o URL incorrecta (404)", 404)
                 if status == 429 or status >= 500:
                     failure = f"Atlas respondió {status}"
                 elif status >= 400:
