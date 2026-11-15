@@ -520,16 +520,26 @@ def public_settings(db: Session, settings: Settings) -> schemas.PublicSettings:
         # Real content wins, so edits made in the admin panel also show with DEMO_MODE=true.
         return getattr(real, field, None) or getattr(demo, field, None)
 
+    gallery = _pick_gallery(real, demo)
+    main, main_mobile = pick("hero_image_url"), pick("hero_mobile_image_url")
+    slides = [schemas.HeroSlide(image_url=main, mobile_image_url=main_mobile)] if main else []
+    slides += [
+        schemas.HeroSlide(image_url=slide["url"], mobile_image_url=slide.get("mobile_url"))
+        for slide in gallery
+        if slide.get("url") and slide["url"] != main
+    ]
+
     return schemas.PublicSettings(
         demo_mode=settings.demo_mode,
         whatsapp_enabled=any_whatsapp_digits(db, settings),
         site_name=pick("site_name") or DEFAULT_SITE_NAME,
         hero=schemas.Hero(
-            image_url=pick("hero_image_url"),
-            mobile_image_url=pick("hero_mobile_image_url"),
+            image_url=main,
+            mobile_image_url=main_mobile,
             headline=pick("hero_headline"),
             subhead=pick("hero_subhead"),
-            gallery=[slide["url"] for slide in _pick_gallery(real, demo)],
+            gallery=[slide["url"] for slide in gallery],
+            slides=slides,
         ),
         intro=pick("intro"),
         boutique=schemas.BodyText(body=pick("boutique_body")),

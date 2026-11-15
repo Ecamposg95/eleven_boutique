@@ -50,7 +50,7 @@ type PublicSettings = {
   demo_mode: boolean;
   whatsapp_enabled: boolean;      // nunca se expone el número por separado
   site_name: string;
-  hero: { image_url: string | null; headline: string | null; subhead: string | null; gallery: string[] };
+  hero: { image_url: string | null; mobile_image_url: string | null; headline: string | null; subhead: string | null; gallery: string[]; slides: { image_url: string; mobile_image_url: string | null }[] };
   intro: string | null;
   boutique: { body: string | null };
   contact: { body: string | null };

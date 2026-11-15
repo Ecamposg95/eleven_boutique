@@ -21,7 +21,9 @@ import {
 import {
   closingImage,
   giantWord,
+  heroPhotos,
   stripEntries,
+  type HeroPhoto,
   type StripEntry,
 } from "@/lib/home";
 import { categoryTiles, stockedCategories } from "@/lib/categories";
@@ -75,7 +77,7 @@ function PhotoHero({
   images,
 }: {
   settings: PublicSettings;
-  images: string[];
+  images: HeroPhoto[];
 }) {
   return (
     <section
@@ -84,7 +86,7 @@ function PhotoHero({
     >
       <div className="mono absolute inset-0">
         <HeroSlides
-          images={images}
+          photos={images}
           sizes="100vw"
           imageClassName="object-[50%_25%]"
           controlsClassName="acrylic-card absolute left-[var(--gutter)] top-[calc(var(--chrome-h)+1.25rem)] z-10 rounded-full px-4 py-1.5"
@@ -324,15 +326,8 @@ export default async function HomePage() {
     ]);
 
   const heroImage = safeImageSrc(settings.hero.image_url);
-  // La principal primero; las de la galería se turnan después. Sin principal, la galería basta.
-  const heroImages = [
-    ...new Set(
-      [
-        heroImage,
-        ...(settings.hero.gallery ?? []).map((url) => safeImageSrc(url)),
-      ].filter((url): url is string => Boolean(url)),
-    ),
-  ];
+  // La principal primero; las demás se turnan después, cada una con su versión de teléfono.
+  const heroImages = heroPhotos(settings.hero);
   const allBrands = brands ?? [];
   const allCollections = collections ?? [];
   const allLookbooks = lookbooks ?? [];

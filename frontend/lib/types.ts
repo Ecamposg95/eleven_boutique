@@ -76,6 +76,9 @@ export type LookbookDetail = LookbookSummary & {
   products: ProductCard[];
 };
 
+/** Foto de portada: `image_url` para pantallas horizontales, `mobile_image_url` para verticales. */
+export type HeroSlideData = { image_url: string; mobile_image_url: string | null };
+
 export type PublicSettings = {
   demo_mode: boolean;
   whatsapp_enabled: boolean; // nunca se expone el número por separado
@@ -86,6 +89,7 @@ export type PublicSettings = {
     headline: string | null;
     subhead: string | null;
     gallery?: string[]; // Fotos extra que se turnan después de image_url. Opcional: APIs anteriores no lo envían.
+    slides?: HeroSlideData[]; // Todas las fotos en orden, con su versión de teléfono. Opcional por lo mismo.
   };
   intro: string | null;
   boutique: { body: string | null };

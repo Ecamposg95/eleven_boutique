@@ -56,7 +56,13 @@ def _block_urls(db: Session) -> set[str]:
 def _gallery_urls(db: Session) -> set[str]:
     """The portada gallery keeps its URLs in JSON too."""
     galleries = db.scalars(select(SiteSettings.hero_gallery))
-    return {slide["url"] for gallery in galleries for slide in (gallery or []) if slide.get("url")}
+    return {
+        url
+        for gallery in galleries
+        for slide in (gallery or [])
+        for url in (slide.get("url"), slide.get("mobile_url"))
+        if url
+    }
 
 
 def _used_urls(db: Session) -> set[str]:

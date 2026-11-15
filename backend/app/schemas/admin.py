@@ -482,6 +482,14 @@ HERO_GALLERY_MAX = 8
 class HeroSlide(Schema):
     asset_id: uuid.UUID
     url: str
+    # Art direction: vertical version for portrait screens (phones). Optional.
+    mobile_asset_id: uuid.UUID | None = None
+    mobile_url: str | None = None
+
+
+class HeroSlideIn(Input):
+    asset_id: uuid.UUID
+    mobile_asset_id: uuid.UUID | None = None
 
 
 class SettingsPatch(Input):
@@ -492,6 +500,8 @@ class SettingsPatch(Input):
     hero_asset_id: uuid.UUID | None = None
     hero_mobile_asset_id: uuid.UUID | None = None
     hero_gallery_asset_ids: Annotated[list[uuid.UUID], Field(max_length=HERO_GALLERY_MAX)] | None = None
+    # Replaces hero_gallery_asset_ids when sent: each slide may carry its phone version.
+    hero_gallery_slides: Annotated[list[HeroSlideIn], Field(max_length=HERO_GALLERY_MAX)] | None = None
     hero_headline: LongText | None = None
     hero_subhead: LongText | None = None
     intro: LongText | None = None

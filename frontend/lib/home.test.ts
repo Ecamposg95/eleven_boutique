@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { closingImage, giantWord, stripEntries } from "./home";
-import type { BrandSummary, LookbookSummary, ProductCard } from "./types";
+import { closingImage, giantWord, stripEntries, heroPhotos } from "./home";
+import type { BrandSummary, LookbookSummary, ProductCard, PublicSettings } from "./types";
 
 const lookbook = (slug: string): LookbookSummary => ({
   slug,
@@ -99,5 +99,42 @@ describe("giantWord", () => {
   it("toma la primera palabra del nombre", () => {
     expect(giantWord("Eleven Boutique")).toBe("Eleven");
     expect(giantWord("  Eleven  ")).toBe("Eleven");
+  });
+});
+
+describe("heroPhotos", () => {
+  const hero = (extra: Partial<PublicSettings["hero"]>): PublicSettings["hero"] => ({
+    image_url: null,
+    headline: null,
+    subhead: null,
+    ...extra,
+  });
+
+  it("usa las parejas de la API y descarta repetidas, inválidas y versiones iguales", () => {
+    expect(
+      heroPhotos(
+        hero({
+          slides: [
+            { image_url: "/media/a.jpg", mobile_image_url: "/media/a-tel.jpg" },
+            { image_url: "/media/b.jpg", mobile_image_url: "/media/b.jpg" },
+            { image_url: "/media/a.jpg", mobile_image_url: null },
+            { image_url: "javascript:alert(1)", mobile_image_url: null },
+            { image_url: "/media/c.jpg", mobile_image_url: "//otro.sitio/c.jpg" },
+          ],
+        }),
+      ),
+    ).toEqual([
+      { src: "/media/a.jpg", mobile: "/media/a-tel.jpg" },
+      { src: "/media/b.jpg", mobile: null },
+      { src: "/media/c.jpg", mobile: null },
+    ]);
+  });
+
+  it("sin parejas cae a la principal y la galería", () => {
+    expect(heroPhotos(hero({ image_url: "/media/a.jpg", gallery: ["/media/b.jpg", "/media/a.jpg"] }))).toEqual([
+      { src: "/media/a.jpg", mobile: null },
+      { src: "/media/b.jpg", mobile: null },
+    ]);
+    expect(heroPhotos(hero({}))).toEqual([]);
   });
 });

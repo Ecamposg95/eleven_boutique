@@ -61,7 +61,10 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
       whatsapp_premium_number: premium.digits || null,
       hero_asset_id: form.hero_asset_id,
       hero_mobile_asset_id: form.hero_mobile_asset_id,
-      hero_gallery_asset_ids: form.hero_gallery.map((slide) => slide.asset_id),
+      hero_gallery_slides: form.hero_gallery.map((slide) => ({
+        asset_id: slide.asset_id,
+        mobile_asset_id: slide.mobile_asset_id ?? null,
+      })),
       hero_headline: form.hero_headline.trim() || null,
       hero_subhead: form.hero_subhead.trim() || null,
       intro: form.intro.trim() || null,
@@ -140,8 +143,8 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
             label="Portada en computadora"
             url={heroUrl}
             assetId={form.hero_asset_id}
-            ratio="4 / 5"
-            hint="Vertical 4:5, ideal 1920 × 2400 px. Se monta sobre el nombre gigante y se ve en blanco y negro."
+            ratio="16 / 9"
+            hint="Horizontal 16:9, ideal 2880 × 1620 px. Se ve en pantallas horizontales, sobre el nombre gigante y en blanco y negro."
             onChange={(asset) => {
               set("hero_asset_id", asset?.id ?? null);
               setHeroUrl(asset?.url ?? null);
@@ -152,7 +155,7 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
             url={mobileUrl}
             assetId={form.hero_mobile_asset_id}
             ratio="9 / 16"
-            hint="Opcional: la portada usa la misma foto vertical en teléfono. Puede dejarlo vacío."
+            hint="Vertical 9:16, ideal 1080 × 1920 px. Se ve en teléfonos y pantallas verticales. Si falta, se recorta la de computadora. Persona en el tercio de arriba: abajo va el nombre gigante."
             onChange={(asset) => {
               set("hero_mobile_asset_id", asset?.id ?? null);
               setMobileUrl(asset?.url ?? null);
@@ -164,7 +167,8 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
             label="Más fotos de portada (se turnan)"
             slides={form.hero_gallery}
             max={8}
-            hint="Se muestran después de la principal, una a la vez con fundido lento. Mismo formato: vertical 4:5, ideal 1920 × 2400 px."
+            withMobile
+            hint="Se muestran después de la principal, una a la vez con fundido lento. Cada una en horizontal 16:9 (2880 × 1620 px), con su versión de teléfono vertical 9:16 (1080 × 1920 px)."
             onChange={(slides) => set("hero_gallery", slides)}
           />
         </div>
