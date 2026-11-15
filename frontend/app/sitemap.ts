@@ -1,10 +1,11 @@
 import type { MetadataRoute } from "next";
-import { getBrands, getCollections, getLookbooks, getProducts, soft } from "@/lib/api";
+import { getBrands, getCategories, getCollections, getLookbooks, getProducts, soft } from "@/lib/api";
+import { categoryHref, stockedCategories } from "@/lib/categories";
 import { SITE_URL } from "@/lib/seo";
 import type { ProductCard } from "@/lib/types";
 import { brandHref, productHref } from "@/lib/url";
 
-const STATIC_PATHS = ["/", "/marcas", "/colecciones", "/novedades", "/lookbooks", "/la-boutique", "/contacto"];
+const STATIC_PATHS = ["/", "/tienda", "/tienda/marcas", "/colecciones", "/lookbooks", "/la-boutique", "/contacto"];
 const MAX_PRODUCT_PAGES = 100;
 
 async function allProducts(): Promise<ProductCard[]> {
@@ -18,14 +19,16 @@ async function allProducts(): Promise<ProductCard[]> {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [brands, products, collections, lookbooks] = await Promise.all([
+  const [brands, categories, products, collections, lookbooks] = await Promise.all([
     soft(getBrands()),
+    soft(getCategories()),
     soft(allProducts()),
     soft(getCollections()),
     soft(getLookbooks()),
   ]);
   const paths = [
     ...STATIC_PATHS,
+    ...stockedCategories(categories ?? []).map((category) => categoryHref(category.slug)),
     ...(brands ?? []).map((brand) => brandHref(brand.slug)),
     ...(products ?? []).map(productHref),
     ...(collections ?? []).map((item) => `/colecciones/${encodeURIComponent(item.slug)}`),

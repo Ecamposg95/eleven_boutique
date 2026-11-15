@@ -134,7 +134,7 @@ export function HouseShowroom({ houses }: { houses: BrandSummary[] }) {
             <span />
           )}
           <Link
-            href="/marcas"
+            href="/tienda/marcas"
             className="label cta shrink-0 self-start md:self-auto"
           >
             Explorar marcas

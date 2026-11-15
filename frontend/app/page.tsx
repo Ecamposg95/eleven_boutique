@@ -61,7 +61,7 @@ function HeroText({
         </p>
       ) : null}
       <span aria-hidden="true" className="mt-6 block h-px w-8 bg-current" />
-      <Link href="/marcas" className="label cta mt-3 self-start">
+      <Link href="/tienda/marcas" className="label cta mt-3 self-start">
         Explorar marcas
       </Link>
     </>
@@ -373,7 +373,7 @@ export default async function HomePage() {
           <SectionHead
             id="novedades-t"
             title="Novedades"
-            href="/novedades"
+            href="/tienda?sort=recent"
             action="Ver todas"
           />
           <ul className="grid grid-cols-2 gap-x-3 gap-y-10 md:grid-cols-4">
@@ -397,7 +397,7 @@ export default async function HomePage() {
             <SectionHead
               id="casas-t"
               title={stars.length > 0 ? "También en la boutique" : "Las casas"}
-              href="/marcas"
+              href="/tienda/marcas"
               action={`Ver las ${allBrands.length}`}
             />
             <BrandWall

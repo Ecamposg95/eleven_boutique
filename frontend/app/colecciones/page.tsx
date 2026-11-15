@@ -33,7 +33,7 @@ export default async function CollectionsPage() {
             ))}
           </ul>
         ) : (
-          <EmptyState message="Las colecciones se publicarán en cuanto estén listas." href="/marcas" action="Explorar marcas" />
+          <EmptyState message="Las colecciones se publicarán en cuanto estén listas." href="/tienda/marcas" action="Explorar marcas" />
         )}
       </div>
     </>

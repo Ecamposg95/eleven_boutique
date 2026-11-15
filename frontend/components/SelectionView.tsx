@@ -65,7 +65,7 @@ export function SelectionView() {
     return (
       <EmptyState
         message="Aún no guardas piezas. Usa «Guardar en mi selección» en cualquier pieza del catálogo."
-        href="/novedades"
+        href="/tienda?sort=recent"
         action="Ver novedades"
       />
     );

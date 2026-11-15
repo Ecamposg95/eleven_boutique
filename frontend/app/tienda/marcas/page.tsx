@@ -8,7 +8,7 @@ import { pageMeta } from "@/lib/seo";
 export const metadata: Metadata = pageMeta({
   title: "Marcas",
   description: "Directorio alfabético de las casas presentes en el catálogo de Eleven Boutique.",
-  path: "/marcas",
+  path: "/tienda/marcas",
 });
 
 export default async function BrandsPage() {

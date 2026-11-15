@@ -41,7 +41,7 @@ export function stripEntries({
   }));
   if (novedades.length > 0) {
     entries.push({
-      href: "/novedades",
+      href: "/tienda?sort=recent",
       kicker: "Novedades",
       title: "Lo último en llegar",
       image: novedades[0]?.primary_image?.url ?? null,
@@ -50,7 +50,7 @@ export function stripEntries({
   }
   if (brands.length > 0) {
     entries.push({
-      href: "/marcas",
+      href: "/tienda/marcas",
       kicker: "Las casas",
       title: `${brands.length} casas, una boutique`,
       image: null,

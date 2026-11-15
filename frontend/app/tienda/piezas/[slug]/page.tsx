@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function UnbrandedProductPage({ params }: Props) {
   const slug = decodeSlug((await params).slug);
   const [product, settings] = await Promise.all([getProduct(slug), getSettings()]);
-  // Las piezas con marca viven solo en /marcas/{marca}/{pieza}.
+  // Las piezas con marca viven solo en /tienda/marcas/{marca}/{pieza}.
   if (!product || product.brand.slug) notFound();
   return <ProductView product={product} demoMode={settings.demo_mode} />;
 }

@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import { parseImageHosts } from "./lib/images";
+import { LEGACY_REDIRECTS } from "./lib/redirects";
 
 const apiUrl = (process.env.API_URL ?? "http://localhost:8000/api/v1").replace(/\/+$/, "");
 
@@ -24,6 +25,9 @@ const config: NextConfig = {
       { source: "/api/v1/:path*", destination: `${apiUrl}/:path*` },
       { source: "/media/:path*", destination: `${backendOrigin}/media/:path*` },
     ];
+  },
+  async redirects() {
+    return LEGACY_REDIRECTS;
   },
   async headers() {
     return [{ source: "/admin/:path*", headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] }];

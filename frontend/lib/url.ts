@@ -16,15 +16,22 @@ export function withParams(path: string, params: Params): string {
   return qs ? `${path}?${qs}` : path;
 }
 
+export const SHOP_PATH = "/tienda";
+
 export function productHref(product: Pick<ProductCard, "slug" | "brand">): string {
   const slug = encodeURIComponent(product.slug);
   return product.brand.slug
-    ? `/marcas/${encodeURIComponent(product.brand.slug)}/${slug}`
-    : `/piezas/${slug}`;
+    ? `${SHOP_PATH}/marcas/${encodeURIComponent(product.brand.slug)}/${slug}`
+    : `${SHOP_PATH}/piezas/${slug}`;
 }
 
 export function brandHref(slug: string): string {
-  return `/marcas/${encodeURIComponent(slug)}`;
+  return `${SHOP_PATH}/marcas/${encodeURIComponent(slug)}`;
+}
+
+export function departmentHref(department: string, sub?: string): string {
+  const base = `${SHOP_PATH}/${encodeURIComponent(department)}`;
+  return sub ? `${base}/${encodeURIComponent(sub)}` : base;
 }
 
 type RawParam = string | string[] | undefined;

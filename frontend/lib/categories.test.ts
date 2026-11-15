@@ -62,8 +62,8 @@ describe("categorías", () => {
       ],
     );
     expect(tiles).toEqual([
-      { href: "/novedades", label: "Novedades", image: "/n.jpg", count: 1 },
-      { href: "/categorias/ropa", label: "ROPA", image: "/r.jpg", count: 3 },
+      { href: "/tienda?sort=recent", label: "Novedades", image: "/n.jpg", count: 1 },
+      { href: "/tienda/ropa", label: "ROPA", image: "/r.jpg", count: 3 },
     ]);
   });
 
@@ -89,21 +89,21 @@ describe("categorías", () => {
   });
 
   it("codifica el slug en la dirección", () => {
-    expect(categoryHref("artículos")).toBe("/categorias/art%C3%ADculos");
+    expect(categoryHref("artículos")).toBe("/tienda/art%C3%ADculos");
   });
 });
 
 describe("opciones del catálogo", () => {
   it("el orden conserva la categoría y marca el actual", () => {
     const options = sortOptions(
-      "/categorias/ropa",
+      "/tienda/ropa",
       { category: "camisas" },
       "name",
     );
     expect(options.map((o) => [o.href, o.current])).toEqual([
-      ["/categorias/ropa?category=camisas", false],
-      ["/categorias/ropa?category=camisas&sort=recent", false],
-      ["/categorias/ropa?category=camisas&sort=name", true],
+      ["/tienda/ropa?category=camisas", false],
+      ["/tienda/ropa?category=camisas&sort=recent", false],
+      ["/tienda/ropa?category=camisas&sort=name", true],
     ]);
   });
 

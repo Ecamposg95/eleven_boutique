@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parsePage, parseSort, productHref, withParams } from "./url";
+import { brandHref, departmentHref, parsePage, parseSort, productHref, SHOP_PATH, withParams } from "./url";
 
 describe("withParams", () => {
   it("omite vacíos y la página 1", () => {
@@ -9,9 +9,23 @@ describe("withParams", () => {
 });
 
 describe("productHref", () => {
-  it("usa /marcas con marca y /piezas sin marca", () => {
-    expect(productHref({ slug: "a", brand: { slug: "b", name: "B" } })).toBe("/marcas/b/a");
-    expect(productHref({ slug: "a", brand: { slug: null, name: null } })).toBe("/piezas/a");
+  it("usa /tienda/marcas con marca y /tienda/piezas sin marca", () => {
+    expect(productHref({ slug: "a", brand: { slug: "b", name: "B" } })).toBe("/tienda/marcas/b/a");
+    expect(productHref({ slug: "a", brand: { slug: null, name: null } })).toBe("/tienda/piezas/a");
+  });
+  it("codifica caracteres especiales", () => {
+    expect(productHref({ slug: "a b", brand: { slug: "é", name: "E" } })).toBe("/tienda/marcas/%C3%A9/a%20b");
+  });
+});
+
+describe("brandHref y departmentHref", () => {
+  it("cuelgan de /tienda", () => {
+    expect(SHOP_PATH).toBe("/tienda");
+    expect(brandHref("acne")).toBe("/tienda/marcas/acne");
+    expect(brandHref("é")).toBe("/tienda/marcas/%C3%A9");
+    expect(departmentHref("ropa")).toBe("/tienda/ropa");
+    expect(departmentHref("ropa", "camisas")).toBe("/tienda/ropa/camisas");
+    expect(departmentHref("artículos", "a/b")).toBe("/tienda/art%C3%ADculos/a%2Fb");
   });
 });
 

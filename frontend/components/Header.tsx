@@ -170,6 +170,13 @@ export function Header({
         </Link>
 
         <div className="flex items-center gap-5 justify-self-end sm:gap-7">
+          <Link
+            href="/tienda"
+            aria-current={pathname === "/tienda" ? "page" : undefined}
+            className="label inline-flex min-h-11 items-center"
+          >
+            Tienda
+          </Link>
           <SelectionLink className="label inline-flex min-h-11 items-center" />
           <Link
             href="/buscar"
@@ -212,9 +219,18 @@ export function Header({
               <SelectionLink onNavigate={close} className={LINK} asListItem />
               <li>
                 <Link
-                  href="/novedades"
+                  href="/tienda"
                   onClick={close}
-                  aria-current={isCurrent("/novedades") ? "page" : undefined}
+                  aria-current={pathname === "/tienda" ? "page" : undefined}
+                  className={LINK}
+                >
+                  Tienda
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/tienda?sort=recent"
+                  onClick={close}
                   className={LINK}
                 >
                   Novedades
@@ -235,15 +251,15 @@ export function Header({
                   <Fold
                     label="Casas"
                     links={houses}
-                    more={{ href: "/marcas", label: "Todas las marcas" }}
+                    more={{ href: "/tienda/marcas", label: "Todas las marcas" }}
                     isCurrent={isCurrent}
                     onNavigate={close}
                   />
                 ) : (
                   <Link
-                    href="/marcas"
+                    href="/tienda/marcas"
                     onClick={close}
-                    aria-current={isCurrent("/marcas") ? "page" : undefined}
+                    aria-current={isCurrent("/tienda/marcas") ? "page" : undefined}
                     className={LINK}
                   >
                     Marcas

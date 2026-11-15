@@ -33,7 +33,7 @@ export default async function LookbooksPage() {
             ))}
           </ul>
         ) : (
-          <EmptyState message="Los lookbooks se publicarán en cuanto estén listos." href="/marcas" action="Explorar marcas" />
+          <EmptyState message="Los lookbooks se publicarán en cuanto estén listos." href="/tienda/marcas" action="Explorar marcas" />
         )}
       </div>
     </>

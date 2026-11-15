@@ -1,5 +1,5 @@
 import type { Category, ProductCard, ProductSort } from "./types";
-import { withParams } from "./url";
+import { departmentHref, SHOP_PATH, withParams } from "./url";
 
 /** Ficha del carrusel de portada: una categoría con la foto de una de sus piezas. */
 export type CategoryTile = {
@@ -9,8 +9,7 @@ export type CategoryTile = {
   count: number;
 };
 
-export const categoryHref = (slug: string) =>
-  `/categorias/${encodeURIComponent(slug)}`;
+export const categoryHref = (slug: string) => departmentHref(slug);
 
 export const topCategories = (categories: Category[]) =>
   categories.filter((category) => !category.parent_slug);
@@ -44,7 +43,7 @@ export function categoryTiles(
   const tiles: CategoryTile[] = [];
   if (newest.length > 0) {
     tiles.push({
-      href: "/novedades",
+      href: `${SHOP_PATH}?sort=recent`,
       label: "Novedades",
       image: pick(newest),
       count: newest.length,

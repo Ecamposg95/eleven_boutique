@@ -51,7 +51,7 @@ export default async function BrandPage({ params, searchParams }: Props) {
   const page = parsePage(query.page);
   const path = brandHref(brand.slug);
 
-  // Alias como /marcas/bape: la dirección canónica es la de la marca.
+  // Alias como /tienda/marcas/bape: la dirección canónica es la de la marca.
   if (brand.slug !== slug) {
     permanentRedirect(withParams(path, { category, sort, page }));
   }
@@ -119,7 +119,7 @@ export default async function BrandPage({ params, searchParams }: Props) {
         ) : (
           <EmptyState
             message="Aún no hay piezas publicadas de esta marca."
-            href="/marcas"
+            href="/tienda/marcas"
             action="Explorar marcas"
           />
         )}

@@ -46,7 +46,7 @@ export default async function SearchPage({ searchParams }: Props) {
         {!results ? null : empty ? (
           <p className="serif measure text-30">
             Sin resultados para «{q}». Revise la ortografía o explore{" "}
-            <Link href="/marcas" className="link">
+            <Link href="/tienda/marcas" className="link">
               todas las marcas
             </Link>
             .

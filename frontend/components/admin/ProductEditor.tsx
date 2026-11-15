@@ -366,7 +366,7 @@ export function ProductEditor({
   };
 
   const missing = missingForPublish({ name: form.name, brand_id: form.brand_id || null, category_id: form.category_id || null, media });
-  // «Sin marca» es una clasificación: su ficha vive en /piezas.
+  // «Sin marca» es una clasificación: su ficha vive en /tienda/piezas.
   const isBrand = product.brand.kind === "brand";
   const publicHref = productHref({ slug: saved.slug, brand: { slug: isBrand ? product.brand.slug : null, name: isBrand ? product.brand.name : null } });
 
