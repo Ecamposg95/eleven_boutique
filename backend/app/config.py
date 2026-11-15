@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     # Anything other than "development" marks the session cookie Secure: safe if left unset.
     app_env: str = "production"
     media_root: str = ""
+    atlas_api_url: str = ""
+    atlas_api_key: str = ""
+    atlas_sync_enabled: bool = False
 
     @property
     def resolved_database_url(self) -> str:
