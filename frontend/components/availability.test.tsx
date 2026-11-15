@@ -33,9 +33,11 @@ describe("ProductView", () => {
     const html = renderToStaticMarkup(<ProductView product={detail(true, variants)} demoMode={false} />);
     expect(html.indexOf(">Ch<")).toBeLessThan(html.indexOf(">M<"));
     expect(html.indexOf(">M<")).toBeLessThan(html.indexOf(">XL<"));
-    expect(html).toContain('aria-label="Ch, agotada"');
-    expect(html).toMatch(/line-through[^>]*aria-label="Ch, agotada"|aria-label="Ch, agotada"[^>]*line-through/);
-    expect(html).not.toContain('aria-label="M, agotada"');
+    const li = (size: string) => html.match(new RegExp(`<li[^>]*>${size}(?:<span[^>]*>[^<]*</span>)?</li>`))![0];
+    expect(li("Ch")).toContain("line-through");
+    expect(li("Ch")).toContain('<span class="sr-only">, agotada</span>');
+    expect(li("M")).not.toContain("line-through");
+    expect(li("M")).not.toContain("agotada");
     expect(html).not.toContain(LABEL);
   });
   it("pieza agotada muestra la etiqueta en la ficha", () => {

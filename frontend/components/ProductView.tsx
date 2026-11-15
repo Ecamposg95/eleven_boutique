@@ -56,12 +56,12 @@ export function ProductView({ product, demoMode }: { product: ProductDetail; dem
               {sizes.map(({ size, available }) => (
                 <li
                   key={size}
-                  aria-label={available ? size : `${size}, agotada`}
                   className={`min-w-11 border border-bronze px-3 py-2 text-center text-15 ${
                     available ? "" : "muted line-through"
                   }`}
                 >
                   {size}
+                  {available ? null : <span className="sr-only">, agotada</span>}
                 </li>
               ))}
             </ul>
