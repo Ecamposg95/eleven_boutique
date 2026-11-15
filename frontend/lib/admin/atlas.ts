@@ -1,11 +1,14 @@
+import { normalize } from "@/lib/brands";
 import { AdminApiError, api } from "./client";
 import { plural } from "./format";
+import { resolvePrimary } from "./reorder";
 import type {
   AdminCategory,
   AtlasBrandMapRow,
   AtlasCategoryMapRow,
   AtlasStatus,
   Product,
+  ProductMediaItem,
 } from "./types";
 
 // Lógica de la pantalla Atlas ONE y de las piezas de solo lectura, sin React, para poder probarla.
@@ -22,6 +25,7 @@ export function describeCounts(counts: Record<string, number>): string[] {
   if (n("borradores")) out.push(plural(n("borradores"), "borrador", "borradores"));
   if (n("disponibilidad")) out.push(`${n("disponibilidad")} con disponibilidad actualizada`);
   if (n("eventos_enviados")) out.push(plural(n("eventos_enviados"), "evento enviado", "eventos enviados"));
+  if (n("eventos_pendientes")) out.push(plural(n("eventos_pendientes"), "evento en espera", "eventos en espera"));
   if (n("archivado_omitido")) out.push("Archivado omitido");
   return out;
 }
@@ -103,7 +107,7 @@ export const atlasSkippedMessage = (count: number) =>
   count === 1 ? "1 pieza viene de Atlas ONE y no se cambió" : `${plural(count, "pieza", "piezas")} vienen de Atlas ONE y no se cambiaron`;
 export const fetchAtlasStatus = () => api<AtlasStatus>("/atlas/status");
 
-export const saveBrandMap = (atlas_brand_id: string, brand_id: string | null) =>
+export const saveBrandMap = (atlas_brand_id: string, brand_id: string) =>
   api<AtlasBrandMapRow>("/atlas/brand-map", { method: "PATCH", json: { atlas_brand_id, brand_id } });
 
 export const saveCategoryMap = (atlas_department_id: string, category_id: string | null) =>
@@ -130,4 +134,32 @@ export const isAtlasLocked = (product: Pick<Product, "from_atlas">, field: strin
 export function editorialPayload<T extends Record<string, unknown>>(product: Pick<Product, "from_atlas">, values: T): Partial<T> {
   if (!product.from_atlas) return values;
   return Object.fromEntries(Object.entries(values).filter(([key]) => !isAtlasLocked(product, key))) as Partial<T>;
+}
+
+/**
+ * Controles de una foto en la galería. Atlas ONE manda en el orden de sus fotos y en cuál de ellas es
+ * la principal (el servidor rechaza cambiarlos); las del panel se mueven libres y pueden ser la
+ * principal. Con una del panel como principal no se sabe cuál marca Atlas: la primera de Atlas
+ * ofrece volver y la sincronización deja la que Atlas diga.
+ */
+export function photoControls(
+  media: readonly Pick<ProductMediaItem, "id" | "is_primary" | "read_only">[],
+  index: number,
+): { movable: boolean; canMakePrimary: boolean } {
+  const item = media[index];
+  if (!item) return { movable: false, canMakePrimary: false };
+  const primaryId = resolvePrimary(media);
+  const primary = media.find((photo) => photo.id === primaryId);
+  if (item.read_only) {
+    const firstAtlas = media.find((photo) => photo.read_only);
+    return { movable: false, canMakePrimary: !primary?.read_only && firstAtlas?.id === item.id };
+  }
+  return { movable: true, canMakePrimary: item.id !== primaryId };
+}
+
+/** Destinos del mapa de marcas: las casas y la clasificación «Sin marca» (las demás, no). */
+export function brandMapOptions(brands: readonly { id: string; name: string; kind: string }[]): { id: string; name: string }[] {
+  return brands
+    .filter((brand) => brand.kind === "brand" || (brand.kind === "classification" && normalize(brand.name) === "sin marca"))
+    .map(({ id, name }) => ({ id, name }));
 }

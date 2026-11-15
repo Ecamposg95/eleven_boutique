@@ -1,5 +1,7 @@
 """Ligas entre marcas/departamentos de Atlas ONE y las casas/categorías de Eleven."""
 
+import uuid
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -16,16 +18,38 @@ from app.models import (
     Category,
 )
 from app.services.admin.common import unique_slug
-from app.services.brand_match import brand_index, no_brand_classification
+from app.services.brand_match import NO_BRAND, brand_index, no_brand_classification
 from app.services.text import normalize
+
+PLACEHOLDER_BRAND = "Pendiente de ligar (Atlas ONE)"
+
+
+def linkable_index(
+    db: Session,
+) -> tuple[dict[str, set[uuid.UUID]], dict[uuid.UUID, Brand]]:
+    """Como `brand_index`, pero el índice solo apunta a casas a las que se puede ligar una marca de
+    Atlas: ni clasificaciones ni la casa interna de respaldo (el panel tampoco lo permite).
+    `brands` sigue trayendo todas, para resolver «Sin marca» y mapas ya ligados.
+    """
+    index, brands = brand_index(db)
+    linkable = {
+        brand_id
+        for brand_id, brand in brands.items()
+        if brand.kind == KIND_BRAND and brand.name != PLACEHOLDER_BRAND
+    }
+    filtered = {key: owners & linkable for key, owners in index.items()}
+    return {key: owners for key, owners in filtered.items() if owners}, brands
 
 
 def sync_brands(db: Session, atlas_brands: list[dict]) -> dict[str, int]:
     """Liga marcas de Atlas a casas por nombre/alias; sin coincidencia crea una casa en borrador.
 
-    Nunca modifica una casa existente. Un mapa ya ligado gana sobre el nombre.
+    Nunca modifica una casa existente. Un mapa ya ligado gana sobre el nombre. La marca «Sin marca»
+    de Atlas va a la clasificación «Sin marca» (como una pieza sin marca); si esa clasificación no
+    existe, la fila espera sin ligar en vez de crear una casa con ese nombre.
     """
-    index, brands = brand_index(db)
+    index, brands = linkable_index(db)
+    no_brand = no_brand_classification(brands)
     taken = set(db.scalars(select(Brand.slug))) | set(
         db.scalars(select(BrandAlias.slug))
     )
@@ -43,6 +67,11 @@ def sync_brands(db: Session, atlas_brands: list[dict]) -> dict[str, int]:
             row.atlas_name = item["name"]
             if row.brand_id is not None:
                 continue
+        if normalize(item["name"]) == NO_BRAND:
+            if no_brand is not None:
+                row.brand_id = no_brand.id
+                counts["ligadas"] += 1
+            continue
         owners = index.get(normalize(item["name"]), set())
         if len(owners) == 1:
             row.brand_id = next(iter(owners))
@@ -103,7 +132,8 @@ class Resolver:
 
     def __init__(self, db: Session) -> None:
         self.db = db
-        self.index, self.brands = brand_index(db)
+        self.index, self.brands = linkable_index(db)
+        self.full_index, _ = brand_index(db)
         self.no_brand = no_brand_classification(self.brands)
         self.brand_maps = {
             r.atlas_brand_id: r for r in db.scalars(select(AtlasBrandMap))
@@ -124,9 +154,18 @@ class Resolver:
             return None, f"casa sin ligar: {atlas_brand_id}"
         brand = self.brands.get(row.brand_id) if row.brand_id else None
         if brand is None:
-            owners = self.index.get(normalize(row.atlas_name), set())
-            kind = "ambigua" if len(owners) > 1 else "sin ligar"
-            return None, f"casa {kind}: {row.atlas_name}"
+            key = normalize(row.atlas_name)
+            if key == NO_BRAND:
+                return None, "No existe la clasificación Sin marca"
+            owners = self.index.get(key, set())
+            if len(owners) > 1:
+                return None, f"casa ambigua: {row.atlas_name}"
+            if any(self.brands[i].kind != KIND_BRAND for i in self.full_index.get(key, set()) if i in self.brands):
+                return None, f"casa sin ligar: {row.atlas_name} (el nombre es de una clasificación)"
+            return None, f"casa sin ligar: {row.atlas_name}"
+        if brand is self.no_brand:
+            # Como una pieza sin marca: la clasificación se usa aunque esté en borrador.
+            return brand, None
         if brand.status == STATUS_ARCHIVED:
             return None, f"casa archivada: {brand.name}"
         if brand.status != STATUS_PUBLISHED:

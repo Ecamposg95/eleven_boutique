@@ -25,6 +25,7 @@ from app.models.base import utcnow
 from app.schemas import admin as schemas
 from app.services.admin import audit
 from app.services.admin.common import invalid_reference, not_found, paginate
+from app.services.atlas.sync import request_full_load
 from app.services.text import escape_like, normalize
 
 ProductSort = Literal["updated", "recent", "name", "display", "sku"]
@@ -223,6 +224,8 @@ def _prepare_publication(db: Session, product: Product, publish_brand: bool, use
             {"status": [brand.status, STATUS_PUBLISHED], "product_id": [None, str(product.id)]},
         )
         brand.status = STATUS_PUBLISHED
+        # Sus piezas de Atlas en borrador se reevalúan en la próxima corrida.
+        request_full_load(db)
 
 
 def _publish_stamp(product: Product) -> None:
@@ -394,6 +397,27 @@ def add_media(
     return _refreshed(db, product.id)
 
 
+def _guard_atlas_order(db: Session, product: Product, data: schemas.ProductMediaOrder) -> None:
+    """Atlas manda en el orden relativo de sus fotos y en cuál de ellas es la principal.
+
+    Una foto del panel sí puede ser la principal (la sincronización la respeta) y moverse a
+    cualquier lugar. Mientras la principal sea del panel no se sabe cuál marca Atlas: volver a una
+    de Atlas se acepta y pide recarga completa, que deja la principal que Atlas diga.
+    """
+    current = sorted(product.media, key=lambda link: link.position)
+    atlas_ids = {link.id for link in current if link.media_asset_id is None}
+    if [i for i in data.order if i in atlas_ids] != [link.id for link in current if link.id in atlas_ids]:
+        raise _atlas_owned("El orden de las fotos de Atlas ONE se cambia en Atlas ONE")
+    primary = next((link for link in current if link.is_primary), current[0] if current else None)
+    if data.primary_id is None or primary is None or data.primary_id == primary.id:
+        return
+    if data.primary_id not in atlas_ids:
+        return
+    if primary.id in atlas_ids:
+        raise _atlas_owned("La foto principal de Atlas ONE se elige en Atlas ONE")
+    request_full_load(db)
+
+
 def reorder_media(
     db: Session, product_id: uuid.UUID, data: schemas.ProductMediaOrder, user: AdminUser
 ) -> schemas.AdminProduct:
@@ -403,6 +427,8 @@ def reorder_media(
         raise ApiError(422, "invalid_order", "El orden debe incluir cada foto de la pieza una vez")
     if data.primary_id is not None and data.primary_id not in links:
         raise ApiError(422, "invalid_order", "La foto principal no pertenece a esta pieza")
+    if is_atlas(product):
+        _guard_atlas_order(db, product, data)
 
     before = [str(link.id) for link in product.media]
     # Two steps, because (product_id, position) is unique at every point.

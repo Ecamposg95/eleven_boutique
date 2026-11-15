@@ -23,12 +23,9 @@ def brand_index(
     return index, brands
 
 
+def is_no_brand_classification(brand: Brand) -> bool:
+    return brand.kind == KIND_CLASSIFICATION and normalize(brand.name) == NO_BRAND
+
+
 def no_brand_classification(brands: dict[uuid.UUID, Brand]) -> Brand | None:
-    return next(
-        (
-            brand
-            for brand in brands.values()
-            if brand.kind == KIND_CLASSIFICATION and normalize(brand.name) == NO_BRAND
-        ),
-        None,
-    )
+    return next((brand for brand in brands.values() if is_no_brand_classification(brand)), None)

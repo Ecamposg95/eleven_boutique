@@ -25,8 +25,9 @@ from app.schemas import admin as schemas
 from app.services.admin import audit
 from app.services.admin.common import invalid_reference, not_found
 from app.services.atlas.client import AtlasClient
-from app.services.atlas.sync_products import PLACEHOLDER_BRAND
-from app.services.atlas.sync import run_sync, with_lock
+from app.services.atlas.links import PLACEHOLDER_BRAND
+from app.services.atlas.sync import request_full_load, run_sync, with_lock
+from app.services.brand_match import is_no_brand_classification
 
 logger = logging.getLogger(__name__)
 
@@ -131,19 +132,19 @@ def patch_brand_map(
     row = db.scalar(select(AtlasBrandMap).where(AtlasBrandMap.atlas_brand_id == data.atlas_brand_id))
     if row is None:
         raise not_found("Casa de Atlas ONE no encontrada")
-    if data.brand_id is not None:
-        brand = db.get(Brand, data.brand_id)
-        if brand is None:
-            raise invalid_reference("La marca indicada no existe")
-        if brand.name == PLACEHOLDER_BRAND:
-            raise invalid_reference("Casa interna de sincronización")
-        if brand.kind != KIND_BRAND:
-            raise invalid_reference("Solo se puede enlazar a una marca, no a una clasificación")
+    brand = db.get(Brand, data.brand_id)
+    if brand is None:
+        raise invalid_reference("La marca indicada no existe")
+    if brand.name == PLACEHOLDER_BRAND:
+        raise invalid_reference("Casa interna de sincronización")
+    if brand.kind != KIND_BRAND and not is_no_brand_classification(brand):
+        raise invalid_reference("Solo se puede enlazar a una marca o a «Sin marca», no a otra clasificación")
     if row.brand_id != data.brand_id:
         audit.record(
             db, user, "update", "atlas_brand_map", row.id, {"brand_id": [row.brand_id, data.brand_id]}
         )
         row.brand_id = data.brand_id
+        request_full_load(db)
         db.commit()
     return schemas.AtlasBrandMapOut.model_validate(row, from_attributes=True)
 
@@ -173,5 +174,6 @@ def patch_category_map(
             {"category_id": [row.category_id, data.category_id]},
         )
         row.category_id = data.category_id
+        request_full_load(db)
         db.commit()
     return schemas.AtlasCategoryMapOut.model_validate(row, from_attributes=True)

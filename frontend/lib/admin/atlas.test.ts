@@ -5,6 +5,8 @@ import {
   editorialPayload,
   atlasSkippedMessage,
   isAtlasLocked,
+  photoControls,
+  brandMapOptions,
   splitAtlasBulk,
   unlinkedFirst,
   pollSync,
@@ -28,6 +30,7 @@ describe("describeCounts", () => {
   });
   it("sin cambios", () => expect(describeCounts({ creadas: 0 })).toEqual([]));
   it("archivadas", () => expect(describeCounts({ bajas: 2 })).toEqual(["2 archivadas"]));
+  it("eventos en espera", () => expect(describeCounts({ eventos_pendientes: 40 })).toEqual(["40 eventos en espera"]));
 });
 
 describe("startSync", () => {
@@ -140,5 +143,41 @@ describe("splitAtlasBulk", () => {
   it("mensaje", () => {
     expect(atlasSkippedMessage(2)).toBe("2 piezas vienen de Atlas ONE y no se cambiaron");
     expect(atlasSkippedMessage(1)).toBe("1 pieza viene de Atlas ONE y no se cambió");
+  });
+});
+
+describe("photoControls", () => {
+  const photo = (id: string, read_only: boolean, is_primary = false) => ({
+    id, read_only, is_primary, media_asset_id: read_only ? null : `a-${id}`, url: `/${id}.jpg`, alt: "", position: 0,
+  });
+
+  it("las fotos de Atlas no se mueven; con la principal de Atlas, solo las del panel pueden serlo", () => {
+    const media = [photo("a1", true), photo("a2", true, true), photo("p1", false)];
+    expect(photoControls(media, 0)).toEqual({ movable: false, canMakePrimary: false });
+    expect(photoControls(media, 1)).toEqual({ movable: false, canMakePrimary: false });
+    expect(photoControls(media, 2)).toEqual({ movable: true, canMakePrimary: true });
+  });
+  it("con la principal en el panel, otra del panel puede serlo y se puede volver a la de Atlas", () => {
+    const media = [photo("a1", true), photo("p1", false, true), photo("p2", false), photo("a2", true)];
+    // Solo un botón para volver: la sincronización deja la principal que marque Atlas.
+    expect(photoControls(media, 0)).toEqual({ movable: false, canMakePrimary: true });
+    expect(photoControls(media, 3)).toEqual({ movable: false, canMakePrimary: false });
+    expect(photoControls(media, 1)).toEqual({ movable: true, canMakePrimary: false });
+    expect(photoControls(media, 2)).toEqual({ movable: true, canMakePrimary: true });
+  });
+  it("piezas del panel: todo se mueve", () => {
+    const media = [photo("p1", false, true), photo("p2", false)];
+    expect(photoControls(media, 1)).toEqual({ movable: true, canMakePrimary: true });
+  });
+});
+
+describe("brandMapOptions", () => {
+  it("ofrece las casas y la clasificación «Sin marca», no otras clasificaciones", () => {
+    const brands = [
+      { id: "1", name: "Gucci", kind: "brand" },
+      { id: "2", name: "SIN MARCA ", kind: "classification" },
+      { id: "3", name: "Genérica", kind: "classification" },
+    ];
+    expect(brandMapOptions(brands)).toEqual([{ id: "1", name: "Gucci" }, { id: "2", name: "SIN MARCA " }]);
   });
 });

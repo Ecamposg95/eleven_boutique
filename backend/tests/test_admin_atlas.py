@@ -4,11 +4,19 @@ import uuid
 
 import pytest
 
-from app.models import ROLE_EDITOR, AtlasBrandMap, AtlasCategoryMap, AtlasSyncRun, AtlasSyncState, ProductMedia
+from app.models import (
+    ROLE_EDITOR,
+    AtlasBrandMap,
+    AtlasCategoryMap,
+    AtlasSyncRun,
+    AtlasSyncState,
+    MediaAsset,
+    ProductMedia,
+)
 from app.models.base import utcnow
 from app.services.admin import atlas as atlas_service
+from app.services.atlas.links import PLACEHOLDER_BRAND
 from app.services.atlas.sync import with_lock
-from app.services.atlas.sync_products import PLACEHOLDER_BRAND
 from tests.admin_helpers import BASE, ORIGIN, login, make_user
 from tests.factories import make_brand, make_category, make_product
 
@@ -55,7 +63,7 @@ def test_editor_is_refused_everywhere(editor):
     assert editor.get(f"{BASE}/atlas/status").status_code == 403
     assert editor.post(f"{BASE}/atlas/sync", headers=ORIGIN).status_code == 403
     assert editor.get(f"{BASE}/atlas/brand-map").status_code == 403
-    assert patch(editor, "/atlas/brand-map", {"atlas_brand_id": "a", "brand_id": None}).status_code == 403
+    assert patch(editor, "/atlas/brand-map", {"atlas_brand_id": "a", "brand_id": str(uuid.uuid4())}).status_code == 403
     assert patch(editor, "/atlas/category-map", {"atlas_department_id": "a", "category_id": None}).status_code == 403
 
 
@@ -113,10 +121,64 @@ def test_brand_map_patch_validates_target(db, client):
     ]
     for bad in (uuid.uuid4(), classification.id, placeholder.id):
         assert patch(client, "/atlas/brand-map", {"atlas_brand_id": "b1", "brand_id": str(bad)}).status_code == 422
-    assert patch(client, "/atlas/brand-map", {"atlas_brand_id": "zz", "brand_id": None}).status_code == 404
+    assert patch(client, "/atlas/brand-map", {"atlas_brand_id": "zz", "brand_id": str(house.id)}).status_code == 404
     ok = patch(client, "/atlas/brand-map", {"atlas_brand_id": "b1", "brand_id": str(house.id)})
     assert ok.status_code == 200 and ok.json()["brand_id"] == str(house.id)
-    assert patch(client, "/atlas/brand-map", {"atlas_brand_id": "b1", "brand_id": None}).json()["brand_id"] is None
+
+
+def test_brand_map_accepts_the_sin_marca_classification_only(db, client):
+    sin_marca = make_brand(db, "Sin marca", kind="classification", status="draft")
+    db.add(AtlasBrandMap(atlas_brand_id="b1", atlas_name="Sin marca"))
+    db.commit()
+    ok = patch(client, "/atlas/brand-map", {"atlas_brand_id": "b1", "brand_id": str(sin_marca.id)})
+    assert ok.status_code == 200 and ok.json()["brand_id"] == str(sin_marca.id)
+
+
+def test_brand_map_cannot_be_unlinked(db, client):
+    """El emparejador automático volvería a ligar una fila sin casa: desligar no se sostiene."""
+    house = make_brand(db, "Gucci")
+    db.add(AtlasBrandMap(atlas_brand_id="b1", atlas_name="Gucci", brand_id=house.id))
+    db.commit()
+    assert patch(client, "/atlas/brand-map", {"atlas_brand_id": "b1", "brand_id": None}).status_code == 422
+    assert client.get(f"{BASE}/atlas/brand-map").json()[0]["brand_id"] == str(house.id)
+
+
+def test_map_patches_and_house_publication_request_a_full_load(db, client):
+    house = make_brand(db, "Gucci")
+    draft = make_brand(db, "Nueva", status="draft")
+    category = make_category(db, "Bolsas")
+    db.add(AtlasBrandMap(atlas_brand_id="b1", atlas_name="Gucci"))
+    db.add(AtlasCategoryMap(atlas_department_id="d1", atlas_name="Bolsos"))
+    db.add(AtlasSyncState(id=1, products_since=utcnow()))
+    db.commit()
+
+    def since():
+        db.expire_all()
+        return db.get(AtlasSyncState, 1).products_since
+
+    def reset():
+        db.get(AtlasSyncState, 1).products_since = utcnow()
+        db.commit()
+
+    assert patch(client, "/atlas/brand-map", {"atlas_brand_id": "b1", "brand_id": str(house.id)}).status_code == 200
+    assert since() is None
+    reset()
+    assert patch(client, "/atlas/category-map", {"atlas_department_id": "d1", "category_id": str(category.id)}).status_code == 200
+    assert since() is None
+    reset()
+    assert patch(client, f"/brands/{draft.id}", {"description": "x"}).status_code == 200
+    assert since() is not None
+    # Casa sin marca de Atlas que apunte a ella: publicarla no cambia ninguna pieza de Atlas.
+    assert patch(client, f"/brands/{draft.id}", {"status": "published"}).status_code == 200
+    assert since() is not None
+    assert patch(client, f"/brands/{draft.id}", {"aliases": ["Nueva Casa"]}).status_code == 200
+    assert since() is None
+    reset()
+    mapped = make_brand(db, "Ligada", status="draft")
+    db.add(AtlasBrandMap(atlas_brand_id="b2", atlas_name="Ligada", brand_id=mapped.id))
+    db.commit()
+    assert patch(client, f"/brands/{mapped.id}", {"status": "published"}).status_code == 200
+    assert since() is None
 
 
 def test_category_map_patch_validates_target(db, client):
@@ -242,3 +304,68 @@ def test_non_atlas_piece_invalid_references_are_422(db, client):
     for body in ({"brand_id": str(uuid.uuid4())}, {"category_id": str(uuid.uuid4())}):
         response = patch(client, f"/products/{product.id}", body)
         assert response.status_code == 422 and response.json()["error"]["code"] == "invalid_reference"
+
+
+def _photos(db):
+    """Pieza de Atlas con dos fotos de Atlas (la segunda principal) y una del panel al final."""
+    brand, category = make_brand(db, "Casa"), make_category(db, "Bolsas")
+    product = make_product(db, brand, category, "Pieza Atlas", external_inventory_id="inv-1")
+    for link in db.query(ProductMedia).filter_by(product_id=product.id):
+        db.delete(link)
+    db.flush()
+    asset = MediaAsset(
+        storage_key="k.jpg", url="https://cdn/k.jpg", filename="k.jpg",
+        content_type="image/jpeg", width=1, height=1, size_bytes=1,
+    )
+    db.add(asset)
+    db.flush()
+    a1 = ProductMedia(product_id=product.id, url="https://atlas/1.jpg", alt="1", position=0)
+    a2 = ProductMedia(product_id=product.id, url="https://atlas/2.jpg", alt="2", position=1, is_primary=True)
+    panel = ProductMedia(product_id=product.id, url=asset.url, alt="p", position=2, media_asset_id=asset.id)
+    db.add_all([a1, a2, panel])
+    db.commit()
+    return product, str(a1.id), str(a2.id), str(panel.id)
+
+
+def test_atlas_photos_keep_their_order_and_main(db, client):
+    product, a1, a2, panel = _photos(db)
+    path = f"/products/{product.id}/media"
+    for body in (
+        {"order": [a2, a1, panel], "primary_id": a2},  # reordena fotos de Atlas
+        {"order": [a1, a2, panel], "primary_id": a1},  # otra principal de Atlas
+    ):
+        response = patch(client, path, body)
+        assert response.status_code == 422, body
+        assert response.json()["error"]["code"] == "atlas_owned"
+    ok = patch(client, path, {"order": [panel, a1, a2], "primary_id": a2})
+    assert ok.status_code == 200, ok.text
+    assert [m["id"] for m in ok.json()["media"]] == [panel, a1, a2]
+    assert patch(client, path, {"order": [a1, panel, a2]}).status_code == 200
+    # Una foto del panel sí puede ser la principal: la sincronización la respeta.
+    ok = patch(client, path, {"order": [a1, panel, a2], "primary_id": panel})
+    assert ok.status_code == 200
+    assert [m["id"] for m in ok.json()["media"] if m["is_primary"]] == [panel]
+
+
+def test_panel_main_photo_can_move_between_panel_photos_and_back_to_atlas(db, client):
+    product, a1, a2, panel = _photos(db)
+    db.get(ProductMedia, uuid.UUID(a2)).is_primary = False
+    db.get(ProductMedia, uuid.UUID(panel)).is_primary = True
+    other = MediaAsset(
+        storage_key="o.jpg", url="https://cdn/o.jpg", filename="o.jpg",
+        content_type="image/jpeg", width=1, height=1, size_bytes=1,
+    )
+    db.add(other)
+    db.flush()
+    second = ProductMedia(product_id=product.id, url=other.url, alt="o", position=3, media_asset_id=other.id)
+    db.add(second)
+    db.add(AtlasSyncState(id=1, products_since=utcnow()))
+    db.commit()
+    path = f"/products/{product.id}/media"
+    body = {"order": [a1, a2, panel, str(second.id)], "primary_id": str(second.id)}
+    assert patch(client, path, body).status_code == 200
+    # Volver a la de Atlas: la acepta y pide recarga completa, que confirma la principal de Atlas.
+    body["primary_id"] = a2
+    assert patch(client, path, body).status_code == 200
+    db.expire_all()
+    assert db.get(AtlasSyncState, 1).products_since is None

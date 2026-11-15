@@ -15,12 +15,15 @@ function MapRow({
   value,
   options,
   save,
+  unlinkable = true,
 }: {
   rowKey: string;
   atlasName: string;
   value: string | null;
   options: Option[];
   save: (id: string | null) => Promise<unknown>;
+  /** Marcas: no se desligan, porque la liga automática las volvería a ligar en la siguiente corrida. */
+  unlinkable?: boolean;
 }) {
   const [current, setCurrent] = useState(value ?? "");
   const [busy, setBusy] = useState(false);
@@ -58,7 +61,13 @@ function MapRow({
       </td>
       <td>
         <select id={id} className="a-input" value={current} disabled={busy} onChange={(event) => void change(event.target.value)}>
-          <option value="">Sin ligar</option>
+          {unlinkable ? (
+            <option value="">Sin ligar</option>
+          ) : current === "" ? (
+            <option value="" disabled>
+              Elegir casa…
+            </option>
+          ) : null}
           {options.map((option) => (
             <option key={option.id} value={option.id}>
               {option.name}
@@ -122,7 +131,8 @@ export function AtlasMaps({
             atlasName={row.atlas_name}
             value={row.brand_id}
             options={brands}
-            save={(id) => saveBrandMap(row.atlas_brand_id, id)}
+            unlinkable={false}
+            save={(id) => (id ? saveBrandMap(row.atlas_brand_id, id) : Promise.resolve())}
           />
         ))}
       />
