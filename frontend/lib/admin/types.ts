@@ -21,8 +21,10 @@ export type ProductMediaItem = {
   alt: string;
   is_primary: boolean;
   position: number;
+  /** Foto que trae Atlas ONE: no se edita ni se borra desde el panel. */
+  read_only?: boolean;
 };
-export type Variant = { id: string; sku: string; size: string | null; color: string | null };
+export type Variant = { id: string; sku: string; size: string | null; color: string | null; available?: boolean };
 
 /** El listado devuelve la misma forma que el detalle. */
 export type Product = {
@@ -45,6 +47,16 @@ export type Product = {
   media: ProductMediaItem[];
   variants: Variant[];
   photo_refs: string[];
+  /** La pieza viene de Atlas ONE: nombre, marca, categoría y estado son suyos. */
+  from_atlas?: boolean;
+  available?: boolean;
+  /** Motivo por el que una pieza de Atlas está en borrador. */
+  atlas_missing?: string | null;
+  hidden_on_web?: boolean;
+  gender?: string | null;
+  model?: string | null;
+  material?: string | null;
+  admin_description?: string | null;
 };
 
 export type BulkAction = "publish" | "unpublish" | "archive" | "feature" | "unfeature";
@@ -145,25 +157,6 @@ export type AdminSettings = {
   contact_body: string | null;
 };
 
-export type ImportPreview = {
-  preview_id: string;
-  rows: number;
-  products: number;
-  variants: number;
-  new_products: number;
-  conflicts: number;
-  new_categories: string[];
-  errors: { row: number; sku: string | null; message: string }[];
-  sample: { sku: string; name: string; brand: string; category: string; variants: number }[];
-};
-export type ImportResult = {
-  import_id: string;
-  created: number;
-  updated: number;
-  skipped: number;
-  errors: number;
-};
-
 export type AuditEntry = {
   id: string;
   created_at: string;
@@ -173,3 +166,25 @@ export type AuditEntry = {
   entity_id: string | null;
   changes: Record<string, unknown>;
 };
+
+export type AtlasRun = {
+  kind: string;
+  status: string;
+  started_at: string;
+  finished_at: string | null;
+  counts: Record<string, number>;
+  /** Solo si la corrida falló. */
+  error: string | null;
+  /** Aviso de una corrida buena (p. ej. la baja nocturna se omitió); no es una falla. */
+  note?: string | null;
+};
+export type AtlasDraft = { id: string; name: string; atlas_missing: string | null };
+export type AtlasStatus = {
+  enabled: boolean;
+  last_run: AtlasRun | null;
+  last_ok_at: string | null;
+  last_error?: string | null;
+  drafts: AtlasDraft[];
+};
+export type AtlasBrandMapRow = { atlas_brand_id: string; atlas_name: string; brand_id: string | null };
+export type AtlasCategoryMapRow = { atlas_department_id: string; atlas_name: string; category_id: string | null };

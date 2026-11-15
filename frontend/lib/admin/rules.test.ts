@@ -23,8 +23,10 @@ describe("roles", () => {
   it("el editor no ve marcas, ajustes, importación ni auditoría", () => {
     const labels = navFor("editor").map((item) => item.label);
     expect(labels).toContain("Productos");
-    for (const hidden of ["Marcas", "Configuración", "Importar", "Auditoría"]) expect(labels).not.toContain(hidden);
+    for (const hidden of ["Marcas", "Configuración", "Importar", "Atlas ONE", "Auditoría"]) expect(labels).not.toContain(hidden);
     expect(navFor("admin").map((item) => item.label)).toContain("Marcas");
+    expect(navFor("admin").map((item) => item.label)).toContain("Atlas ONE");
+    expect(navFor("admin").map((item) => item.label)).not.toContain("Importar");
   });
 });
 

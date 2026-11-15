@@ -164,6 +164,18 @@ export function CheckField({
   );
 }
 
+/** Valor que no se edita en el panel (por ejemplo, lo que viene de Atlas ONE). */
+export function ReadOnlyField({ label, value, className = "" }: { label: string; value: string; className?: string }) {
+  return (
+    <div className={className}>
+      <p className="a-label">{label}</p>
+      <p className="mt-1">
+        {value} <span className="muted">· Viene de Atlas ONE</span>
+      </p>
+    </div>
+  );
+}
+
 export function StatusLabel({ status }: { status: Status }) {
   return (
     <span className="a-status" data-status={status}>
