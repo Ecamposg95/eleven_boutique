@@ -60,23 +60,23 @@ def with_lock(db: Session) -> Iterator[bool]:
     # Conexión propia: la sesión devuelve la suya al pool en cada commit y el candado es por conexión.
     engine = bind.engine if isinstance(bind, Connection) else bind
     conn = engine.connect()
+    acquired = False
     try:
         acquired = bool(
             conn.scalar(text("SELECT pg_try_advisory_lock(hashtext(:key))"), {"key": LOCK_KEY})
         )
+        # Dentro del try: si este commit falla, el finally libera o descarta la conexión.
         conn.commit()
-        try:
-            yield acquired
-        finally:
-            if acquired:
-                try:
-                    conn.execute(text("SELECT pg_advisory_unlock(hashtext(:key))"), {"key": LOCK_KEY})
-                    conn.commit()
-                except Exception:
-                    # Sin poder liberar, la conexión se descarta: cerrar la sesión de Postgres suelta el candado.
-                    logger.exception("No se pudo liberar el candado de sincronización")
-                    conn.invalidate()
+        yield acquired
     finally:
+        if acquired:
+            try:
+                conn.execute(text("SELECT pg_advisory_unlock(hashtext(:key))"), {"key": LOCK_KEY})
+                conn.commit()
+            except Exception:
+                # Sin poder liberar, la conexión se descarta: cerrar la sesión de Postgres suelta el candado.
+                logger.exception("No se pudo liberar el candado de sincronización")
+                conn.invalidate()
         conn.close()
 
 
@@ -110,6 +110,7 @@ def _counts() -> dict[str, int]:
         "eventos_enviados": 0,
         "eventos_descartados": 0,
         "eventos_error": 0,
+        "archivado_omitido": 0,
     }
 
 
@@ -132,6 +133,7 @@ def _execute(db: Session, client: AtlasClient, kind: SyncKind, now: Callable[[],
     products_time: str | None = None
     availability_time: str | None = None
     error: str | None = None
+    notes: list[str] = []
     try:
         brands = sync_brands(db, _all_items(client, "/brands"))
         departments = sync_departments(db, _all_items(client, "/departments"))
@@ -147,7 +149,12 @@ def _execute(db: Session, client: AtlasClient, kind: SyncKind, now: Callable[[],
             products_time = server_time
         if full:
             # Solo se llega aquí si se recorrieron todas las páginas sin error.
-            counts["bajas"] += archive_missing(db, seen)
+            archived, note = archive_missing(db, seen)
+            counts["bajas"] += archived
+            if note is not None:
+                counts["archivado_omitido"] = 1
+                notes.append(note)
+                logger.warning(note)
             db.commit()
 
         for items, server_time in client.iter_pages("/availability", availability_since):
@@ -185,7 +192,8 @@ def _execute(db: Session, client: AtlasClient, kind: SyncKind, now: Callable[[],
         kind="full" if full and kind == "incremental" else kind,
         status="ok" if error is None else "error",
         counts=counts,
-        error=error,
+        # Una nota (p. ej. archivado omitido) no falla la corrida; un error la sustituye.
+        error=error or ("; ".join(notes)[:MAX_ERROR] or None),
     )
     db.add(run)
     db.execute(delete(AtlasSyncRun).where(AtlasSyncRun.started_at < started - RUN_RETENTION))

@@ -311,18 +311,38 @@ class ProductSync:
         return True
 
 
-def archive_missing(db: Session, seen: set[str]) -> int:
-    """Nocturna completa: archiva las piezas de Atlas que ya no vinieron publicadas."""
-    archived = 0
-    for product in db.scalars(
-        select(Product).where(
-            Product.external_inventory_id.is_not(None), Product.status != STATUS_ARCHIVED
+# Freno de la nocturna: una carga completa vacía o recortada (canal apagado, cambio de
+# configuración, falla de Atlas) no debe vaciar el sitio.
+ARCHIVE_MAX_SHARE = 0.30
+ARCHIVE_MIN_POPULATION = 10
+
+
+def archive_missing(db: Session, seen: set[str]) -> tuple[int, str | None]:
+    """Nocturna completa: archiva las piezas de Atlas que ya no vinieron publicadas.
+
+    Devuelve (archivadas, nota). Si la carga no trajo piezas vivas, o archivaría más del 30% de
+    las piezas de Atlas no archivadas (con al menos 10), no archiva nada y la nota lo explica.
+    """
+    candidates = list(
+        db.scalars(
+            select(Product).where(
+                Product.external_inventory_id.is_not(None), Product.status != STATUS_ARCHIVED
+            )
         )
-    ):
-        if product.external_inventory_id not in seen:
-            product.status = STATUS_ARCHIVED
-            archived += 1
-    return archived
+    )
+    missing = [p for p in candidates if p.external_inventory_id not in seen]
+    if not missing:
+        return 0, None
+    if not seen:
+        return 0, f"archivado omitido: la carga completa no trajo piezas ({len(missing)} sin archivar)"
+    population = len(candidates)
+    if population >= ARCHIVE_MIN_POPULATION and len(missing) > ARCHIVE_MAX_SHARE * population:
+        return 0, (
+            f"archivado omitido: archivaría {len(missing)} de {population} piezas (más del 30%)"
+        )
+    for product in missing:
+        product.status = STATUS_ARCHIVED
+    return len(missing), None
 
 
 def apply_availability(db: Session, items: list[dict]) -> int:
