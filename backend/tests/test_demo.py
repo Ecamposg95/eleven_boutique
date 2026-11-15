@@ -194,6 +194,7 @@ def test_public_settings_have_no_copy_without_demo_mode(seeded, public_client):
             "headline": None,
             "subhead": None,
             "gallery": [],
+            "slides": [],
         },
         "intro": None,
         "boutique": {"body": None},

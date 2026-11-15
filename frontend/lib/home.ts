@@ -1,8 +1,10 @@
+import { safeImageSrc } from "./images";
 import type {
   BrandSummary,
   CollectionSummary,
   LookbookSummary,
   ProductCard,
+  PublicSettings,
 } from "./types";
 
 /** Una entrada de la franja negra de portada: imagen opcional, etiqueta, título y destino. */
@@ -83,4 +85,27 @@ export function closingImage(
 /** La palabra gigante de portada: el primer término del nombre del sitio. */
 export function giantWord(siteName: string): string {
   return siteName.trim().split(/\s+/)[0] || siteName;
+}
+
+/** Una foto de portada lista para pintar: `mobile` solo si es distinta de la principal. */
+export type HeroPhoto = { src: string; mobile: string | null };
+
+/**
+ * Las fotos que se turnan en portada, en orden y sin repetir. Usa `hero.slides` (con versión de
+ * teléfono) y, si la API es anterior, cae a la principal más la galería.
+ */
+export function heroPhotos(hero: PublicSettings["hero"]): HeroPhoto[] {
+  const raw = hero.slides?.length
+    ? hero.slides.map((slide) => ({ src: slide.image_url, mobile: slide.mobile_image_url }))
+    : [hero.image_url, ...(hero.gallery ?? [])].map((src) => ({ src, mobile: null }));
+  const seen = new Set<string>();
+  const photos: HeroPhoto[] = [];
+  for (const item of raw) {
+    const src = safeImageSrc(item.src);
+    if (!src || seen.has(src)) continue;
+    seen.add(src);
+    const mobile = safeImageSrc(item.mobile);
+    photos.push({ src, mobile: mobile && mobile !== src ? mobile : null });
+  }
+  return photos;
 }

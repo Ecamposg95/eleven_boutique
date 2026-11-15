@@ -640,6 +640,7 @@ def test_settings_round_trip_and_public_mobile_hero(client):
         "headline": "Titular",
         "subhead": "Sub",
         "gallery": [],
+        "slides": [{"image_url": desktop["url"], "mobile_image_url": mobile["url"]}],
     }
     assert public["whatsapp_enabled"] is True
     assert "whatsapp_number" not in public
@@ -654,8 +655,8 @@ def test_settings_hero_gallery_round_trip_order_and_clear(client):
     saved = patch(client, "/settings", {"hero_gallery_asset_ids": [second["id"], first["id"]]})
     assert saved.status_code == 200, saved.text
     assert saved.json()["hero_gallery"] == [
-        {"asset_id": second["id"], "url": second["url"]},
-        {"asset_id": first["id"], "url": first["url"]},
+        {"asset_id": second["id"], "url": second["url"], "mobile_asset_id": None, "mobile_url": None},
+        {"asset_id": first["id"], "url": first["url"], "mobile_asset_id": None, "mobile_url": None},
     ]
     assert client.get(f"{BASE}/settings").json() == saved.json()
     public = client.get("/api/v1/site-settings/public").json()
@@ -668,6 +669,49 @@ def test_settings_hero_gallery_round_trip_order_and_clear(client):
 
     assert patch(client, "/settings", {"hero_gallery_asset_ids": []}).json()["hero_gallery"] == []
     assert client.get("/api/v1/site-settings/public").json()["hero"]["gallery"] == []
+
+
+def test_settings_hero_slides_carry_a_phone_version(client):
+    main, main_phone, wide, phone, extra = (upload_one(client) for _ in range(5))
+    saved = patch(
+        client,
+        "/settings",
+        {
+            "hero_asset_id": main["id"],
+            "hero_mobile_asset_id": main_phone["id"],
+            "hero_gallery_slides": [
+                {"asset_id": wide["id"], "mobile_asset_id": phone["id"]},
+                {"asset_id": extra["id"]},
+                {"asset_id": wide["id"]},
+            ],
+        },
+    )
+    assert saved.status_code == 200, saved.text
+    assert saved.json()["hero_gallery"] == [
+        {"asset_id": wide["id"], "url": wide["url"], "mobile_asset_id": phone["id"], "mobile_url": phone["url"]},
+        {"asset_id": extra["id"], "url": extra["url"], "mobile_asset_id": None, "mobile_url": None},
+    ]
+    hero = client.get("/api/v1/site-settings/public").json()["hero"]
+    assert hero["gallery"] == [wide["url"], extra["url"]]
+    assert hero["slides"] == [
+        {"image_url": main["url"], "mobile_image_url": main_phone["url"]},
+        {"image_url": wide["url"], "mobile_image_url": phone["url"]},
+        {"image_url": extra["url"], "mobile_image_url": None},
+    ]
+
+    # The phone version counts as in use, so it cannot be deleted from the library.
+    assert client.delete(f"{BASE}/media/{phone['id']}", headers=ORIGIN).status_code == 409
+
+    # The legacy list of ids still works and drops phone versions; then the phone photo is free.
+    legacy = patch(client, "/settings", {"hero_gallery_asset_ids": [wide["id"]]}).json()
+    assert legacy["hero_gallery"][0]["mobile_url"] is None
+    assert client.delete(f"{BASE}/media/{phone['id']}", headers=ORIGIN).status_code == 204
+
+
+def test_settings_hero_slides_reject_an_unknown_phone_version(client):
+    item = upload_one(client)
+    body = {"hero_gallery_slides": [{"asset_id": item["id"], "mobile_asset_id": str(uuid.uuid4())}]}
+    assert patch(client, "/settings", body).status_code == 422
 
 
 def test_settings_hero_gallery_rejects_unknown_and_too_many(client):

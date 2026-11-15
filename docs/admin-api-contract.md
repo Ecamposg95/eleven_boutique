@@ -39,14 +39,14 @@ Un producto solo pasa a `published` si tiene nombre, marca (o clasificación "Si
 | GET/POST, PATCH/DELETE | `/categories`, `/categories/{id}` | `DELETE` da 409 si tiene productos o hijas |
 | GET/POST, GET/PATCH/DELETE | `/collections`, `/collections/{id}` | `title, slug, summary, cover_asset_id, status, display_order, product_ids[]` ordenados |
 | GET/POST, GET/PATCH/DELETE | `/lookbooks`, `/lookbooks/{id}` | Igual, más `blocks[]` con las formas de `LookbookBlock` |
-| GET/PATCH | `/settings` | `whatsapp_number` (línea Ventas), `whatsapp_premium_number` (línea Boutique), `hero_asset_id, hero_mobile_asset_id, hero_gallery_asset_ids` (lista ordenada, máx. 8; la respuesta trae `hero_gallery: [{asset_id, url}]`), `hero_headline, hero_subhead, intro, boutique_body, contact_body` |
+| GET/PATCH | `/settings` | `whatsapp_number` (línea Ventas), `whatsapp_premium_number` (línea Boutique), `hero_asset_id` (computadora, horizontal), `hero_mobile_asset_id` (teléfono, vertical), `hero_gallery_slides: [{asset_id, mobile_asset_id?}]` (lista ordenada, máx. 8; reemplaza a `hero_gallery_asset_ids`, que se sigue aceptando sin versión de teléfono; la respuesta trae `hero_gallery: [{asset_id, url, mobile_asset_id, mobile_url}]`), `hero_headline, hero_subhead, intro, boutique_body, contact_body` |
 | POST | `/imports/products/preview` | Multipart `.xlsx` o `.csv` → `ImportPreview`. No escribe |
 | POST | `/imports/products` | `{preview_id, update_existing: bool}` → `ImportResult` |
 | GET | `/imports/template` | CSV plantilla |
 | GET | `/imports/{id}/report` | CSV de resultados por fila |
 | GET | `/audit` | Paginado, solo `admin` o superior |
 
-`GET /site-settings/public` añade `hero.mobile_image_url: string | null` y `hero.gallery: string[]` (fotos extra que se turnan después de la principal). Las URL públicas de archivos son `/media/...`.
+`GET /site-settings/public` añade `hero.mobile_image_url: string | null` y `hero.gallery: string[]` (fotos extra que se turnan después de la principal). También `hero.slides: [{image_url, mobile_image_url}]`: todas las fotos en orden, la principal primero; el sitio muestra `mobile_image_url` en pantallas verticales. Las URL públicas de archivos son `/media/...`.
 
 ## Decisiones de implementación
 

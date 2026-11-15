@@ -138,12 +138,18 @@ class SearchResults(Schema):
     products: list[ProductCard]
 
 
+class HeroSlide(Schema):
+    image_url: str  # Landscape screens (computer).
+    mobile_image_url: str | None  # Portrait screens (phone); null uses image_url.
+
+
 class Hero(Schema):
     image_url: str | None
     mobile_image_url: str | None
     headline: str | None
     subhead: str | None
     gallery: list[str]  # Extra photos that rotate after image_url, in order.
+    slides: list[HeroSlide]  # Every portada photo in order, main first, with its phone version.
 
 
 class BodyText(Schema):

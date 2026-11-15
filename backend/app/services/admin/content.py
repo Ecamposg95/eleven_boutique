@@ -287,13 +287,25 @@ def _settings_out(row: SiteSettings | None) -> schemas.AdminSettings:
     )
 
 
-def _hero_gallery(db: Session, asset_ids: list[uuid.UUID]) -> list[dict[str, str]]:
-    """Ordered, without repeats. Stores the URL next to the id, like the other asset fields."""
+def _hero_gallery(
+    db: Session, pairs: list[tuple[uuid.UUID, uuid.UUID | None]]
+) -> list[dict[str, str]]:
+    """Ordered, without repeated main photos. Stores each URL next to its id, like the other
+    asset fields; the phone version is optional."""
     slides: list[dict[str, str]] = []
-    for asset_id in dict.fromkeys(asset_ids):
+    seen: set[uuid.UUID] = set()
+    for asset_id, mobile_id in pairs:
+        if asset_id in seen:
+            continue
+        seen.add(asset_id)
         asset = asset_or_error(db, asset_id)
         assert asset is not None
-        slides.append({"asset_id": str(asset.id), "url": asset.url})
+        slide = {"asset_id": str(asset.id), "url": asset.url}
+        if mobile_id is not None:
+            mobile = asset_or_error(db, mobile_id)
+            assert mobile is not None
+            slide |= {"mobile_asset_id": str(mobile.id), "mobile_url": mobile.url}
+        slides.append(slide)
     return slides
 
 
@@ -324,8 +336,12 @@ def update_settings(db: Session, data: schemas.SettingsPatch, user: AdminUser) -
             "hero_mobile_image_url",
             asset_or_error(db, data.hero_mobile_asset_id),
         )
-    if "hero_gallery_asset_ids" in fields:
-        row.hero_gallery = _hero_gallery(db, data.hero_gallery_asset_ids or [])
+    if "hero_gallery_slides" in fields:
+        row.hero_gallery = _hero_gallery(
+            db, [(slide.asset_id, slide.mobile_asset_id) for slide in data.hero_gallery_slides or []]
+        )
+    elif "hero_gallery_asset_ids" in fields:
+        row.hero_gallery = _hero_gallery(db, [(a, None) for a in data.hero_gallery_asset_ids or []])
     for field in _TEXT_SETTINGS:
         if field in fields:
             setattr(row, field, getattr(data, field))

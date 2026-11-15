@@ -245,7 +245,7 @@ export function AssetField({
   );
 }
 
-export type GallerySlide = { asset_id: string; url: string };
+export type GallerySlide = { asset_id: string; url: string; mobile_asset_id?: string | null; mobile_url?: string | null };
 
 /** Varias imágenes en orden: añadir desde la biblioteca, mover y quitar. */
 export function GalleryField({
@@ -253,15 +253,27 @@ export function GalleryField({
   slides,
   max,
   hint,
+  withMobile,
   onChange,
 }: {
   label: string;
   slides: GallerySlide[];
   max: number;
   hint?: string;
+  /** Cada foto puede llevar su versión vertical para teléfono. */
+  withMobile?: boolean;
   onChange: (slides: GallerySlide[]) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [mobileFor, setMobileFor] = useState<string | null>(null);
+  const setMobile = (assetId: string, asset: MediaAsset | null) =>
+    onChange(
+      slides.map((slide) =>
+        slide.asset_id === assetId
+          ? { ...slide, mobile_asset_id: asset?.id ?? null, mobile_url: asset?.url ?? null }
+          : slide,
+      ),
+    );
   const full = slides.length >= max;
   const add = (assets: MediaAsset[]) => {
     const known = new Set(slides.map((slide) => slide.asset_id));
@@ -275,8 +287,41 @@ export function GalleryField({
         <ol className="flex flex-wrap gap-4">
           {slides.map((slide, index) => (
             <li key={slide.asset_id} className="flex flex-col items-start gap-1">
-              <Thumb src={slide.url} size="9rem" ratio="4 / 5" sizes="200px" />
+              <div className="flex items-end gap-2">
+                <Thumb src={slide.url} size="9rem" ratio={withMobile ? "16 / 9" : "4 / 5"} sizes="200px" />
+                {withMobile ? (
+                  <Thumb
+                    src={slide.mobile_url}
+                    size="3.5rem"
+                    ratio="9 / 16"
+                    sizes="100px"
+                    emptyLabel="Sin teléfono"
+                  />
+                ) : null}
+              </div>
               <span className="a-hint">Foto {index + 2}</span>
+              {withMobile ? (
+                <div className="flex gap-1">
+                  <button
+                    type="button"
+                    className="a-btn a-btn-quiet a-btn-small"
+                    aria-label={`${slide.mobile_url ? "Cambiar" : "Elegir"} versión teléfono: foto ${index + 2}`}
+                    onClick={() => setMobileFor(slide.asset_id)}
+                  >
+                    {slide.mobile_url ? "Cambiar teléfono" : "Versión teléfono"}
+                  </button>
+                  {slide.mobile_url ? (
+                    <button
+                      type="button"
+                      className="a-btn a-btn-quiet a-btn-small"
+                      aria-label={`Quitar versión teléfono: foto ${index + 2}`}
+                      onClick={() => setMobile(slide.asset_id, null)}
+                    >
+                      Quitar
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
               <div className="flex gap-1">
                 <button
                   type="button"
@@ -316,6 +361,16 @@ export function GalleryField({
       </button>
       {hint ? <p className="a-hint max-w-prose">{hint}</p> : null}
       <MediaPicker open={open} multiple title={label} onClose={() => setOpen(false)} onPick={add} />
+      {withMobile ? (
+        <MediaPicker
+          open={mobileFor !== null}
+          title="Versión para teléfono (vertical 9:16)"
+          onClose={() => setMobileFor(null)}
+          onPick={(assets) => {
+            if (mobileFor) setMobile(mobileFor, assets[0] ?? null);
+          }}
+        />
+      ) : null}
     </div>
   );
 }

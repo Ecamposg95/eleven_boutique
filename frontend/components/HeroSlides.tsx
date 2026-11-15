@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { nextHouse } from "@/lib/showroom";
-import { CatalogImage } from "./CatalogImage";
+import type { HeroPhoto } from "@/lib/home";
+import { HeroPicture } from "./HeroPicture";
 
 /** Cuánto permanece cada foto de portada antes del fundido a la siguiente. */
 export const SLIDE_MS = 6000;
@@ -19,12 +20,12 @@ function subscribeReduced(onChange: () => void) {
  * Se pausa con la pestaña oculta y con el botón; con prefers-reduced-motion arranca en pausa.
  */
 export function HeroSlides({
-  images,
+  photos,
   sizes,
   imageClassName = "",
   controlsClassName = "absolute inset-x-0 bottom-0 px-4 pb-3",
 }: {
-  images: string[];
+  photos: HeroPhoto[];
   sizes: string;
   imageClassName?: string;
   controlsClassName?: string;
@@ -34,7 +35,7 @@ export function HeroSlides({
   const reduced = useSyncExternalStore(subscribeReduced, () => window.matchMedia(REDUCED).matches, () => false);
   const [hidden, setHidden] = useState(false);
   const stopped = choice ?? reduced;
-  const playing = images.length > 1 && !stopped && !hidden;
+  const playing = photos.length > 1 && !stopped && !hidden;
 
   useEffect(() => {
     const onVisibility = () => setHidden(document.hidden);
@@ -44,29 +45,29 @@ export function HeroSlides({
 
   useEffect(() => {
     if (!playing) return;
-    const timer = window.setTimeout(() => setActive((index) => nextHouse(index, images.length)), SLIDE_MS);
+    const timer = window.setTimeout(() => setActive((index) => nextHouse(index, photos.length)), SLIDE_MS);
     return () => window.clearTimeout(timer);
-  }, [playing, active, images.length]);
+  }, [playing, active, photos.length]);
 
   return (
     <>
-      {images.map((src, index) => (
+      {photos.map((photo, index) => (
         <div
-          key={src}
+          key={photo.src}
           aria-hidden={index !== active}
           className={`absolute inset-0 transition-opacity duration-[1200ms] ease-out ${index === active ? "opacity-100" : "opacity-0"}`}
         >
-          <CatalogImage src={src} alt="" sizes={sizes} preload={index === 0} className={`object-cover ${imageClassName}`} />
+          <HeroPicture photo={photo} sizes={sizes} preload={index === 0} className={`object-cover ${imageClassName}`} />
         </div>
       ))}
-      {images.length > 1 ? (
+      {photos.length > 1 ? (
         <div className={`flex items-center justify-between gap-4 text-[#efece6] ${controlsClassName}`}>
           <ul className="flex gap-1" aria-label="Fotos de portada">
-            {images.map((src, index) => (
-              <li key={src}>
+            {photos.map((photo, index) => (
+              <li key={photo.src}>
                 <button
                   type="button"
-                  aria-label={`Ver foto ${index + 1} de ${images.length}`}
+                  aria-label={`Ver foto ${index + 1} de ${photos.length}`}
                   aria-current={index === active ? "true" : undefined}
                   onClick={() => setActive(index)}
                   className="flex h-6 w-7 cursor-pointer items-center"
