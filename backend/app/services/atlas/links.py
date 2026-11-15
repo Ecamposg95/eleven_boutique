@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.models import (
     KIND_BRAND,
+    STATUS_ARCHIVED,
     STATUS_DRAFT,
     STATUS_PUBLISHED,
     VALIDATION_PENDING,
@@ -31,7 +32,7 @@ def sync_brands(db: Session, atlas_brands: list[dict]) -> dict[str, int]:
     maps = {row.atlas_brand_id: row for row in db.scalars(select(AtlasBrandMap))}
     counts = {"ligadas": 0, "creadas_borrador": 0}
     for item in atlas_brands:
-        if item.get("deleted"):
+        if item.get("deleted") or not normalize(item["name"]):
             continue
         row = maps.get(item["id"])
         if row is None:
@@ -86,48 +87,74 @@ def sync_departments(db: Session, atlas_departments: list[dict]) -> dict[str, in
         if item.get("deleted") and row.category_id is not None:
             row.category_id = None
             counts["desligadas"] += 1
+    incoming = {item["id"] for item in atlas_departments}
+    for dept_id, row in maps.items():
+        if dept_id not in incoming and row.category_id is not None:
+            row.category_id = None
+            counts["desligadas"] += 1
     db.flush()
     return counts
+
+
+class Resolver:
+    """Resuelve casas y categorías de Atlas con todo precargado: úsalo una vez por corrida."""
+
+    def __init__(self, db: Session) -> None:
+        self.db = db
+        self.index, self.brands = brand_index(db)
+        self.no_brand = no_brand_classification(self.brands)
+        self.brand_maps = {
+            r.atlas_brand_id: r for r in db.scalars(select(AtlasBrandMap))
+        }
+        self.category_maps = {
+            r.atlas_department_id: r for r in db.scalars(select(AtlasCategoryMap))
+        }
+        self.categories = {c.id: c for c in db.scalars(select(Category))}
+
+    def brand(self, atlas_brand_id: str | None) -> tuple[Brand | None, str | None]:
+        """Casa para un producto de Atlas, o el motivo por el que no se puede usar."""
+        if atlas_brand_id is None:
+            if self.no_brand:
+                return self.no_brand, None
+            return None, "No existe la clasificación Sin marca"
+        row = self.brand_maps.get(atlas_brand_id)
+        if row is None:
+            return None, f"casa sin ligar: {atlas_brand_id}"
+        brand = self.brands.get(row.brand_id) if row.brand_id else None
+        if brand is None:
+            owners = self.index.get(normalize(row.atlas_name), set())
+            kind = "ambigua" if len(owners) > 1 else "sin ligar"
+            return None, f"casa {kind}: {row.atlas_name}"
+        if brand.status == STATUS_ARCHIVED:
+            return None, f"casa archivada: {brand.name}"
+        if brand.status != STATUS_PUBLISHED:
+            return None, f"casa en borrador: {brand.name}"
+        return brand, None
+
+    def category(
+        self, atlas_department_id: str | None
+    ) -> tuple[Category | None, str | None]:
+        row = (
+            self.category_maps.get(atlas_department_id) if atlas_department_id else None
+        )
+        category = (
+            self.categories.get(row.category_id) if row and row.category_id else None
+        )
+        if category is None:
+            return (
+                None,
+                f"categoría sin ligar: {row.atlas_name if row else atlas_department_id}",
+            )
+        return category, None
 
 
 def resolve_brand(
     db: Session, atlas_brand_id: str | None
 ) -> tuple[Brand | None, str | None]:
-    """Casa para un producto de Atlas, o el motivo por el que no se puede usar."""
-    index, brands = brand_index(db)
-    if atlas_brand_id is None:
-        brand = no_brand_classification(brands)
-        return (
-            (brand, None) if brand else (None, "No existe la clasificación Sin marca")
-        )
-    row = db.scalar(
-        select(AtlasBrandMap).where(AtlasBrandMap.atlas_brand_id == atlas_brand_id)
-    )
-    if row is None:
-        return None, f"casa sin ligar: {atlas_brand_id}"
-    brand = brands.get(row.brand_id) if row.brand_id else None
-    if brand is None:
-        owners = index.get(normalize(row.atlas_name), set())
-        kind = "ambigua" if len(owners) > 1 else "sin ligar"
-        return None, f"casa {kind}: {row.atlas_name}"
-    if brand.status != STATUS_PUBLISHED:
-        return None, f"casa en borrador: {brand.name}"
-    return brand, None
+    return Resolver(db).brand(atlas_brand_id)
 
 
 def resolve_category(
     db: Session, atlas_department_id: str | None
 ) -> tuple[Category | None, str | None]:
-    row = None
-    if atlas_department_id is not None:
-        row = db.scalar(
-            select(AtlasCategoryMap).where(
-                AtlasCategoryMap.atlas_department_id == atlas_department_id
-            )
-        )
-    if row is None or row.category_id is None:
-        return (
-            None,
-            f"categoría sin ligar: {row.atlas_name if row else atlas_department_id}",
-        )
-    return db.get(Category, row.category_id), None
+    return Resolver(db).category(atlas_department_id)

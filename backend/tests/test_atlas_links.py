@@ -88,10 +88,10 @@ def test_unknown_brand_creates_draft_once(db):
 
 
 def test_draft_slug_unique(db):
-    make_brand(db, "Gucci", slug="gucci-x")
     make_brand(db, "Otra", slug="nueva-casa")
     sync_brands(db, [_brand("b1", "Nueva Casa")])
-    assert _row(db, "b1").brand_id is not None
+    new = db.get(Brand, _row(db, "b1").brand_id)
+    assert new.slug != "nueva-casa" and new.slug.startswith("nueva-casa")
 
 
 def test_never_modifies_existing_house(db):
@@ -146,3 +146,61 @@ def test_deleted_or_vanished_department_unlinks(db):
     sync_departments(db, [_dept("d1", "Ropa", deleted=True)])
     row = db.scalar(select(AtlasCategoryMap))
     assert row.category_id is None
+    row.category_id = cat.id
+    db.flush()
+    counts = sync_departments(db, [_dept("d9", "Otro")])
+    assert counts["desligadas"] == 1
+    assert row.category_id is None
+
+
+def test_vanished_brand_keeps_link(db):
+    sync_brands(db, [_brand("b1", "Cosa Rara")])
+    sync_brands(db, [])
+    assert _row(db, "b1").brand_id is not None
+
+
+def test_brand_rename_keeps_link_updates_name(db):
+    casa = make_brand(db, "Nike")
+    sync_brands(db, [_brand("b1", "Nike")])
+    sync_brands(db, [_brand("b1", "Nike Inc")])
+    row = _row(db, "b1")
+    assert row.brand_id == casa.id and row.atlas_name == "Nike Inc"
+
+
+def test_blank_brand_name_skipped(db):
+    sync_brands(db, [_brand("b1", "  ")])
+    assert _row(db, "b1") is None
+
+
+def test_archived_house_reason(db):
+    from app.models import STATUS_ARCHIVED
+
+    casa = make_brand(db, "Vieja", status=STATUS_ARCHIVED)
+    db.add(AtlasBrandMap(atlas_brand_id="b1", atlas_name="Vieja", brand_id=casa.id))
+    db.flush()
+    assert resolve_brand(db, "b1") == (None, "casa archivada: Vieja")
+
+
+def test_resolver_constant_queries(db):
+    from sqlalchemy import event
+
+    from app.services.atlas.links import Resolver
+
+    casa = make_brand(db, "Fija")
+    db.add(AtlasBrandMap(atlas_brand_id="b1", atlas_name="Fija", brand_id=casa.id))
+    db.flush()
+    resolver = Resolver(db)
+    seen = []
+    engine = db.get_bind()
+
+    def listener(*args):
+        seen.append(1)
+
+    event.listen(engine, "before_cursor_execute", listener)
+    try:
+        for _ in range(50):
+            assert resolver.brand("b1") == (casa, None)
+            resolver.category("d1")
+    finally:
+        event.remove(engine, "before_cursor_execute", listener)
+    assert len(seen) == 0
