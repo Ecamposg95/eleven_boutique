@@ -324,9 +324,14 @@ def _instagram_url(value: str | None) -> str | None:
     value = (value or "").strip()
     if not value:
         return None
-    parts = urlsplit(value)
-    if parts.scheme != "https" or parts.hostname not in _INSTAGRAM_HOSTS or parts.username or parts.password:
-        raise ApiError(422, "invalid_instagram_url", "El enlace debe ser de instagram.com (https)")
+    invalid = ApiError(422, "invalid_instagram_url", "El enlace debe ser de instagram.com (https)")
+    try:
+        parts = urlsplit(value)
+        host = parts.hostname
+    except ValueError:  # e.g. "https://[abc": urlsplit rejects it as a bad IPv6 URL.
+        raise invalid from None
+    if parts.scheme != "https" or host not in _INSTAGRAM_HOSTS or parts.username or parts.password:
+        raise invalid
     return value
 
 

@@ -791,6 +791,7 @@ def test_settings_detail_attention_and_instagram_round_trip(db, client):
         "https://user@evil.example/instagram.com",
         "http://instagram.com/x",
         "javascript:alert(1)",
+        "https://[abc",
     ],
 )
 def test_settings_rejects_non_instagram_url(client, url):
