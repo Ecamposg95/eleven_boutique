@@ -12,6 +12,7 @@ from app.models import (
     KIND_CLASSIFICATION,
     Brand,
     BrandAlias,
+    CatalogEvent,
     Category,
     Collection,
     CollectionProduct,
@@ -308,6 +309,9 @@ def consult_selection(db: Session, slugs: list[str], settings: Settings) -> sche
         digits = lines[product.brand.is_premium] if product else None
         if digits is not None:
             groups.setdefault(digits, []).append(product)
+            # Interés anónimo por pieza; se reenvía a Atlas ONE en la sincronización.
+            db.add(CatalogEvent(type="selection", product_id=product.id))
+    db.commit()
 
     def piece(product: Product) -> Piece:
         unbranded = product.brand.kind == KIND_CLASSIFICATION
