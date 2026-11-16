@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 import { AdminApiError, api, errorText } from "@/lib/admin/client";
 import type { AdminCategory } from "@/lib/admin/types";
+import { AssetField } from "./MediaPicker";
 import { Empty, Notice, TextField, useConfirm, useUnsavedWarning } from "./ui";
 
 function Row({ category, all, onDirty }: { category: AdminCategory; all: AdminCategory[]; onDirty: (id: string, dirty: boolean) => void }) {
@@ -14,6 +15,8 @@ function Row({ category, all, onDirty }: { category: AdminCategory; all: AdminCa
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [confirm, dialog] = useConfirm();
+  const [coverId, setCoverId] = useState(category.cover_asset_id);
+  const [coverUrl, setCoverUrl] = useState(category.cover_url);
   const dirty = name !== saved.name || parent !== saved.parent;
 
   const update = (nextName: string, nextParent: string) => {
@@ -34,6 +37,19 @@ function Row({ category, all, onDirty }: { category: AdminCategory; all: AdminCa
       setError(null);
       setNote("Guardada");
       onDirty(category.id, false);
+      router.refresh();
+    } catch (cause) {
+      setError(errorText(cause));
+    }
+  };
+
+  const saveCover = async (asset: { id: string; url: string } | null) => {
+    try {
+      await api(`/categories/${category.id}`, { method: "PATCH", json: { cover_asset_id: asset?.id ?? null } });
+      setCoverId(asset?.id ?? null);
+      setCoverUrl(asset?.url ?? null);
+      setError(null);
+      setNote(asset ? "Portada guardada" : "Portada quitada");
       router.refresh();
     } catch (cause) {
       setError(errorText(cause));
@@ -75,6 +91,18 @@ function Row({ category, all, onDirty }: { category: AdminCategory; all: AdminCa
           <p id={errorId} role="alert" className="a-error">
             {error}
           </p>
+        ) : null}
+        {category.parent_id === null ? (
+          <div className="mt-3">
+            <AssetField
+              label="Foto de portada del departamento"
+              url={coverUrl}
+              assetId={coverId}
+              ratio="4 / 5"
+              hint="Vertical 4:5, ideal 1600 × 2000 px. Encabeza su pestaña en la portada y su página en la tienda."
+              onChange={(asset) => void saveCover(asset)}
+            />
+          </div>
         ) : null}
       </td>
       <td className="max-sm:hidden">

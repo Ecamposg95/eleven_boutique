@@ -21,11 +21,23 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
     intro: settings.intro ?? "",
     boutique_body: settings.boutique_body ?? "",
     contact_body: settings.contact_body ?? "",
+    instagram_url: settings.instagram_url ?? "",
+    detail_asset_id: settings.detail_asset_id,
+    detail_mobile_asset_id: settings.detail_mobile_asset_id,
+    detail_caption: settings.detail_caption ?? "",
+    attention_asset_id: settings.attention_asset_id,
+    attention_mobile_asset_id: settings.attention_mobile_asset_id,
+    attention_headline: settings.attention_headline ?? "",
+    attention_subhead: settings.attention_subhead ?? "",
   };
   const [saved, setSaved] = useState(initial);
   const [form, setForm] = useState(initial);
   const [heroUrl, setHeroUrl] = useState(settings.hero_image_url);
   const [mobileUrl, setMobileUrl] = useState(settings.hero_mobile_image_url);
+  const [detailUrl, setDetailUrl] = useState(settings.detail_image_url);
+  const [detailMobileUrl, setDetailMobileUrl] = useState(settings.detail_mobile_image_url);
+  const [attentionUrl, setAttentionUrl] = useState(settings.attention_image_url);
+  const [attentionMobileUrl, setAttentionMobileUrl] = useState(settings.attention_mobile_image_url);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -70,6 +82,14 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
       intro: form.intro.trim() || null,
       boutique_body: form.boutique_body.trim() || null,
       contact_body: form.contact_body.trim() || null,
+      instagram_url: form.instagram_url.trim() || null,
+      detail_asset_id: form.detail_asset_id,
+      detail_mobile_asset_id: form.detail_mobile_asset_id,
+      detail_caption: form.detail_caption.trim() || null,
+      attention_asset_id: form.attention_asset_id,
+      attention_mobile_asset_id: form.attention_mobile_asset_id,
+      attention_headline: form.attention_headline.trim() || null,
+      attention_subhead: form.attention_subhead.trim() || null,
     };
     try {
       await api("/settings", { method: "PATCH", json: body });
@@ -79,7 +99,9 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
       setMessage("Cambios guardados. El sitio público los muestra en menos de un minuto.");
       router.refresh();
     } catch (cause) {
-      if (cause instanceof AdminApiError) setErrors(cause.fields);
+      if (cause instanceof AdminApiError) {
+        setErrors(cause.code === "invalid_instagram_url" ? { instagram_url: cause.message } : cause.fields);
+      }
       setFormError(errorText(cause));
     } finally {
       setBusy(false);
@@ -172,6 +194,86 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
             onChange={(slides) => set("hero_gallery", slides)}
           />
         </div>
+      </section>
+
+      <section aria-labelledby="detail-t" className="a-section">
+        <h2 id="detail-t" className="a-h2">
+          Franja de detalle
+        </h2>
+        <div className="mt-2 grid gap-6 md:grid-cols-2">
+          <AssetField
+            label="Franja en computadora"
+            url={detailUrl}
+            assetId={form.detail_asset_id}
+            ratio="21 / 9"
+            hint="Panorámica 21:9, ideal 2880 × 1234 px. Lo importante al centro: en teléfono se recortan los lados."
+            onChange={(asset) => {
+              set("detail_asset_id", asset?.id ?? null);
+              setDetailUrl(asset?.url ?? null);
+            }}
+          />
+          <AssetField
+            label="Franja en teléfono (opcional)"
+            url={detailMobileUrl}
+            assetId={form.detail_mobile_asset_id}
+            ratio="4 / 5"
+            hint="Opcional, vertical 4:5, ideal 1600 × 2000 px."
+            onChange={(asset) => {
+              set("detail_mobile_asset_id", asset?.id ?? null);
+              setDetailMobileUrl(asset?.url ?? null);
+            }}
+          />
+        </div>
+        <TextField className="mt-4" label="Texto sobre la foto (opcional)" value={form.detail_caption} onChange={(value) => set("detail_caption", value)} error={errors.detail_caption} />
+      </section>
+
+      <section aria-labelledby="attn-t" className="a-section">
+        <h2 id="attn-t" className="a-h2">
+          Bloque de atención
+        </h2>
+        <div className="mt-2 grid gap-6 md:grid-cols-2">
+          <AssetField
+            label="Atención en computadora"
+            url={attentionUrl}
+            assetId={form.attention_asset_id}
+            ratio="16 / 9"
+            hint="Horizontal 16:9, ideal 2880 × 1620 px. Deje tranquila la mitad izquierda: ahí van el texto y los botones."
+            onChange={(asset) => {
+              set("attention_asset_id", asset?.id ?? null);
+              setAttentionUrl(asset?.url ?? null);
+            }}
+          />
+          <AssetField
+            label="Atención en teléfono"
+            url={attentionMobileUrl}
+            assetId={form.attention_mobile_asset_id}
+            ratio="4 / 5"
+            hint="Vertical 4:5, ideal 1600 × 2000 px."
+            onChange={(asset) => {
+              set("attention_mobile_asset_id", asset?.id ?? null);
+              setAttentionMobileUrl(asset?.url ?? null);
+            }}
+          />
+        </div>
+        <div className="mt-4 space-y-4">
+          <TextField label="Titular" placeholder="Escríbenos. Te asesoramos." value={form.attention_headline} onChange={(value) => set("attention_headline", value)} error={errors.attention_headline} />
+          <TextAreaField label="Subtítulo (opcional)" rows={3} value={form.attention_subhead} onChange={(value) => set("attention_subhead", value)} error={errors.attention_subhead} />
+        </div>
+      </section>
+
+      <section aria-labelledby="ig-t" className="a-section">
+        <h2 id="ig-t" className="a-h2">
+          Instagram
+        </h2>
+        <TextField
+          className="mt-2 max-w-xl"
+          label="Perfil de Instagram"
+          type="url"
+          placeholder="https://www.instagram.com/eleven.fashionboutique/"
+          value={form.instagram_url}
+          onChange={(value) => set("instagram_url", value)}
+          error={errors.instagram_url}
+        />
       </section>
 
       <section aria-labelledby="text-t" className="a-section">

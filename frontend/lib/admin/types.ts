@@ -104,6 +104,8 @@ export type AdminCategory = {
   slug: string;
   parent_id: string | null;
   display_order: number;
+  cover_asset_id: string | null;
+  cover_url: string | null;
   product_count: number;
 };
 
@@ -143,6 +145,18 @@ export type AdminSettings = {
   intro: string | null;
   boutique_body: string | null;
   contact_body: string | null;
+  instagram_url: string | null;
+  detail_asset_id: string | null;
+  detail_image_url: string | null;
+  detail_mobile_asset_id: string | null;
+  detail_mobile_image_url: string | null;
+  detail_caption: string | null;
+  attention_asset_id: string | null;
+  attention_image_url: string | null;
+  attention_mobile_asset_id: string | null;
+  attention_mobile_image_url: string | null;
+  attention_headline: string | null;
+  attention_subhead: string | null;
 };
 
 export type ImportPreview = {
