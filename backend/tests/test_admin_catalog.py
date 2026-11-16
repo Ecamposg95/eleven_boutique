@@ -518,6 +518,20 @@ def test_category_crud(client):
     assert public["hija"] == "raiz-nueva"
 
 
+@pytest.mark.parametrize("slug", ["marcas", "piezas"])
+def test_top_level_category_cannot_take_reserved_slug(client, slug):
+    created = post(client, "/categories", {"name": "Algo", "slug": slug})
+    assert created.status_code == 422 and error_code(created) == "reserved_slug"
+    named = post(client, "/categories", {"name": slug.capitalize()})
+    assert named.status_code == 422 and error_code(named) == "reserved_slug"
+    other = post(client, "/categories", {"name": "Otra"}).json()
+    renamed = patch(client, f"/categories/{other['id']}", {"slug": slug})
+    assert renamed.status_code == 422 and error_code(renamed) == "reserved_slug"
+    parent = post(client, "/categories", {"name": "Padre"}).json()
+    child = post(client, "/categories", {"name": "Hija", "slug": slug, "parent_id": parent["id"]})
+    assert child.status_code == 201
+
+
 def test_category_cover_round_trip_only_on_top_level(client):
     item = upload_one(client)
     parent = post(client, "/categories", {"name": "Raíz Foto"}).json()
@@ -804,6 +818,26 @@ def test_settings_instagram_url_is_normalized(client):
     assert saved["instagram_url"] == "https://instagram.com/eleven"
     assert patch(client, "/settings", {"instagram_url": ""}).json()["instagram_url"] is None
     assert patch(client, "/settings", {"instagram_url": "   "}).json()["instagram_url"] is None
+
+
+def test_settings_instagram_url_lowercases_host_and_scheme(client):
+    saved = patch(client, "/settings", {"instagram_url": "HTTPS://WWW.Instagram.COM/Eleven"}).json()
+    assert saved["instagram_url"] == "https://www.instagram.com/Eleven"
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://instagram.com:8443/eleven",
+        "https://instagram.com./eleven",
+        "https://instagram.com",
+        "https://instagram.com/",
+        "https://www.instagram.com",
+    ],
+)
+def test_settings_rejects_instagram_port_dot_and_missing_profile(client, url):
+    response = patch(client, "/settings", {"instagram_url": url})
+    assert response.status_code == 422 and error_code(response) == "invalid_instagram_url"
 
 
 def test_brand_premium_flag_round_trip(client):

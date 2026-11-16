@@ -271,6 +271,15 @@ def list_categories(db: Session) -> schemas.Page[schemas.AdminCategory]:
     )
 
 
+# Static /tienda/marcas and /tienda/piezas routes would shadow a department with these slugs.
+RESERVED_DEPARTMENT_SLUGS = frozenset({"marcas", "piezas"})
+
+
+def _check_reserved_slug(slug: str, parent_id: uuid.UUID | None) -> None:
+    if parent_id is None and slug in RESERVED_DEPARTMENT_SLUGS:
+        raise ApiError(422, "reserved_slug", "Ese nombre está reservado por la tienda.")
+
+
 def _check_category_slug(db: Session, slug: str, own_id: uuid.UUID | None) -> None:
     if db.scalar(select(Category.id).where(Category.slug == slug, Category.id != own_id)):
         raise ApiError(409, "slug_taken", "Ese slug ya está en uso")
@@ -307,6 +316,7 @@ def create_category(
         slug = data.slug
     else:
         slug = unique_slug(data.name, set(db.scalars(select(Category.slug))), fallback="categoria")
+    _check_reserved_slug(slug, data.parent_id)
     category = Category(
         name=data.name, slug=slug, parent_id=data.parent_id, display_order=data.display_order
     )
@@ -335,6 +345,8 @@ def update_category(
         _check_parent(db, data.parent_id, category.id)
     if data.slug:
         _check_category_slug(db, data.slug, category.id)
+    new_parent = data.parent_id if "parent_id" in fields else category.parent_id
+    _check_reserved_slug(data.slug or category.slug, new_parent)
     if "cover_asset_id" in fields:
         cover = _category_cover(
             db, data.cover_asset_id, data.parent_id if "parent_id" in fields else category.parent_id

@@ -228,6 +228,12 @@ describe("attentionLinks", () => {
     });
   });
 
+  it("acepta el host en mayúsculas", () => {
+    expect(attentionLinks({ ...base, instagram_url: "https://WWW.Instagram.com/eleven" }).instagram).toBe(
+      "https://WWW.Instagram.com/eleven",
+    );
+  });
+
   it("acepta instagram.com sin www", () => {
     expect(attentionLinks({ ...base, instagram_url: "https://instagram.com/eleven" }).instagram).toBe(
       "https://instagram.com/eleven",

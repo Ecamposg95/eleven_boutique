@@ -2,7 +2,7 @@
 
 import uuid
 from datetime import timedelta
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, urlunsplit
 
 from sqlalchemy import exists, func, or_, select
 from sqlalchemy.orm import Session
@@ -328,11 +328,20 @@ def _instagram_url(value: str | None) -> str | None:
     try:
         parts = urlsplit(value)
         host = parts.hostname
+        port = parts.port
     except ValueError:  # e.g. "https://[abc": urlsplit rejects it as a bad IPv6 URL.
         raise invalid from None
-    if parts.scheme != "https" or host not in _INSTAGRAM_HOSTS or parts.username or parts.password:
+    if (
+        parts.scheme.lower() != "https"
+        or host not in _INSTAGRAM_HOSTS  # hostname is already lowercased; "a.com." never matches
+        or port is not None
+        or parts.username
+        or parts.password
+        or parts.netloc.lower().endswith(".")
+        or parts.path.strip("/") == ""
+    ):
         raise invalid
-    return value
+    return urlunsplit(("https", host, parts.path, parts.query, parts.fragment))
 
 
 def _hero_gallery(

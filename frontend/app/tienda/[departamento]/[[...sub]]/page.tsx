@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { CatalogBar } from "@/components/CatalogBar";
 import { CatalogImage } from "@/components/CatalogImage";
 import { CatalogListing } from "@/components/CatalogListing";
@@ -21,6 +21,7 @@ import {
   PAGE_SIZE,
   parsePage,
   parseSort,
+  withParams,
 } from "@/lib/url";
 
 type Props = {
@@ -28,7 +29,10 @@ type Props = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-/** Departamento y subcategoría opcional de la ruta; `null` si alguno no existe. */
+/**
+ * Departamento y subcategoría opcional de la ruta; `null` si no hay departamento (o sobran
+ * segmentos). Una subcategoría desconocida de un departamento válido se devuelve en `staleSub`.
+ */
 async function resolve({ departamento, sub }: Awaited<Props["params"]>) {
   if (sub && sub.length > 1) return null;
   const categories = await getCategories();
@@ -42,8 +46,8 @@ async function resolve({ departamento, sub }: Awaited<Props["params"]>) {
     subSlug === undefined
       ? undefined
       : children.find((child) => child.slug === subSlug);
-  if (subSlug !== undefined && !subcategory) return null;
-  return { department, children, subcategory };
+  const staleSub = subSlug !== undefined && !subcategory;
+  return { department, children, subcategory, staleSub };
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -62,7 +66,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function DepartmentPage({ params, searchParams }: Props) {
   const found = await resolve(await params);
   if (!found) notFound();
-  const { department, children, subcategory } = found;
+  const { department, children, subcategory, staleSub } = found;
+  if (staleSub) {
+    // Enlaces antiguos a una subcategoría renombrada o borrada: se muestra el departamento.
+    const old = await searchParams;
+    permanentRedirect(
+      withParams(departmentHref(department.slug), {
+        brand: firstParam(old.brand)?.slice(0, 100),
+        sort: firstParam(old.sort),
+      }),
+    );
+  }
   // La subcategoría sale solo de la ruta; `?category=` (de redirecciones antiguas) se ignora.
   const query = await searchParams;
   const sort = parseSort(query.sort);
@@ -70,7 +84,7 @@ export default async function DepartmentPage({ params, searchParams }: Props) {
   const scope = subcategory ?? department;
   const path = departmentHref(department.slug, subcategory?.slug);
 
-  const facets = await getBrandFacets(scope.slug);
+  const facets = await getBrandFacets(scope.slug).catch(() => []);
   const requested = firstParam(query.brand)?.slice(0, 100);
   const brand = facets.some((facet) => facet.slug === requested)
     ? requested

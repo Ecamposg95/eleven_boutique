@@ -1,9 +1,9 @@
 import type { MetadataRoute } from "next";
 import { getBrands, getCategories, getCollections, getLookbooks, getProducts, soft } from "@/lib/api";
-import { categoryHref, stockedCategories } from "@/lib/categories";
+import { categoryHref, childCategories, stockedCategories } from "@/lib/categories";
 import { SITE_URL } from "@/lib/seo";
 import type { ProductCard } from "@/lib/types";
-import { brandHref, productHref } from "@/lib/url";
+import { brandHref, departmentHref, productHref } from "@/lib/url";
 
 const STATIC_PATHS = ["/", "/tienda", "/tienda/marcas", "/colecciones", "/lookbooks", "/la-boutique", "/contacto"];
 const MAX_PRODUCT_PAGES = 100;
@@ -28,7 +28,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ]);
   const paths = [
     ...STATIC_PATHS,
-    ...stockedCategories(categories ?? []).map((category) => categoryHref(category.slug)),
+    ...stockedCategories(categories ?? []).flatMap((category) => [
+      categoryHref(category.slug),
+      ...childCategories(categories ?? [], category.slug)
+        .filter((child) => child.product_count > 0)
+        .map((child) => departmentHref(category.slug, child.slug)),
+    ]),
     ...(brands ?? []).map((brand) => brandHref(brand.slug)),
     ...(products ?? []).map(productHref),
     ...(collections ?? []).map((item) => `/colecciones/${encodeURIComponent(item.slug)}`),

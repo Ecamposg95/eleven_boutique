@@ -36,7 +36,7 @@ export default async function ShopPage({ searchParams }: Props) {
   const page = parsePage(query.page);
   const [categories, facets] = await Promise.all([
     getCategories(),
-    getBrandFacets(),
+    getBrandFacets().catch(() => []),
   ]);
   // Una marca que no está en las facetas se ignora.
   const requested = firstParam(query.brand)?.slice(0, 100);

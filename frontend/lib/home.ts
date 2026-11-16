@@ -149,7 +149,7 @@ export function departmentPanels(
 }
 
 const WA_PREFIX = "https://wa.me/";
-const IG_PATTERN = /^https:\/\/(www\.)?instagram\.com\//;
+const IG_PATTERN = /^https:\/\/(www\.)?instagram\.com\//i;
 
 /**
  * Los enlaces del bloque de atención y del pie. Solo se aceptan `https://wa.me/` para WhatsApp e

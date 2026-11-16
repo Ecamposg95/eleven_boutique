@@ -315,7 +315,7 @@ async function categorySamples() {
       .filter((category) => category.product_count > 0 || category.cover_url)
       .map(async (category) => {
         const page = await soft(
-          getProducts({ category: category.slug, page_size: 8 }),
+          getProducts({ category: category.slug, page_size: 8, sort: "recent" }),
         );
         return { category, total: page?.total ?? 0, items: page?.items ?? [] };
       }),
