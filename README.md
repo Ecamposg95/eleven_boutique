@@ -12,7 +12,9 @@ Catálogo en línea y gestor de productos de Eleven Boutique (Atlas One). El sit
 
 ### Sitio público (`frontend/app`)
 
-`/` inicio · `/piezas` catálogo · `/marcas` · `/colecciones` · `/lookbooks` · `/novedades` · `/buscar` · `/la-boutique` · `/contacto`
+`/` inicio · `/tienda` catálogo (departamentos y subcategorías en la ruta) · `/tienda/marcas` · `/tienda/piezas/[slug]` · `/colecciones` · `/lookbooks` · `/buscar` · `/la-boutique` · `/contacto`
+
+Las rutas antiguas `/marcas`, `/piezas`, `/novedades` y `/categorias` redirigen de forma permanente a `/tienda`.
 
 ### Panel admin (`/admin`)
 
@@ -67,15 +69,27 @@ cd frontend && npm run lint && npm run typecheck && npm test
   `railway ssh --service api -- sh -c "cd /app && ADMIN_PASSWORD='…' python -m scripts.create_admin correo@dominio"`
   (contraseña de 12+ caracteres).
 
-## Estado al 2026-11-13
+## Estado al 16 de noviembre de 2026
 
-- En vivo: portada a pantalla completa con fotos que rotan y titular «Viste tus propias reglas.»,
-  menú lateral con Categorías/Casas, carrusel de categorías, páginas de categoría, barra
-  «Filtros · Ordenar», lookbook «Invierno en lana» publicado. Diseño: `docs/design-system.md`.
-- Producción tiene 77 marcas y **0 productos publicados**: el carrusel, «Categorías» del menú y las
-  páginas de categoría se llenan solos al publicar piezas desde el panel.
-- Pendiente de contenido: texto de «La boutique» (activa el cierre de portada), marca y nombre del
-  blazer gris (dos fotos ya subidas, sin asignar).
+- **Tienda nueva** (rama `tienda-nueva`). Diseño: `docs/design-system.md`.
+- **Portada premium:** portada con «Entrar a la tienda», pestañas por departamento con sus piezas
+  recientes, «Recién llegado», franja de detalle y bloque de atención con WhatsApp, Línea Boutique
+  e Instagram.
+- **`/tienda`:** departamentos, subcategorías en la ruta (`/tienda/[departamento]/[subcategoría]`),
+  filtro por marca y `?sort=recent`. Marcas y piezas viven en `/tienda/marcas` y `/tienda/piezas`.
+- **Redirecciones permanentes** desde `/marcas`, `/piezas`, `/novedades` y `/categorias`. Los enlaces
+  de WhatsApp de cada pieza apuntan a `/tienda`.
+- **Instagram** en el pie y en el menú lateral, si hay URL configurada.
+- **Panel:** nuevos campos para la portada de cada departamento (4:5, 1600 × 2000 px), la franja de
+  detalle (21:9, 2880 × 1234 px; teléfono 4:5), el bloque de atención (16:9, 2880 × 1620 px;
+  teléfono 4:5) y la URL de Instagram. Una URL de Instagram mal formada devuelve 422.
+- Los slugs `marcas` y `piezas` están reservados: no pueden usarse como departamento.
+- **Migración 0005** (`alembic upgrade head`): columnas de portada de departamento, detalle,
+  atención e Instagram.
+- Producción tiene 77 marcas y **0 productos publicados**: departamentos, «Recién llegado» y las
+  páginas de la tienda se llenan solos al publicar piezas desde el panel.
+- Pendiente de contenido: texto de «La boutique», marca y nombre del blazer gris (dos fotos ya
+  subidas, sin asignar), y las fotos nuevas de departamento, detalle y atención.
 - Pendiente de seguridad: rotar la contraseña del usuario admin creado en esta etapa.
 - **«Mi selección»** (2026-11-13): en cada pieza, «Guardar en mi selección»; `/seleccion` reúne las
   piezas y arma un solo mensaje de WhatsApp (dos si se mezclan casas premium con línea Boutique).

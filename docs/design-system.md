@@ -28,10 +28,38 @@
 > - **Carrusel de categorías** (`components/CategoryRail.tsx`) bajo la portada: Novedades + cada
 >   categoría principal con piezas, fichas 4:5 en B/N sin fotos repetidas (`lib/categories.ts`).
 >   Se oculta con menos de 2 fichas.
-> - **Página de categoría** `/categorias/[slug]` (solo principales; las hijas son filtros).
+> - **Página de categoría** `/categorias/[slug]` (solo principales; las hijas son filtros). Reemplazada el 2026-11-16 por `/tienda/[departamento]` (ver abajo); `/categorias` redirige.
 > - **Barra flotante «Filtros · Ordenar»** (`components/CatalogBar.tsx`) abajo al centro en
 >   categoría y marca; cada botón abre una hoja inferior (`<dialog class="sheet">`). Un grupo con
 >   una sola opción no se muestra.
+
+> **Actualización 2026-11-16 — tienda nueva.** La portada y el catálogo pasan a `/tienda`; el
+> carrusel de categorías (`CategoryRail`) y `/novedades` desaparecen.
+>
+> **Componentes de la portada** (`components/`, orden de arriba abajo tras el hero con «Entrar a la tienda»):
+> - **`DepartmentTabs`**: «Comprar por departamento» en pestañas (`role="tablist"`, flechas, Inicio y
+>   Fin). Cada panel muestra la portada del departamento (ficha **4:5**, doble tamaño en escritorio),
+>   hasta 8 piezas recientes y «Ver todo {departamento}». Teléfono: deslizamiento lateral con
+>   `snap`. Si ningún departamento tiene piezas, quedan solo las portadas como fichas.
+> - **`NewArrivals`**: «Recién llegado», carrusel de hasta 12 piezas con flechas «Anterior» y
+>   «Siguiente» en escritorio, deslizamiento en teléfono y «Ver todas» hacia `/tienda?sort=recent`.
+>   Se oculta sin piezas.
+> - **`DetailBand`**: foto a todo lo ancho, **21:9** en escritorio y **4:5** en teléfono, con pie
+>   opcional en `.label`. Sin foto no se muestra.
+> - **`AttentionBlock`**: foto de fondo **16:9** en escritorio y **4:5** en teléfono (bloque
+>   `.inverse` con degradado oscuro); en la mitad izquierda, titular, texto y botones «Escribir por
+>   WhatsApp» e Instagram, y el enlace «Línea Boutique (casas premium)». Sin WhatsApp ni Instagram
+>   no hay bloque. Deje tranquila la mitad izquierda de la foto.
+> - **`InstagramLink`**: ícono de línea más la palabra «Instagram», siempre en otra pestaña. Se usa
+>   en el bloque de atención, el pie y el panel lateral; sin URL no se renderiza.
+>
+> **Listado `/tienda`** (`app/tienda/[departamento]/[[...sub]]`):
+> - **`DepartmentChips`**: fila de etiquetas bajo el título (departamentos o subcategorías); la
+>   actual con `aria-current="page"` y relleno ivory. Se acomoda en varias líneas.
+> - **`CatalogBar`**: la barra flotante conserva «Filtros · Ordenar». La hoja «Filtros» reúne los
+>   grupos «Subcategoría» y «Marca» (un grupo con una sola opción no aparece) y el botón muestra la
+>   opción activa. `?sort=recent` ordena por lo más reciente.
+> - Slugs `marcas` y `piezas` reservados: no pueden ser departamento.
 
 Paleta y familias tipográficas vienen fijadas por el brief; todo lo demás es decisión de este documento.
 
