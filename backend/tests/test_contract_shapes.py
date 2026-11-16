@@ -7,8 +7,10 @@ from app.services.demo_seed import seed_demo
 MEDIA = {"url", "alt", "is_primary", "position"}
 BRAND_SUMMARY = {"slug", "name", "logo_url", "is_featured", "aliases", "product_count"}
 BRAND_DETAIL = BRAND_SUMMARY | {"description", "editorial_image_url"}
-CARD = {"slug", "name", "brand", "category", "primary_image", "secondary_image"}
-DETAIL = CARD | {"gallery", "consult_url", "seo_title", "seo_description", "published_at"}
+CARD = {"slug", "name", "brand", "category", "primary_image", "secondary_image", "available"}
+DETAIL = CARD | {
+    "gallery", "consult_url", "seo_title", "seo_description", "published_at", "variants"
+}
 COLLECTION = {"slug", "title", "summary", "cover_url", "product_count"}
 LOOKBOOK = {"slug", "title", "summary", "cover_url"}
 

@@ -351,10 +351,58 @@ def test_0002_renders_for_postgres_in_both_directions():
     assert "PRAGMA" not in ddl
 
 
+# --- 0005: sincronización con Atlas ONE ------------------------------------------------
+
+ATLAS_TABLES = {"atlas_sync_state", "atlas_sync_runs", "atlas_brand_map", "atlas_category_map"}
+
+
+def test_0005_marks_existing_events_as_forwarded_and_round_trips(seeded_0001):
+    url, engine = seeded_0001
+    config = alembic_config(url)
+    command.upgrade(config, "0004")
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                "INSERT INTO catalog_events (id, type, occurred_at)"
+                f" VALUES ('{'7' * 32}', 'whatsapp_click', '{STAMP}')"
+            )
+        )
+    command.upgrade(config, "head")
+    with engine.connect() as connection:
+        assert connection.execute(
+            text("SELECT count(*) FROM catalog_events WHERE forwarded_at IS NULL")
+        ).scalar() == 0
+        assert connection.execute(text("SELECT available FROM products")).scalar() == 1
+        assert connection.execute(text("SELECT hidden_on_web FROM products")).scalar() == 0
+    assert ATLAS_TABLES <= set(inspect(engine).get_table_names())
+
+    command.downgrade(config, "0004")
+    inspector = inspect(engine)
+    assert not ATLAS_TABLES & set(inspector.get_table_names())
+    assert "forwarded_at" not in {c["name"] for c in inspector.get_columns("catalog_events")}
+    assert "available" not in {c["name"] for c in inspector.get_columns("products")}
+    command.upgrade(config, "head")
+    with engine.connect() as connection:
+        assert schema_differences(connection) == []
+
+
+def test_0005_partial_unique_indexes_render_for_postgres():
+    config = alembic_config("postgresql+psycopg://user:pass@localhost/eleven")
+    config.output_buffer = io.StringIO()
+    command.upgrade(config, "0004:0005", sql=True)
+    ddl = config.output_buffer.getvalue()
+    assert "uq_products_external_inventory_id" in ddl
+    assert "WHERE external_inventory_id IS NOT NULL" in ddl
+    assert "PRAGMA" not in ddl
+
+
+# --- 0006: tienda nueva ------------------------------------------------------------------
+
+
 def test_instagram_default_is_backfilled(tmp_path):
     url = f"sqlite:///{tmp_path / 'data.db'}"
     config = alembic_config(url)
-    command.upgrade(config, "0004")
+    command.upgrade(config, "0005")
     engine = make_engine(url)
     with engine.begin() as connection:
         connection.execute(

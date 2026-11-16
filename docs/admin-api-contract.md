@@ -8,7 +8,7 @@ Base: `/api/v1/admin`. El navegador llama siempre por el mismo origen (rewrite d
 - Contraseñas con Argon2id. El primer usuario se crea con `python -m scripts.create_admin <email>`, que pide la contraseña o la lee de `ADMIN_PASSWORD`. No hay registro público ni credenciales por defecto.
 - Bloqueo de login: 5 fallos en 15 min por email. Misma respuesta para email inexistente y contraseña errónea.
 - Mutaciones: rechazar con 403 si `Origin` no está en `CORS_ORIGINS`/`PUBLIC_SITE_URL`.
-- Roles `superadmin`, `admin`, `editor`. `editor` gestiona catálogo y fotos. Marcas, ajustes e importación exigen `admin` o superior; usuarios, `superadmin`.
+- Roles `superadmin`, `admin`, `editor`. `editor` gestiona catálogo y fotos. Marcas, ajustes y la pantalla Atlas ONE exigen `admin` o superior; usuarios, `superadmin`.
 - `audit_logs` registra usuario, operación, entidad, id, fecha y cambios `{campo: [antes, después]}`, sin secretos ni hashes.
 - 401 sin sesión, 403 sin rol. Estos endpoints nunca aceptan ni devuelven precio, costo, stock ni código de barras.
 
@@ -24,9 +24,10 @@ Un producto solo pasa a `published` si tiene nombre, marca (o clasificación "Si
 | POST | `/auth/logout` | Revoca la sesión |
 | GET | `/auth/me` | `Me = {id, email, role}` |
 | GET | `/dashboard` | `{products: {draft, published, archived, without_photo}, brands: {draft, published}, consult_clicks_30d, whatsapp_configured}` |
-| GET/POST | `/products` | Lista con `?q=&status=&brand=&category=&has_photo=&page=&page_size=&sort=` |
-| GET/PATCH/DELETE | `/products/{id}` | Campos: `name, slug, brand_id, category_id, status, is_featured, display_order, commercial_added_at, seo_title, seo_description, internal_notes, publish_brand`. Incluye `media`, `variants`, `photo_refs` |
-| POST | `/products/bulk` | `{ids, action: publish\|unpublish\|archive\|feature\|unfeature, publish_brand?}` → resultado por id, sin fallar el lote completo |
+| GET | `/products` | Lista con `?q=&status=&brand=&category=&has_photo=&page=&page_size=&sort=` |
+| POST | `/products` | Retirado: 410 «Las piezas se publican desde Atlas ONE» |
+| GET/PATCH/DELETE | `/products/{id}` | Campos: `name, slug, brand_id, category_id, status, is_featured, display_order, commercial_added_at, seo_title, seo_description, internal_notes, publish_brand, hidden_on_web`. Incluye `media` (con `read_only`), `variants` (con `available`), `photo_refs`, `from_atlas, available, atlas_missing, hidden_on_web, gender, model, material, admin_description`. En una pieza de Atlas (`from_atlas`) `name, slug, brand_id, category_id, status` dan 422 «Este campo viene de Atlas ONE», `DELETE` da 409, y sus fotos de Atlas (`read_only`) no se editan ni se borran (422); lo editorial (`hidden_on_web, is_featured, display_order, seo_*, internal_notes`, colecciones, fotos subidas al panel) sigue libre |
+| POST | `/products/bulk` | `{ids, action: publish\|unpublish\|archive\|feature\|unfeature, publish_brand?}` → resultado por id, sin fallar el lote completo. En piezas de Atlas, `publish/unpublish/archive` fallan con 422 |
 | POST | `/products/{id}/media` | Asocia `{media_asset_id, alt?}` |
 | PATCH | `/products/{id}/media` | Reordena y define principal: `{order: [media_id...], primary_id}` |
 | PATCH | `/products/{id}/media/{media_id}` | `{alt}` de la foto en este producto |
@@ -40,10 +41,10 @@ Un producto solo pasa a `published` si tiene nombre, marca (o clasificación "Si
 | GET/POST, GET/PATCH/DELETE | `/collections`, `/collections/{id}` | `title, slug, summary, cover_asset_id, status, display_order, product_ids[]` ordenados |
 | GET/POST, GET/PATCH/DELETE | `/lookbooks`, `/lookbooks/{id}` | Igual, más `blocks[]` con las formas de `LookbookBlock` |
 | GET/PATCH | `/settings` | `whatsapp_number` (línea Ventas), `whatsapp_premium_number` (línea Boutique), `hero_asset_id` (computadora, horizontal), `hero_mobile_asset_id` (teléfono, vertical), `hero_gallery_slides: [{asset_id, mobile_asset_id?}]` (lista ordenada, máx. 8; reemplaza a `hero_gallery_asset_ids`, que se sigue aceptando sin versión de teléfono; la respuesta trae `hero_gallery: [{asset_id, url, mobile_asset_id, mobile_url}]`), `hero_headline, hero_subhead, intro, boutique_body, contact_body`, `instagram_url` (https a `instagram.com` o `www.instagram.com`, máx. 500; otro host da 422 `invalid_instagram_url`; vacío lo borra), franja de detalle `detail_asset_id` (computadora), `detail_mobile_asset_id` (teléfono), `detail_caption`, bloque de atención `attention_asset_id`, `attention_mobile_asset_id`, `attention_headline`, `attention_subhead`; la respuesta trae cada `*_asset_id` con su `*_image_url` |
-| POST | `/imports/products/preview` | Multipart `.xlsx` o `.csv` → `ImportPreview`. No escribe |
-| POST | `/imports/products` | `{preview_id, update_existing: bool}` → `ImportResult` |
-| GET | `/imports/template` | CSV plantilla |
-| GET | `/imports/{id}/report` | CSV de resultados por fila |
+| GET | `/atlas/status` | `admin`. `{enabled, last_error, last_run: {kind, status, started_at, finished_at, counts, error (solo si falló), note (aviso de corrida buena)} \| null, last_ok_at, drafts: [{id, name, atlas_missing}]}` |
+| POST | `/atlas/sync` | `admin`. Corre una sincronización manual en segundo plano: 202 `{started: true}`; 409 si ya hay una en curso o no está configurada |
+| GET/PATCH | `/atlas/brand-map` | `admin`. `[{atlas_brand_id, atlas_name, brand_id}]`; PATCH `{atlas_brand_id, brand_id}` (sin `null`: la liga automática la rehace). Casas de tipo marca o la clasificación «Sin marca»; 422 si no existe, es otra clasificación o la casa interna «Pendiente de ligar (Atlas ONE)» |
+| GET/PATCH | `/atlas/category-map` | `admin`. `[{atlas_department_id, atlas_name, category_id}]`; PATCH `{atlas_department_id, category_id \| null}` |
 | GET | `/audit` | Paginado, solo `admin` o superior |
 
 `GET /site-settings/public` añade `hero.mobile_image_url: string | null` y `hero.gallery: string[]` (fotos extra que se turnan después de la principal). También `hero.slides: [{image_url, mobile_image_url}]`: todas las fotos en orden, la principal primero; el sitio muestra `mobile_image_url` en pantallas verticales. Las URL públicas de archivos son `/media/...`.
@@ -71,22 +72,4 @@ Un producto solo pasa a `published` si tiene nombre, marca (o clasificación "Si
 
 ## Importación de catálogo
 
-Lee solo: `SKU`, `Nombre`, `Departamento`, `Marca`, `Color`, `Talla`, y de `Descripcion` únicamente las referencias que coincidan con `Foto( mujer)? N(+N)*`. Toda otra columna se ignora sin cargarla: precios, costos, stock, IVA, código de barras y el resto del texto de `Descripcion`, que contiene precios históricos.
-
-- **Agrupación:** cada fila es una variante (`product_variants`: `sku` único, `color`, `size`, `product_id`). El SKU base es el SKU sin el sufijo final igual a `-{Talla}`; filas con el mismo SKU base y marca forman un producto. Sin talla, el SKU es su propio producto. `products.sku` = SKU base.
-- **Marca:** se resuelve por `brand_aliases` sin distinguir acentos. Vacía o "Sin marca" → clasificación. Desconocida → error de fila; nunca crea marcas sola.
-- **Categoría:** por nombre de `Departamento`, sin distinguir acentos. Si no existe, la preview la lista y la importación la crea como categoría raíz. No se deduce de la marca.
-- **SKU existente:** la preview lo reporta como conflicto. Con `update_existing=false` se omite; con `true` actualiza nombre, marca, categoría y variantes, sin tocar estado, fotos ni campos editoriales.
-- **Siempre `status=draft`, `is_demo=false`.** La importación nunca publica. Idempotente. Slug único derivado de marca y nombre, con sufijo si se repite.
-
-```ts
-type ImportPreview = {
-  preview_id: string;
-  rows: number; products: number; variants: number;
-  new_products: number; conflicts: number;
-  new_categories: string[];
-  errors: { row: number; sku: string | null; message: string }[];
-  sample: { sku: string; name: string; brand: string; category: string; variants: number }[];
-};
-type ImportResult = { import_id: string; created: number; updated: number; skipped: number; errors: number };
-```
+Retirada: las piezas llegan de Atlas ONE (sincronización). Ya no existen `/imports/*` ni la creación manual de piezas.

@@ -14,7 +14,7 @@ export const ADMIN_NAV: readonly NavItem[] = [
   { href: "/admin/categorias", label: "Categorías", min: "editor" },
   { href: "/admin/colecciones", label: "Colecciones", min: "editor" },
   { href: "/admin/lookbooks", label: "Lookbooks", min: "editor" },
-  { href: "/admin/importar", label: "Importar", min: "admin" },
+  { href: "/admin/atlas", label: "Atlas ONE", min: "admin" },
   { href: "/admin/configuracion", label: "Configuración", min: "admin" },
   { href: "/admin/auditoria", label: "Auditoría", min: "admin" },
 ];
@@ -41,7 +41,7 @@ export function missingForPublish(product: {
   return missing;
 }
 
-export type BulkRowInfo = { id: string; name: string; brandName: string | null };
+export type BulkRowInfo = { id: string; name: string; brandName: string | null; fromAtlas?: boolean };
 export type BulkSummary = {
   ok: string[];
   failed: { id: string; name: string; message: string }[];

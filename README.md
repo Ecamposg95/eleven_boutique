@@ -84,7 +84,7 @@ cd frontend && npm run lint && npm run typecheck && npm test
   detalle (21:9, 2880 × 1234 px; teléfono 4:5), el bloque de atención (16:9, 2880 × 1620 px;
   teléfono 4:5) y la URL de Instagram. Una URL de Instagram mal formada devuelve 422.
 - Los slugs `marcas` y `piezas` están reservados: no pueden usarse como departamento.
-- **Migración 0005** (`alembic upgrade head`): columnas de portada de departamento, detalle,
+- **Migración 0006** (`alembic upgrade head`): columnas de portada de departamento, detalle,
   atención e Instagram.
 - Producción tiene 77 marcas y **0 productos publicados**: departamentos, «Recién llegado» y las
   páginas de la tienda se llenan solos al publicar piezas desde el panel.

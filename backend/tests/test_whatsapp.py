@@ -188,3 +188,16 @@ def test_new_real_settings_row_gets_the_default_instagram_and_keeps_an_operator_
     seed_site_settings(db, make_settings())
     db.commit()
     assert db.scalar(select(SiteSettings.instagram_url)) is None
+
+
+def test_sold_out_piece_uses_the_availability_question(db, make_client):
+    brand = make_brand(db, "Dolce & Gabbana")
+    make_product(
+        db, brand, make_category(db), "Camisa", slug="camisa", sku="DG-001", available=False
+    )
+    db.commit()
+    url = make_client(whatsapp_number=FAKE_NUMBER).get("/api/v1/products/camisa").json()["consult_url"]
+    assert message_of(url) == (
+        "Hola, ¿tienen disponible esta pieza de Eleven Boutique: Dolce & Gabbana — Camisa? "
+        "Referencia: DG-001. Enlace: https://eleven.example/tienda/marcas/dolce-gabbana/camisa."
+    )

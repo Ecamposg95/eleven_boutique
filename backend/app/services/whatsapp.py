@@ -53,10 +53,17 @@ def build_consult_url(
     name: str,
     slug: str,
     sku: str,
+    available: bool = True,
 ) -> str | None:
     if digits is None:
         return None
     piece = Piece(brand_slug, brand_name, name, slug, sku)
+    if not available:
+        message = (
+            f"Hola, ¿tienen disponible esta pieza de Eleven Boutique: {piece.label()}? "
+            f"Referencia: {sku}. Enlace: {piece.link(site_url)}."
+        )
+        return _wa_url(digits, message)
     message = (
         f"Hola, me interesa conocer más sobre esta pieza de Eleven Boutique: {piece.label()}. "
         f"Referencia: {sku}. Enlace: {piece.link(site_url)}. ¿Podrían brindarme atención personalizada?"

@@ -17,6 +17,7 @@ from app.models import (
     Product,
 )
 from app.models.base import utcnow
+from app.services.admin.common import unique_slug
 from app.services.base_seed import seed_categories
 from app.services.brand_import import run_import
 from tests.admin_helpers import BASE, ORIGIN, login, make_user, upload_one
@@ -51,17 +52,27 @@ def patch(client, path, body):
 
 
 def create(client, refs, brand="published", **fields):
-    response = post(
-        client,
-        "/products",
-        {
-            "name": fields.pop("name", "Pieza"),
-            "brand_id": str(refs[brand].id),
-            "category_id": str(refs["category"].id),
+    """Las piezas ya no se crean por la API (se publican desde Atlas ONE): directo en la base."""
+    name = fields.pop("name", "Pieza")
+    brand_row = refs[brand]
+    with client.app.state.session_factory() as session:
+        taken = set(session.scalars(select(Product.slug)))
+        base = name if brand_row.kind != "brand" else f"{brand_row.name} {name}"
+        product = Product(
+            name=name,
+            slug=unique_slug(base, taken, fallback="pieza"),
+            sku=fields.pop("sku", f"ELV-{uuid.uuid4().hex[:10].upper()}"),
+            brand_id=brand_row.id,
+            category_id=uuid.UUID(str(refs["category"].id)),
+            status=fields.pop("status", "draft"),
+            photo_refs=[],
             **fields,
-        },
-    )
-    assert response.status_code == 201, response.text
+        )
+        session.add(product)
+        session.commit()
+        product_id = product.id
+    response = client.get(f"{BASE}/products/{product_id}")
+    assert response.status_code == 200, response.text
     return response.json()
 
 
@@ -84,36 +95,12 @@ def error_code(response):
 # --- Publishing ------------------------------------------------------------------------
 
 
-def test_create_defaults_to_draft_with_generated_fields(client, refs):
-    product = create(client, refs, name="Bolsa Roja")
-    assert product["status"] == "draft"
-    assert product["slug"] == "publicada-bolsa-roja"
-    assert product["sku"].startswith("ELV-")
-    assert product["published_at"] is None
-    assert (product["media"], product["variants"], product["photo_refs"]) == ([], [], [])
-
-
 def test_publishing_without_a_photo_is_rejected(client, refs):
     product = create(client, refs)
     response = patch(client, f"/products/{product['id']}", {"status": "published"})
     assert response.status_code == 409
     assert error_code(response) == "photo_required"
     assert client.get(f"{BASE}/products/{product['id']}").json()["status"] == "draft"
-
-
-def test_creating_as_published_without_a_photo_is_rejected_and_rolled_back(db, client, refs):
-    response = post(
-        client,
-        "/products",
-        {
-            "name": "Directa",
-            "brand_id": str(refs["published"].id),
-            "category_id": str(refs["category"].id),
-            "status": "published",
-        },
-    )
-    assert response.status_code == 409
-    assert db.scalar(select(Product).where(Product.name == "Directa")) is None
 
 
 def test_unpublished_brand_gives_409_then_publish_brand_publishes_both(db, client, refs):
@@ -239,16 +226,6 @@ def test_published_brand_gets_public_when_published_through_a_product(client, re
 # --- Product fields and listing --------------------------------------------------------
 
 
-def test_invalid_references_are_rejected(client, refs):
-    response = post(
-        client,
-        "/products",
-        {"name": "X", "brand_id": str(uuid.uuid4()), "category_id": str(refs["category"].id)},
-    )
-    assert response.status_code == 422
-    assert error_code(response) == "invalid_reference"
-
-
 def test_slug_uniqueness_and_format(client, refs):
     first = create(client, refs, name="Igual")
     second = create(client, refs, name="Igual")
@@ -256,21 +233,6 @@ def test_slug_uniqueness_and_format(client, refs):
     response = patch(client, f"/products/{second['id']}", {"slug": first["slug"]})
     assert response.status_code == 409 and error_code(response) == "slug_taken"
     assert patch(client, f"/products/{second['id']}", {"slug": "No Valido"}).status_code == 422
-
-
-def test_sku_collision_is_409(client, refs):
-    create(client, refs, sku="UNICO-1")
-    response = post(
-        client,
-        "/products",
-        {
-            "name": "Otra",
-            "sku": "UNICO-1",
-            "brand_id": str(refs["published"].id),
-            "category_id": str(refs["category"].id),
-        },
-    )
-    assert response.status_code == 409 and error_code(response) == "sku_taken"
 
 
 def test_patch_rejects_null_for_required_fields_but_clears_optional_ones(client, refs):
@@ -394,7 +356,7 @@ def test_internal_fields_never_reach_public_responses(db, client, refs):
             lowered = key.casefold()
             assert not any(part in lowered for part in FORBIDDEN_KEY_PARTS), location
             assert "asset_id" not in lowered, location
-            assert lowered not in {"photo_refs", "variants", "storage_key", "uploaded_by_id"}
+            assert lowered not in {"photo_refs", "storage_key", "uploaded_by_id"}
         dumped = json.dumps(body)
         assert SECRET not in dumped
         assert "SKU-OCULTO" not in dumped
@@ -408,11 +370,10 @@ def test_admin_product_never_exposes_other_internal_columns(db, client, refs):
         "Interna",
         external_inventory_id="INV-OCULTO",
         supplier_ref="PROV-OCULTO",
-        admin_description="DESC-OCULTA",
     )
     db.commit()
     dumped = client.get(f"{BASE}/products/{product.id}").text
-    for hidden in ("INV-OCULTO", "PROV-OCULTO", "DESC-OCULTA"):
+    for hidden in ("INV-OCULTO", "PROV-OCULTO"):
         assert hidden not in dumped
 
 

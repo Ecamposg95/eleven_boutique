@@ -1,7 +1,7 @@
 """tienda nueva: department covers, detail and attention banners, Instagram link
 
-Revision ID: 0005
-Revises: 0004
+Revision ID: 0006
+Revises: 0005
 
 Same SQLite rules as 0002: upgrade adds asset columns inline (no table rebuild); downgrade has
 to rebuild because SQLite cannot drop a column that has a foreign key, so it turns enforcement
@@ -11,8 +11,8 @@ off first and refuses to continue if that did not take effect.
 import sqlalchemy as sa
 from alembic import op
 
-revision = "0005"
-down_revision = "0004"
+revision = "0006"
+down_revision = "0005"
 branch_labels = None
 depends_on = None
 

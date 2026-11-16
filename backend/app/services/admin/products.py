@@ -24,7 +24,8 @@ from app.models import (
 from app.models.base import utcnow
 from app.schemas import admin as schemas
 from app.services.admin import audit
-from app.services.admin.common import invalid_reference, not_found, paginate, unique_slug
+from app.services.admin.common import invalid_reference, not_found, paginate
+from app.services.atlas.sync import request_full_load
 from app.services.text import escape_like, normalize
 
 ProductSort = Literal["updated", "recent", "name", "display", "sku"]
@@ -42,11 +43,24 @@ AUDITED_FIELDS = (
     "seo_title",
     "seo_description",
     "internal_notes",
+    "hidden_on_web",
 )
+# Lo que Atlas ONE manda en una pieza con external_inventory_id; el panel solo lo lee.
+ATLAS_OWNED = ("name", "slug", "brand_id", "category_id", "status")
+ATLAS_MESSAGE = "Este campo viene de Atlas ONE"
 _EDITABLE = tuple(field for field in AUDITED_FIELDS if field not in ("sku", "published_at", "status"))
 
 
+def is_atlas(product: Product) -> bool:
+    return product.external_inventory_id is not None
+
+
+def _atlas_owned(message: str = ATLAS_MESSAGE) -> ApiError:
+    return ApiError(422, "atlas_owned", message)
+
+
 def product_out(product: Product) -> schemas.AdminProduct:
+    from_atlas = is_atlas(product)
     brand, category = product.brand, product.category
     return schemas.AdminProduct(
         id=product.id,
@@ -77,13 +91,24 @@ def product_out(product: Product) -> schemas.AdminProduct:
                 alt=item.alt,
                 is_primary=item.is_primary,
                 position=item.position,
+                read_only=from_atlas and item.media_asset_id is None,
             )
             for item in product.media
         ],
         variants=[
-            schemas.VariantOut(id=item.id, sku=item.sku, color=item.color, size=item.size)
+            schemas.VariantOut(
+                id=item.id, sku=item.sku, color=item.color, size=item.size, available=item.available
+            )
             for item in product.variants
         ],
+        from_atlas=from_atlas,
+        available=product.available,
+        atlas_missing=product.atlas_missing,
+        hidden_on_web=product.hidden_on_web,
+        gender=product.gender,
+        model=product.model,
+        material=product.material,
+        admin_description=product.admin_description,
         created_at=product.created_at,
         updated_at=product.updated_at,
     )
@@ -199,6 +224,8 @@ def _prepare_publication(db: Session, product: Product, publish_brand: bool, use
             {"status": [brand.status, STATUS_PUBLISHED], "product_id": [None, str(product.id)]},
         )
         brand.status = STATUS_PUBLISHED
+        # Sus piezas de Atlas en borrador se reevalúan en la próxima corrida.
+        request_full_load(db)
 
 
 def _publish_stamp(product: Product) -> None:
@@ -221,55 +248,21 @@ def _check_slug_free(db: Session, slug: str, own_id: uuid.UUID | None = None) ->
         raise ApiError(409, "slug_taken", "Ese slug ya está en uso")
 
 
-def create_product(db: Session, data: schemas.ProductCreate, user: AdminUser) -> schemas.AdminProduct:
-    _check_references(db, data.brand_id, data.category_id)
-    brand = db.get(Brand, data.brand_id)
-    if data.slug:
-        _check_slug_free(db, data.slug)
-        slug = data.slug
-    else:
-        taken = set(db.scalars(select(Product.slug)))
-        base = data.name if brand.kind != KIND_BRAND else f"{brand.name} {data.name}"
-        slug = unique_slug(base, taken, fallback="pieza")
-    sku = data.sku or f"ELV-{uuid.uuid4().hex[:10].upper()}"
-    if db.scalar(select(Product.id).where(Product.sku == sku)) is not None:
-        raise ApiError(409, "sku_taken", "Ese SKU ya está en uso")
-
-    product = Product(
-        sku=sku,
-        slug=slug,
-        name=data.name,
-        brand_id=data.brand_id,
-        category_id=data.category_id,
-        status=STATUS_DRAFT,
-        is_featured=data.is_featured,
-        display_order=data.display_order,
-        commercial_added_at=data.commercial_added_at,
-        seo_title=data.seo_title,
-        seo_description=data.seo_description,
-        internal_notes=data.internal_notes,
-        is_demo=False,
-        photo_refs=[],
-    )
-    db.add(product)
-    db.flush()
-    if data.status == STATUS_PUBLISHED:
-        _prepare_publication(db, product, data.publish_brand, user)
-        _publish_stamp(product)
-    product.status = data.status
-    audit.record(
-        db, user, "create", "product", product.id, audit.diff({}, audit.snapshot(product, AUDITED_FIELDS))
-    )
-    db.commit()
-    return _refreshed(db, product.id)
-
-
 def update_product(
     db: Session, product_id: uuid.UUID, data: schemas.ProductPatch, user: AdminUser
 ) -> schemas.AdminProduct:
     product = get_product(db, product_id)
     before = audit.snapshot(product, AUDITED_FIELDS)
     fields = data.model_fields_set
+    if is_atlas(product):
+        # Los formularios mandan el objeto completo: solo cuenta lo que de verdad cambia.
+        owned = [
+            field
+            for field in ATLAS_OWNED
+            if field in fields and getattr(data, field) != getattr(product, field)
+        ]
+        if owned:
+            raise _atlas_owned(f"{ATLAS_MESSAGE}: {', '.join(owned)}")
     _check_references(db, data.brand_id, data.category_id)
     if data.slug and data.slug != product.slug:
         _check_slug_free(db, data.slug, product.id)
@@ -295,6 +288,8 @@ def update_product(
 
 def archive_product(db: Session, product_id: uuid.UUID, user: AdminUser) -> schemas.AdminProduct:
     product = get_product(db, product_id)
+    if is_atlas(product):
+        raise ApiError(409, "atlas_owned", "Viene de Atlas ONE: se da de baja allá")
     if product.status != STATUS_ARCHIVED:
         audit.record(
             db, user, "archive", "product", product.id, {"status": [product.status, STATUS_ARCHIVED]}
@@ -308,6 +303,8 @@ def _apply_bulk_action(
     db: Session, product: Product, action: str, publish_brand: bool, user: AdminUser
 ) -> None:
     before = audit.snapshot(product, AUDITED_FIELDS)
+    if is_atlas(product) and action in ("publish", "unpublish", "archive"):
+        raise _atlas_owned(f"{ATLAS_MESSAGE}: status")
     if action == "publish":
         if product.status != STATUS_PUBLISHED:
             _prepare_publication(db, product, publish_brand, user)
@@ -400,6 +397,27 @@ def add_media(
     return _refreshed(db, product.id)
 
 
+def _guard_atlas_order(db: Session, product: Product, data: schemas.ProductMediaOrder) -> None:
+    """Atlas manda en el orden relativo de sus fotos y en cuál de ellas es la principal.
+
+    Una foto del panel sí puede ser la principal (la sincronización la respeta) y moverse a
+    cualquier lugar. Mientras la principal sea del panel no se sabe cuál marca Atlas: volver a una
+    de Atlas se acepta y pide recarga completa, que deja la principal que Atlas diga.
+    """
+    current = sorted(product.media, key=lambda link: link.position)
+    atlas_ids = {link.id for link in current if link.media_asset_id is None}
+    if [i for i in data.order if i in atlas_ids] != [link.id for link in current if link.id in atlas_ids]:
+        raise _atlas_owned("El orden de las fotos de Atlas ONE se cambia en Atlas ONE")
+    primary = next((link for link in current if link.is_primary), current[0] if current else None)
+    if data.primary_id is None or primary is None or data.primary_id == primary.id:
+        return
+    if data.primary_id not in atlas_ids:
+        return
+    if primary.id in atlas_ids:
+        raise _atlas_owned("La foto principal de Atlas ONE se elige en Atlas ONE")
+    request_full_load(db)
+
+
 def reorder_media(
     db: Session, product_id: uuid.UUID, data: schemas.ProductMediaOrder, user: AdminUser
 ) -> schemas.AdminProduct:
@@ -409,6 +427,8 @@ def reorder_media(
         raise ApiError(422, "invalid_order", "El orden debe incluir cada foto de la pieza una vez")
     if data.primary_id is not None and data.primary_id not in links:
         raise ApiError(422, "invalid_order", "La foto principal no pertenece a esta pieza")
+    if is_atlas(product):
+        _guard_atlas_order(db, product, data)
 
     before = [str(link.id) for link in product.media]
     # Two steps, because (product_id, position) is unique at every point.
@@ -432,6 +452,11 @@ def reorder_media(
     return _refreshed(db, product.id)
 
 
+def _guard_atlas_media(product: Product, link: ProductMedia) -> None:
+    if is_atlas(product) and link.media_asset_id is None:
+        raise _atlas_owned("Esta foto viene de Atlas ONE")
+
+
 def update_media_alt(
     db: Session, product_id: uuid.UUID, media_id: uuid.UUID, alt: str, user: AdminUser
 ) -> schemas.AdminProduct:
@@ -439,6 +464,7 @@ def update_media_alt(
     link = next((item for item in product.media if item.id == media_id), None)
     if link is None:
         raise not_found("Foto no encontrada en esta pieza")
+    _guard_atlas_media(product, link)
     if link.alt != alt:
         audit.record(db, user, "update_media_alt", "product", product.id, {"alt": [link.alt, alt]})
         link.alt = alt
@@ -453,6 +479,7 @@ def remove_media(
     link = next((item for item in product.media if item.id == media_id), None)
     if link is None:
         raise not_found("Foto no encontrada en esta pieza")
+    _guard_atlas_media(product, link)
     remaining = [item for item in product.media if item.id != media_id]
     if not remaining and product.status == STATUS_PUBLISHED:
         raise ApiError(

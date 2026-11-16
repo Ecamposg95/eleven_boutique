@@ -36,8 +36,11 @@ export type ProductCard = {
   category: { slug: string; name: string };
   primary_image: Media | null;
   secondary_image: Media | null;
+  available: boolean; // false = agotada (se muestra con etiqueta)
 };
+export type ProductVariant = { color: string | null; size: string | null; available: boolean };
 export type ProductDetail = ProductCard & {
+  variants: ProductVariant[]; // vacío sin variantes; el backend ordena alfabéticamente
   gallery: Media[];
   consult_url: string | null; // wa.me listo; null si no hay número configurado
   seo_title: string | null;

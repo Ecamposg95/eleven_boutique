@@ -6,7 +6,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.api.errors import ApiError
-from app.models import AdminUser, Brand, BrandAlias, Category, MediaAsset, Product
+from app.models import AdminUser, AtlasBrandMap, Brand, BrandAlias, Category, MediaAsset, Product
 from app.schemas import admin as schemas
 from app.services.admin import audit
 from app.services.admin.common import (
@@ -16,6 +16,8 @@ from app.services.admin.common import (
     set_asset,
     unique_slug,
 )
+from app.services.atlas.links import PLACEHOLDER_BRAND
+from app.services.atlas.sync import request_full_load
 from app.services.catalog import _public_aliases
 from app.services.text import normalize, slugify
 
@@ -86,7 +88,8 @@ def _single_out(db: Session, brand: Brand) -> schemas.AdminBrand:
 def list_brands(
     db: Session, *, q: str | None, status: str | None, page: int, page_size: int
 ) -> schemas.Page[schemas.AdminBrand]:
-    stmt = select(Brand).options(selectinload(Brand.aliases))
+    # La casa interna de la sincronización no se ofrece como casa a curar ni elegir.
+    stmt = select(Brand).options(selectinload(Brand.aliases)).where(Brand.name != PLACEHOLDER_BRAND)
     if status:
         stmt = stmt.where(Brand.status == status)
     brands = list(db.scalars(stmt))
@@ -206,6 +209,8 @@ def update_brand(
     db: Session, brand_id: uuid.UUID, data: schemas.BrandPatch, user: AdminUser
 ) -> schemas.AdminBrand:
     brand = _load_brand(db, brand_id)
+    if brand.name == PLACEHOLDER_BRAND:
+        raise ApiError(422, "internal_brand", "Casa interna de sincronización")
     before = audit.snapshot(brand, BRAND_FIELDS)
     aliases_before = _public_aliases(brand)
     fields = data.model_fields_set
@@ -237,6 +242,11 @@ def update_brand(
         changes["aliases"] = [aliases_before, aliases_after]
     if changes:
         audit.record(db, user, "update", "brand", brand.id, changes)
+    mapped = db.scalar(select(AtlasBrandMap.id).where(AtlasBrandMap.brand_id == brand.id).limit(1))
+    if changes.keys() & {"name", "aliases"} or ("status" in changes and mapped is not None):
+        # Arreglar nombre/alias puede ligar una marca de Atlas; publicar una casa ligada destraba
+        # sus piezas en borrador. Las incrementales no las vuelven a traer: toca carga completa.
+        request_full_load(db)
     db.commit()
     return get_brand(db, brand.id)
 

@@ -162,5 +162,7 @@ class CatalogEvent(Base):
         ForeignKey("products.id", ondelete="SET NULL"), index=True
     )
     occurred_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    # Reenvío a Atlas ONE: null = pendiente de enviar.
+    forwarded_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
 
     product: Mapped[Product | None] = relationship()

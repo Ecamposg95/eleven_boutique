@@ -32,5 +32,6 @@ def product_visible(demo_mode: bool) -> ColumnElement[bool]:
     """Requires Product joined to Brand. A hidden brand hides its products: no dead links."""
     return and_(
         record_visible(Product, demo_mode),
+        Product.hidden_on_web.is_(False),
         or_(Brand.kind == KIND_CLASSIFICATION, brand_visible(demo_mode)),
     )

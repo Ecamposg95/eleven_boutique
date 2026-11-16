@@ -2,11 +2,14 @@ import Link from "next/link";
 import type { ProductCard as Product } from "@/lib/types";
 import { productHref } from "@/lib/url";
 import { CatalogImage } from "./CatalogImage";
+import { SoldOutLabel } from "./SoldOutLabel";
 
 export function ProductCard({ product, sizes }: { product: Product; sizes: string }) {
   return (
     <Link href={productHref(product)} prefetch={false} className="group block">
-      <span className="relative block aspect-[4/5] overflow-hidden bg-charcoal">
+      <span
+        className={`relative block aspect-[4/5] overflow-hidden bg-charcoal ${product.available ? "" : "opacity-60"}`.trim()}
+      >
         <CatalogImage
           src={product.primary_image?.url}
           alt={product.primary_image?.alt ?? ""}
@@ -25,6 +28,7 @@ export function ProductCard({ product, sizes }: { product: Product; sizes: strin
         <span className="mt-1 block text-17 font-medium tracking-[-0.01em] decoration-bronze decoration-1 underline-offset-4 group-hover:underline">
           {product.name}
         </span>
+        {product.available ? null : <SoldOutLabel className="mt-1" />}
       </span>
     </Link>
   );

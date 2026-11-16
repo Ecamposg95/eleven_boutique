@@ -99,3 +99,35 @@ def test_selection_size_is_bounded(make_client):
     client = make_client(whatsapp_number=NUMBER)
     assert consult(client).status_code == 422
     assert consult(client, *[f"p{i}" for i in range(25)]).status_code == 422
+
+
+def test_consult_stores_one_selection_event_per_visible_piece(db, make_client):
+    from sqlalchemy import select
+
+    from app.models import CatalogEvent
+
+    category, prada = make_category(db), make_brand(db, "Prada")
+    for slug in ("a", "b", "c"):
+        make_product(db, prada, category, slug.upper(), slug=slug, sku=f"P-{slug}")
+    db.commit()
+    consult(make_client(whatsapp_number=NUMBER), "a", "b", "c", "nope")
+    db.expire_all()
+    events = db.scalars(select(CatalogEvent).where(CatalogEvent.type == "selection")).all()
+    assert len(events) == 3 and all(e.product_id for e in events)
+
+
+def test_failed_event_recording_does_not_break_the_consult(db, make_client, monkeypatch):
+    from sqlalchemy.exc import OperationalError
+    from sqlalchemy.orm import Session
+
+    make_product(db, make_brand(db, "Prada"), make_category(db), "Bolso", slug="bolso", sku="P-1")
+    db.commit()
+    client = make_client(whatsapp_number=NUMBER)
+    expected = consult(client, "bolso").json()
+
+    def boom(self):
+        raise OperationalError("x", {}, Exception("db"))
+
+    monkeypatch.setattr(Session, "commit", boom)
+    response = consult(client, "bolso")
+    assert response.status_code == 200 and response.json() == expected
