@@ -67,7 +67,10 @@ function HeroText({
       <Link href="/tienda" className="label cta mt-3 self-start">
         Entrar a la tienda
       </Link>
-      <Link href="/tienda/marcas" className="label cta muted self-start">
+      <Link
+        href="/tienda/marcas"
+        className={`label cta self-start ${light ? "opacity-75 hover:opacity-100" : "muted"}`}
+      >
         Explorar marcas
       </Link>
     </>
