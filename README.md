@@ -67,6 +67,28 @@ cd frontend && npm run lint && npm run typecheck && npm test
   `railway ssh --service api -- sh -c "cd /app && ADMIN_PASSWORD='…' python -m scripts.create_admin correo@dominio"`
   (contraseña de 12+ caracteres).
 
+### Sincronización con Atlas ONE (servicio `sync`)
+
+Atlas ONE es la fuente de verdad del catálogo: nombre, ficha, casa/categoría, variantes, fotos y
+disponibilidad (sí/no, nunca cantidades ni precios). La web devuelve a Atlas los clics y las
+selecciones como *leads*.
+
+- **Servicio `sync`** (Railway, mismo repo, raíz `/backend`): cron `*/5 * * * *` que corre
+  `python -m scripts.sync_atlas` y termina; política de reinicio `NEVER`. Sincroniza en modo
+  incremental; `--full` hace carga completa. Sale 0 sin hacer nada si la sincronización está apagada
+  o falta la URL o la llave; sale 1 si la corrida termina en error (Railway la marca fallida).
+- **Variables** (en `api` y en `sync`):
+  - `DATABASE_URL`: la misma referencia a Postgres que usa `api`.
+  - `ATLAS_API_URL=https://app.atlasone.com.mx`
+  - `ATLAS_SYNC_ENABLED=true`
+  - `ATLAS_API_KEY`: llave `atlas_…` de la org Eleven con permisos `catalog:read` y `leads:write`.
+    Se emite en Atlas ONE → `/platform` → Llaves API. Nunca va en el repo ni en el chat.
+- **Encenderla:** emitir la llave, ponerla en `ATLAS_API_KEY` de `api` (para «Sincronizar ahora» del
+  panel) y de `sync` (para el cron), y luego pulsar «Sincronizar ahora» en `/admin` → Atlas ONE para
+  la primera carga completa y revisar cómo quedaron ligadas marcas y categorías.
+- **Apagarla:** `ATLAS_SYNC_ENABLED=false` en ambos servicios (o quitar la llave).
+- **Logs:** `railway logs --service sync`.
+
 ## Estado al 2026-11-13
 
 - En vivo: portada a pantalla completa con fotos que rotan y titular «Viste tus propias reglas.»,
@@ -84,4 +106,4 @@ cd frontend && npm run lint && npm run typecheck && npm test
 ## Próximos pasos
 
 - Ampliar el alcance de landing a catálogo completo con gestor de productos.
-- Integración con Atlas ONE para importar o sincronizar el catálogo de productos (por definir).
+- Encender la sincronización con Atlas ONE (falta la llave; ver «Sincronización con Atlas ONE»).
