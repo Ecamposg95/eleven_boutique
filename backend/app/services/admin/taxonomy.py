@@ -358,10 +358,11 @@ def update_category(
     new_parent = data.parent_id if "parent_id" in fields else category.parent_id
     _check_reserved_slug(data.slug or category.slug, new_parent)
     if "cover_asset_id" in fields:
-        cover = _category_cover(
-            db, data.cover_asset_id, data.parent_id if "parent_id" in fields else category.parent_id
-        )
+        cover = _category_cover(db, data.cover_asset_id, new_parent)
         set_asset(category, "cover_asset_id", "cover_url", cover)
+    elif new_parent is not None:
+        # A department moved under another one stops being a department: it loses its cover.
+        set_asset(category, "cover_asset_id", "cover_url", None)
     for field in CATEGORY_FIELDS:
         if field in fields and field != "cover_asset_id":
             setattr(category, field, getattr(data, field))

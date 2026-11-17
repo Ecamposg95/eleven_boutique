@@ -62,7 +62,7 @@ def _disable_sqlite_foreign_keys() -> None:
     if bind.exec_driver_sql("PRAGMA foreign_keys").scalar() != 0:
         raise RuntimeError(
             "No se pudieron desactivar las llaves foráneas de SQLite; "
-            "reconstruir las tablas borraría datos. Baja 0005 en una ejecución aparte."
+            "reconstruir las tablas borraría datos. Baja 0006 en una ejecución aparte."
         )
 
 
@@ -72,11 +72,8 @@ def upgrade() -> None:
     for table, column in ASSET_COLUMNS:
         _add_asset_column(table, column)
         op.create_index(op.f(f"ix_{table}_{column}"), table, [column])
-    op.execute(
-        sa.text("UPDATE site_settings SET instagram_url = :url WHERE instagram_url IS NULL").bindparams(
-            url=INSTAGRAM_URL
-        )
-    )
+    backfill = sa.text("UPDATE site_settings SET instagram_url = :url WHERE instagram_url IS NULL")
+    op.execute(backfill.bindparams(url=INSTAGRAM_URL))
 
 
 def downgrade() -> None:

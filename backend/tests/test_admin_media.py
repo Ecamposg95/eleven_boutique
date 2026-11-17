@@ -318,7 +318,20 @@ def test_media_in_a_gallery_cannot_be_deleted_until_unlinked(db, client):
     assert client.delete(f"{BASE}/media/{item['id']}", headers=ORIGIN).status_code == 204
 
 
-@pytest.mark.parametrize("kind", ["brand", "collection", "lookbook_cover", "lookbook_block", "hero", "hero_gallery", "category_cover", "detail", "attention"])
+IN_USE_KINDS = [
+    "brand",
+    "collection",
+    "lookbook_cover",
+    "lookbook_block",
+    "hero",
+    "hero_gallery",
+    "category_cover",
+    "detail",
+    "attention",
+]
+
+
+@pytest.mark.parametrize("kind", IN_USE_KINDS)
 def test_media_used_elsewhere_cannot_be_deleted(db, client, kind):
     item = upload_one(client)
     brand, category = catalog_refs(db)

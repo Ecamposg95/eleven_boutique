@@ -73,7 +73,7 @@ export default async function DepartmentPage({ params, searchParams }: Props) {
     permanentRedirect(
       withParams(departmentHref(department.slug), {
         brand: firstParam(old.brand)?.slice(0, 100),
-        sort: firstParam(old.sort),
+        sort: parseSort(old.sort),
       }),
     );
   }
@@ -84,18 +84,25 @@ export default async function DepartmentPage({ params, searchParams }: Props) {
   const scope = subcategory ?? department;
   const path = departmentHref(department.slug, subcategory?.slug);
 
-  const facets = await getBrandFacets(scope.slug).catch(() => []);
+  // Facetas y piezas van en paralelo; solo una marca que no aplica obliga a pedir de nuevo.
   const requested = firstParam(query.brand)?.slice(0, 100);
+  const productsFor = (brand: string | undefined) =>
+    getProducts({
+      category: scope.slug,
+      brand,
+      sort,
+      page,
+      page_size: PAGE_SIZE,
+    });
+  const [facets, requestedProducts] = await Promise.all([
+    getBrandFacets(scope.slug).catch(() => []),
+    productsFor(requested),
+  ]);
   const brand = facets.some((facet) => facet.slug === requested)
     ? requested
     : undefined;
-  const products = await getProducts({
-    category: scope.slug,
-    brand,
-    sort,
-    page,
-    page_size: PAGE_SIZE,
-  });
+  const products =
+    brand === requested ? requestedProducts : await productsFor(undefined);
 
   const cover = subcategory ? null : safeImageSrc(department.cover_url);
   const filters = subcategoryOptions(department, children, subcategory?.slug, {

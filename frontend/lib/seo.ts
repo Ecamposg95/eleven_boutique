@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { safeImageSrc } from "./images";
 
 export const SITE_NAME = "Eleven Boutique";
 export const DEFAULT_DESCRIPTION = "Catálogo digital multimarca de lujo para clientes en México.";
@@ -16,7 +17,9 @@ type PageMeta = {
 export function pageMeta({ title, description, path, image, noindex }: PageMeta): Metadata {
   const text = description?.trim() || DEFAULT_DESCRIPTION;
   // Las redes sociales no aceptan SVG como imagen de vista previa.
-  const ogImage = image && !/\.svg($|[?#])/i.test(image) ? [{ url: image }] : undefined;
+  // Las URLs llegan del panel: solo rutas propias o http(s), como en next/image.
+  const src = safeImageSrc(image);
+  const ogImage = src && !/\.svg($|[?#])/i.test(src) ? [{ url: src }] : undefined;
   return {
     title,
     description: text,

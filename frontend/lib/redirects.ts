@@ -16,7 +16,7 @@ export const LEGACY_REDIRECTS: {
   { source: "/novedades", destination: "/tienda?sort=recent", permanent: true },
   {
     source: "/categorias/:slug",
-    has: [{ type: "query", key: "category", value: "(?<category>.*)" }],
+    has: [{ type: "query", key: "category", value: "(?<category>.+)" }],
     destination: "/tienda/:slug/:category",
     permanent: true,
   },

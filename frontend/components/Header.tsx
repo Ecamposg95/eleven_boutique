@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useRef, useSyncExternalStore } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { Suspense, useRef, useSyncExternalStore } from "react";
 import { InstagramLink } from "./InstagramLink";
 import { NAV_GROUPS, type NavLink } from "./nav";
 import { SelectionLink } from "./SelectionLink";
@@ -71,6 +71,51 @@ const LINK =
   "drawer-link label inline-flex min-h-8 items-center text-[0.8125rem] tracking-[0.14em]";
 
 /** Sección que se despliega dentro del panel (<details>: teclado y lector de pantalla nativos). */
+/** «Tienda» y «Novedades» son la misma ruta; solo `?sort=recent` distingue cuál es la actual. */
+function StoreLinks({
+  atStore,
+  recent,
+  onNavigate,
+}: {
+  atStore: boolean;
+  recent: boolean;
+  onNavigate: () => void;
+}) {
+  return (
+    <>
+      <li>
+        <Link
+          href="/tienda"
+          onClick={onNavigate}
+          aria-current={atStore && !recent ? "page" : undefined}
+          className={LINK}
+        >
+          Tienda
+        </Link>
+      </li>
+      <li>
+        <Link
+          href="/tienda?sort=recent"
+          onClick={onNavigate}
+          aria-current={atStore && recent ? "page" : undefined}
+          className={LINK}
+        >
+          Novedades
+        </Link>
+      </li>
+    </>
+  );
+}
+
+/** Lee la query aparte, dentro de un Suspense, para no volver dinámico todo el layout. */
+function StoreLinksWithQuery(props: {
+  atStore: boolean;
+  onNavigate: () => void;
+}) {
+  const recent = useSearchParams().get("sort") === "recent";
+  return <StoreLinks {...props} recent={recent} />;
+}
+
 function Fold({
   label,
   links,
@@ -220,25 +265,20 @@ export function Header({
           <nav aria-label="Principal" className="mt-14 space-y-12">
             <ul aria-label="Tienda" className="space-y-1">
               <SelectionLink onNavigate={close} className={LINK} asListItem />
-              <li>
-                <Link
-                  href="/tienda"
-                  onClick={close}
-                  aria-current={pathname === "/tienda" ? "page" : undefined}
-                  className={LINK}
-                >
-                  Tienda
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/tienda?sort=recent"
-                  onClick={close}
-                  className={LINK}
-                >
-                  Novedades
-                </Link>
-              </li>
+              <Suspense
+                fallback={
+                  <StoreLinks
+                    atStore={false}
+                    recent={false}
+                    onNavigate={close}
+                  />
+                }
+              >
+                <StoreLinksWithQuery
+                  atStore={pathname === "/tienda"}
+                  onNavigate={close}
+                />
+              </Suspense>
               {categories.length > 0 ? (
                 <li>
                   <Fold
@@ -262,7 +302,9 @@ export function Header({
                   <Link
                     href="/tienda/marcas"
                     onClick={close}
-                    aria-current={isCurrent("/tienda/marcas") ? "page" : undefined}
+                    aria-current={
+                      isCurrent("/tienda/marcas") ? "page" : undefined
+                    }
                     className={LINK}
                   >
                     Marcas

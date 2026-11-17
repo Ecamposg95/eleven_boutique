@@ -24,7 +24,7 @@ describe("LEGACY_REDIRECTS", () => {
     const [withQuery, without, ...rest] = find("/categorias/:slug");
     if (!withQuery || !without) throw new Error("faltan reglas de /categorias/:slug");
     expect(rest).toHaveLength(0);
-    expect(withQuery.has).toEqual([{ type: "query", key: "category", value: "(?<category>.*)" }]);
+    expect(withQuery.has).toEqual([{ type: "query", key: "category", value: "(?<category>.+)" }]);
     expect(withQuery.destination).toBe("/tienda/:slug/:category");
     expect(without.has).toBeUndefined();
     expect(without.destination).toBe("/tienda/:slug");

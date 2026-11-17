@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from urllib.parse import quote
 
 _ALLOWED = re.compile(r"\+?[\d\s().-]+")
+STORE_PATH = "/tienda"  # Public store prefix of every piece link.
 
 
 def normalize_number(raw: str | None) -> str | None:
@@ -27,10 +28,10 @@ class Piece:
         return self.name if self.brand_slug is None else f"{self.brand_name} — {self.name}"
 
     def link(self, site_url: str) -> str:
-        base = site_url.rstrip("/")
+        base = f"{site_url.rstrip('/')}{STORE_PATH}"
         if self.brand_slug is None:
-            return f"{base}/tienda/piezas/{self.slug}"
-        return f"{base}/tienda/marcas/{self.brand_slug}/{self.slug}"
+            return f"{base}/piezas/{self.slug}"
+        return f"{base}/marcas/{self.brand_slug}/{self.slug}"
 
 
 def _wa_url(digits: str, message: str) -> str:

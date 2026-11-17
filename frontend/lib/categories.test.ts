@@ -6,6 +6,7 @@ import {
   filterOptions,
   sortOptions,
   stockedCategories,
+  subcategoryOptions,
   topCategories,
 } from "./categories";
 import type { Category } from "./types";
@@ -78,6 +79,49 @@ describe("opciones del catálogo", () => {
         current: true,
       },
     ]);
+  });
+});
+
+describe("subcategoryOptions", () => {
+  const ropa = { slug: "ropa", name: "Ropa" };
+  const children = [
+    { slug: "camisas", name: "Camisas" },
+    { slug: "sacos", name: "Sacos" },
+  ];
+
+  it("abre con «Todo [departamento]» y lleva la subcategoría en la ruta", () => {
+    expect(
+      subcategoryOptions(ropa, children, "sacos", {
+        brand: "gucci",
+        sort: "recent",
+      }),
+    ).toEqual([
+      {
+        href: "/tienda/ropa?brand=gucci&sort=recent",
+        label: "Todo Ropa",
+        current: false,
+      },
+      {
+        href: "/tienda/ropa/camisas?brand=gucci&sort=recent",
+        label: "Camisas",
+        current: false,
+      },
+      {
+        href: "/tienda/ropa/sacos?brand=gucci&sort=recent",
+        label: "Sacos",
+        current: true,
+      },
+    ]);
+  });
+
+  it("sin subcategoría actual, «Todo» es la actual y no hay query vacía", () => {
+    const [all, ...rest] = subcategoryOptions(ropa, children, undefined, {});
+    expect(all).toEqual({
+      href: "/tienda/ropa",
+      label: "Todo Ropa",
+      current: true,
+    });
+    expect(rest.every((option) => !option.current)).toBe(true);
   });
 });
 

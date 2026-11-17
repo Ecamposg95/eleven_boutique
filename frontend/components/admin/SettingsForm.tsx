@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
-import { AdminApiError, api, errorText } from "@/lib/admin/client";
+import { api } from "@/lib/admin/client";
+import { CHECK_FIELDS, saveErrors, settingsBody, settingsForm } from "@/lib/admin/settings";
 import type { AdminSettings } from "@/lib/admin/types";
 import { checkWhatsapp, whatsappPreview } from "@/lib/admin/whatsapp";
 import { AssetField, GalleryField } from "./MediaPicker";
@@ -10,26 +11,7 @@ import { Notice, TextAreaField, TextField, useUnsavedWarning } from "./ui";
 
 export function SettingsForm({ settings }: { settings: AdminSettings }) {
   const router = useRouter();
-  const initial = {
-    whatsapp_number: settings.whatsapp_number ?? "",
-    whatsapp_premium_number: settings.whatsapp_premium_number ?? "",
-    hero_asset_id: settings.hero_asset_id,
-    hero_mobile_asset_id: settings.hero_mobile_asset_id,
-    hero_gallery: settings.hero_gallery ?? [],
-    hero_headline: settings.hero_headline ?? "",
-    hero_subhead: settings.hero_subhead ?? "",
-    intro: settings.intro ?? "",
-    boutique_body: settings.boutique_body ?? "",
-    contact_body: settings.contact_body ?? "",
-    instagram_url: settings.instagram_url ?? "",
-    detail_asset_id: settings.detail_asset_id,
-    detail_mobile_asset_id: settings.detail_mobile_asset_id,
-    detail_caption: settings.detail_caption ?? "",
-    attention_asset_id: settings.attention_asset_id,
-    attention_mobile_asset_id: settings.attention_mobile_asset_id,
-    attention_headline: settings.attention_headline ?? "",
-    attention_subhead: settings.attention_subhead ?? "",
-  };
+  const initial = settingsForm(settings);
   const [saved, setSaved] = useState(initial);
   const [form, setForm] = useState(initial);
   const [heroUrl, setHeroUrl] = useState(settings.hero_image_url);
@@ -61,36 +43,14 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
         ...(whatsapp.ok ? {} : { whatsapp_number: whatsapp.message }),
         ...(premium.ok ? {} : { whatsapp_premium_number: premium.message }),
       });
-      setFormError("Revise los campos marcados.");
+      setFormError(CHECK_FIELDS);
       return;
     }
     setErrors({});
     setBusy(true);
     setFormError(null);
     setMessage(null);
-    const body = {
-      whatsapp_number: whatsapp.digits || null,
-      whatsapp_premium_number: premium.digits || null,
-      hero_asset_id: form.hero_asset_id,
-      hero_mobile_asset_id: form.hero_mobile_asset_id,
-      hero_gallery_slides: form.hero_gallery.map((slide) => ({
-        asset_id: slide.asset_id,
-        mobile_asset_id: slide.mobile_asset_id ?? null,
-      })),
-      hero_headline: form.hero_headline.trim() || null,
-      hero_subhead: form.hero_subhead.trim() || null,
-      intro: form.intro.trim() || null,
-      boutique_body: form.boutique_body.trim() || null,
-      contact_body: form.contact_body.trim() || null,
-      instagram_url: form.instagram_url.trim() || null,
-      detail_asset_id: form.detail_asset_id,
-      detail_mobile_asset_id: form.detail_mobile_asset_id,
-      detail_caption: form.detail_caption.trim() || null,
-      attention_asset_id: form.attention_asset_id,
-      attention_mobile_asset_id: form.attention_mobile_asset_id,
-      attention_headline: form.attention_headline.trim() || null,
-      attention_subhead: form.attention_subhead.trim() || null,
-    };
+    const body = settingsBody(form, { general: whatsapp.digits, premium: premium.digits });
     try {
       await api("/settings", { method: "PATCH", json: body });
       const next = { ...form, whatsapp_number: whatsapp.digits, whatsapp_premium_number: premium.digits };
@@ -99,10 +59,9 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
       setMessage("Cambios guardados. El sitio público los muestra en menos de un minuto.");
       router.refresh();
     } catch (cause) {
-      if (cause instanceof AdminApiError) {
-        setErrors(cause.code === "invalid_instagram_url" ? { instagram_url: cause.message } : cause.fields);
-      }
-      setFormError(errorText(cause));
+      const { fields, notice } = saveErrors(cause);
+      setErrors(fields);
+      setFormError(notice);
     } finally {
       setBusy(false);
     }

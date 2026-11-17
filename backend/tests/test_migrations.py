@@ -416,3 +416,16 @@ def test_instagram_default_is_backfilled(tmp_path):
         value = connection.execute(text("SELECT instagram_url FROM site_settings")).scalar()
     engine.dispose()
     assert value == "https://www.instagram.com/eleven.fashionboutique/"
+
+
+def test_0006_renders_for_postgres_with_real_foreign_keys():
+    config = alembic_config("postgresql+psycopg://user:pass@localhost/eleven")
+    config.output_buffer = io.StringIO()
+    command.upgrade(config, "0005:0006", sql=True)
+    ddl = config.output_buffer.getvalue()
+    assert "ALTER TABLE categories ADD COLUMN cover_asset_id UUID" in ddl
+    assert "fk_categories_cover_asset_id_media_assets" in ddl
+    assert "ON DELETE RESTRICT" in ddl
+    assert "UPDATE site_settings SET instagram_url" in ddl
+    assert "CHAR(32)" not in ddl
+    assert "PRAGMA" not in ddl

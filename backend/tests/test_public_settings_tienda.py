@@ -98,3 +98,31 @@ def test_brand_facets_follow_category_and_children(db, public_client):
         {"slug": "beta", "name": "Beta", "product_count": 1},
     ]
     assert facets(category="inexistente") == []
+
+
+def test_attention_with_only_the_boutique_line(make_client):
+    attention = settings_of(make_client(whatsapp_premium_number=PREMIUM))["attention"]
+    assert attention["whatsapp_url"] is None
+    assert attention["boutique_whatsapp_url"].startswith(f"https://wa.me/{PREMIUM_DIGITS}?")
+
+
+def test_cleared_instagram_is_null(db, make_client):
+    db.add(SiteSettings(is_demo=False, instagram_url=None))
+    db.commit()
+    assert settings_of(make_client())["instagram_url"] is None
+
+
+def test_brand_facets_in_demo_mode_include_demo_pieces_only_there(db, make_client):
+    ropa = make_category(db, "Ropa")
+    brand = make_brand(db, "Demo Marca", status=STATUS_DRAFT)
+    make_product(
+        db, brand, ropa, "Pieza Demo", slug="pieza-demo", status=STATUS_DRAFT, is_demo=True
+    )
+    db.commit()
+
+    def facets(client):
+        return client.get("/api/v1/brand-facets", params={"category": "ropa"}).json()["items"]
+
+    expected = [{"slug": "demo-marca", "name": "Demo Marca", "product_count": 1}]
+    assert facets(make_client(demo_mode=True)) == expected
+    assert facets(make_client(demo_mode=False)) == []

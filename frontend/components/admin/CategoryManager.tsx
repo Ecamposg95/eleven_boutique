@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useRef, useState } from "react";
 import { AdminApiError, api, errorText } from "@/lib/admin/client";
 import type { AdminCategory } from "@/lib/admin/types";
 import { AssetField } from "./MediaPicker";
@@ -17,6 +17,9 @@ function Row({ category, all, onDirty }: { category: AdminCategory; all: AdminCa
   const [confirm, dialog] = useConfirm();
   const [coverId, setCoverId] = useState(category.cover_asset_id);
   const [coverUrl, setCoverUrl] = useState(category.cover_url);
+  const [coverError, setCoverError] = useState<string | null>(null);
+  // Los guardados de portada van en fila: si se eligen dos fotos seguidas, la última es la que queda.
+  const coverQueue = useRef<Promise<void>>(Promise.resolve());
   const dirty = name !== saved.name || parent !== saved.parent;
 
   const update = (nextName: string, nextParent: string) => {
@@ -34,6 +37,11 @@ function Row({ category, all, onDirty }: { category: AdminCategory; all: AdminCa
     try {
       await api(`/categories/${category.id}`, { method: "PATCH", json: { name: name.trim(), parent_id: parent || null } });
       setSaved({ name: name.trim(), parent });
+      if (parent) {
+        // Una subcategoría no lleva portada: el servidor la quita al moverla.
+        setCoverId(null);
+        setCoverUrl(null);
+      }
       setError(null);
       setNote("Guardada");
       onDirty(category.id, false);
@@ -43,17 +51,21 @@ function Row({ category, all, onDirty }: { category: AdminCategory; all: AdminCa
     }
   };
 
-  const saveCover = async (asset: { id: string; url: string } | null) => {
-    try {
-      await api(`/categories/${category.id}`, { method: "PATCH", json: { cover_asset_id: asset?.id ?? null } });
-      setCoverId(asset?.id ?? null);
-      setCoverUrl(asset?.url ?? null);
-      setError(null);
-      setNote(asset ? "Portada guardada" : "Portada quitada");
-      router.refresh();
-    } catch (cause) {
-      setError(errorText(cause));
-    }
+  const saveCover = (asset: { id: string; url: string } | null) => {
+    coverQueue.current = coverQueue.current.then(async () => {
+      setNote("Guardando portada…");
+      try {
+        await api(`/categories/${category.id}`, { method: "PATCH", json: { cover_asset_id: asset?.id ?? null } });
+        setCoverId(asset?.id ?? null);
+        setCoverUrl(asset?.url ?? null);
+        setCoverError(null);
+        setNote(asset ? "Portada guardada" : "Portada quitada");
+        router.refresh();
+      } catch (cause) {
+        setNote(null);
+        setCoverError(errorText(cause));
+      }
+    });
   };
 
   const remove = async () => {
@@ -100,8 +112,13 @@ function Row({ category, all, onDirty }: { category: AdminCategory; all: AdminCa
               assetId={coverId}
               ratio="4 / 5"
               hint="Vertical 4:5, ideal 1600 × 2000 px. Encabeza su pestaña en la portada y su página en la tienda."
-              onChange={(asset) => void saveCover(asset)}
+              onChange={saveCover}
             />
+            {coverError ? (
+              <p role="alert" className="a-error">
+                {coverError}
+              </p>
+            ) : null}
           </div>
         ) : null}
       </td>

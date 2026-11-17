@@ -88,9 +88,12 @@ export function DepartmentTabs({ panels }: { panels: DepartmentPanel[] }) {
   };
   const onKeyDown = (event: KeyboardEvent) => {
     const last = panels.length - 1;
+    // Las flechas parten de la pestaña con el foco, que puede no ser la activa.
+    const focused = tabs.current.findIndex((tab) => tab === event.target);
+    const from = focused === -1 ? active : focused;
     const next = {
-      ArrowRight: active === last ? 0 : active + 1,
-      ArrowLeft: active === 0 ? last : active - 1,
+      ArrowRight: from === last ? 0 : from + 1,
+      ArrowLeft: from === 0 ? last : from - 1,
       Home: 0,
       End: last,
     }[event.key];
@@ -144,31 +147,36 @@ export function DepartmentTabs({ panels }: { panels: DepartmentPanel[] }) {
           aria-labelledby={`${baseId}-tab-${index}`}
           hidden={index !== active}
         >
-          <ul
-            className={`${SLIDER} md:grid md:grid-cols-4 md:gap-y-10 md:overflow-visible`}
-          >
-            {panel.cover ? (
-              <CoverTile
-                panel={panel}
-                className="w-[78vw] shrink-0 snap-start sm:w-[50vw] md:col-span-2 md:row-span-2 md:w-auto"
-                sizes="(min-width: 768px) 50vw, 78vw"
-              />
-            ) : null}
-            {panel.products.slice(0, MAX_PIECES).map((product) => (
-              <li
-                key={product.slug}
-                className="w-[56vw] shrink-0 snap-start sm:w-[34vw] md:w-auto"
+          {/* Solo el panel visible pinta sus fichas: los demás no cargan decenas de tarjetas ocultas. */}
+          {index === active ? (
+            <>
+              <ul
+                className={`${SLIDER} md:grid md:grid-cols-4 md:gap-y-10 md:overflow-visible`}
               >
-                <ProductCard
-                  product={product}
-                  sizes="(min-width: 1600px) 360px, (min-width: 768px) 25vw, 56vw"
-                />
-              </li>
-            ))}
-          </ul>
-          <Link href={panel.href} className="label cta mt-6">
-            Ver todo {panel.name}
-          </Link>
+                {panel.cover ? (
+                  <CoverTile
+                    panel={panel}
+                    className="w-[78vw] shrink-0 snap-start sm:w-[50vw] md:col-span-2 md:row-span-2 md:w-auto"
+                    sizes="(min-width: 768px) 50vw, 78vw"
+                  />
+                ) : null}
+                {panel.products.slice(0, MAX_PIECES).map((product) => (
+                  <li
+                    key={product.slug}
+                    className="w-[56vw] shrink-0 snap-start sm:w-[34vw] md:w-auto"
+                  >
+                    <ProductCard
+                      product={product}
+                      sizes="(min-width: 1600px) 360px, (min-width: 768px) 25vw, 56vw"
+                    />
+                  </li>
+                ))}
+              </ul>
+              <Link href={panel.href} className="label cta mt-6">
+                Ver todo {panel.name}
+              </Link>
+            </>
+          ) : null}
         </div>
       ))}
     </section>

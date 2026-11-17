@@ -6,13 +6,17 @@ import { InstagramLink } from "./InstagramLink";
 /**
  * Bloque de atención, al final de la portada: foto de fondo, degradado para que el texto se lea
  * y, en la mitad izquierda, titular y botones de WhatsApp e Instagram. Sin ninguno de los dos, no hay bloque.
+ * Sin titular (o con una API anterior que no manda `attention`) se usa el de siempre.
  */
+export const DEFAULT_ATTENTION_HEADLINE = "Escríbenos. Te asesoramos.";
+
 export function AttentionBlock({ settings }: { settings: PublicSettings }) {
   const attention = settings.attention;
   const links = attentionLinks(settings);
-  if (!attention || (!links.whatsapp && !links.instagram)) return null;
-  const photo = bandPhoto(attention.image_url, attention.mobile_image_url);
-  const subhead = attention.subhead?.trim();
+  if (!links.whatsapp && !links.instagram) return null;
+  const photo = bandPhoto(attention?.image_url, attention?.mobile_image_url);
+  const headline = attention?.headline?.trim() || DEFAULT_ATTENTION_HEADLINE;
+  const subhead = attention?.subhead?.trim();
 
   return (
     <section
@@ -33,7 +37,7 @@ export function AttentionBlock({ settings }: { settings: PublicSettings }) {
       <div className="page relative z-10 w-full py-14 md:py-20">
         <div className="max-w-xl">
           <h2 id="atencion-t" className="display text-44 md:text-68">
-            {attention.headline}
+            {headline}
           </h2>
           {subhead ? <p className="serif mt-5 text-22">{subhead}</p> : null}
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">

@@ -511,6 +511,18 @@ def test_category_cover_round_trip_only_on_top_level(client):
     assert cleared["cover_asset_id"] is None and cleared["cover_url"] is None
 
 
+def test_department_moved_under_another_loses_its_cover(client):
+    item = upload_one(client)
+    top = post(client, "/categories", {"name": "Arriba"}).json()
+    moved = post(client, "/categories", {"name": "Movida", "cover_asset_id": item["id"]}).json()
+    assert moved["cover_url"] == item["url"]
+    response = patch(client, f"/categories/{moved['id']}", {"parent_id": top["id"]})
+    assert response.status_code == 200, response.text
+    assert response.json()["cover_asset_id"] is None and response.json()["cover_url"] is None
+    renamed = patch(client, f"/categories/{top['id']}", {"name": "Arriba 2"}).json()
+    assert renamed["parent_id"] is None
+
+
 def test_category_delete_is_409_with_children_or_products(db, client, refs):
     parent = post(client, "/categories", {"name": "Padre"}).json()
     child = post(client, "/categories", {"name": "Hija", "parent_id": parent["id"]}).json()

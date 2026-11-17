@@ -182,6 +182,13 @@ describe("departmentPanels", () => {
     ]);
   });
 
+  it("con portada y sin muestra (la consulta falló) se incluye vacío", () => {
+    const ropa = cat("ropa", null, "/r.jpg");
+    expect(departmentPanels([ropa], [])).toEqual([
+      { slug: "ropa", name: "ROPA", href: "/tienda/ropa", cover: "/r.jpg", products: [], total: 0 },
+    ]);
+  });
+
   it("sin piezas ni portada se excluye", () => {
     const ropa = cat("ropa");
     expect(departmentPanels([ropa], [sample(ropa)])).toEqual([]);

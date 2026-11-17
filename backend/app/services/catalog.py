@@ -1,6 +1,7 @@
 """Read side of the public API: queries plus the mapping to explicit response schemas."""
 
 import logging
+from collections.abc import Callable
 from typing import Literal
 
 from sqlalchemy import ColumnElement, Select, func, or_, select
@@ -164,7 +165,7 @@ def list_brand_facets(
 ) -> list[schemas.BrandFacet]:
     """Visible brands with visible pieces in the category and its children (all, without one)."""
     stmt = (
-        select(Brand.slug, Brand.name, func.count())
+        select(Brand.slug, Brand.name, func.count().label("product_count"))
         .select_from(Product)
         .join(Product.brand)
         .where(product_visible(demo_mode), brand_visible(demo_mode))
@@ -173,7 +174,9 @@ def list_brand_facets(
     if category:
         stmt = stmt.where(Product.category_id.in_(_category_and_children(Category.slug == category)))
     rows = sorted(db.execute(stmt).all(), key=lambda row: normalize(row.name))
-    return [schemas.BrandFacet(slug=r.slug, name=r.name, product_count=r[2]) for r in rows]
+    return [
+        schemas.BrandFacet(slug=r.slug, name=r.name, product_count=r.product_count) for r in rows
+    ]
 
 
 def _category_and_children(column_match: ColumnElement[bool]) -> Select:
@@ -579,7 +582,9 @@ def public_settings(db: Session, settings: Settings) -> schemas.PublicSettings:
     )
 
 
-def _attention(db: Session, settings: Settings, pick) -> schemas.Attention:
+def _attention(
+    db: Session, settings: Settings, pick: Callable[[str], str | None]
+) -> schemas.Attention:
     general = effective_whatsapp_digits(db, settings)
     premium = effective_whatsapp_digits(db, settings, premium=True)
     return schemas.Attention(
