@@ -79,7 +79,7 @@ selecciones como *leads*.
   o falta la URL o la llave; sale 1 si la corrida termina en error (Railway la marca fallida).
 - **Variables** (en `api` y en `sync`):
   - `DATABASE_URL`: la misma referencia a Postgres que usa `api`.
-  - `ATLAS_API_URL=https://app.atlasone.com.mx`
+  - `ATLAS_API_URL=https://app.atlasone.com.mx/api/channel/v1` (con la ruta del canal; sin ella la web lee la página de inicio y falla con «respuesta inválida»)
   - `ATLAS_SYNC_ENABLED=true`
   - `ATLAS_API_KEY`: llave `atlas_…` de la org Eleven con permisos `catalog:read` y `leads:write`.
     Se emite en Atlas ONE → `/platform` → Llaves API. Nunca va en el repo ni en el chat.
