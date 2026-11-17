@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { bypassOptimizer, parseImageHosts, safeImageSrc } from "@/lib/images";
+import { bypassOptimizer, cloudinaryLoader, isCloudinary, parseImageHosts, safeImageSrc } from "@/lib/images";
 
 const HOSTS = parseImageHosts(process.env.NEXT_PUBLIC_IMAGE_HOSTS);
 
@@ -20,14 +20,16 @@ export function CatalogImage({ src, alt, sizes, className, preload, onFail }: Pr
   const [failed, setFailed] = useState(false);
   const safe = safeImageSrc(src);
   if (!safe || failed) return null;
+  const cloudinary = isCloudinary(safe);
   return (
     <Image
       src={safe}
+      loader={cloudinary ? cloudinaryLoader : undefined}
       alt={alt}
       fill
       sizes={sizes}
       preload={preload}
-      unoptimized={bypassOptimizer(safe, HOSTS)}
+      unoptimized={!cloudinary && bypassOptimizer(safe, HOSTS)}
       className={className}
       onError={() => {
         setFailed(true);

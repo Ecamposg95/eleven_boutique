@@ -29,3 +29,20 @@ export function bypassOptimizer(src: string, allowedHosts: readonly string[]): b
     return true;
   }
 }
+
+const CLOUDINARY_UPLOAD = /^https:\/\/res\.cloudinary\.com\/[^/]+\/image\/upload\//;
+
+/** Foto alojada en Cloudinary (las de Atlas ONE): Cloudinary la redimensiona, no el servidor de la tienda. */
+export function isCloudinary(src: string): boolean {
+  return CLOUDINARY_UPLOAD.test(src);
+}
+
+/**
+ * Loader de next/image para Cloudinary: pide el ancho exacto que usa el navegador, en el formato
+ * más ligero que acepte (AVIF/WebP) y con calidad automática. La original nunca viaja al visitante
+ * y el servidor de la tienda no gasta CPU en optimizar.
+ */
+export function cloudinaryLoader({ src, width, quality }: { src: string; width: number; quality?: number }): string {
+  const q = quality ? `q_${quality}` : "q_auto";
+  return src.replace(/\/image\/upload\//, `/image/upload/f_auto,${q},c_limit,w_${width}/`);
+}
