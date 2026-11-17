@@ -2,13 +2,20 @@
 
 import { getImageProps } from "next/image";
 import { useState } from "react";
-import { bypassOptimizer, parseImageHosts } from "@/lib/images";
+import { bypassOptimizer, cloudinaryLoader, isCloudinary, parseImageHosts } from "@/lib/images";
 import type { HeroPhoto } from "@/lib/home";
 import { CatalogImage } from "./CatalogImage";
 
 const HOSTS = parseImageHosts(process.env.NEXT_PUBLIC_IMAGE_HOSTS);
 /** Pantalla vertical (teléfono, tableta parada) → versión de teléfono. */
 const PORTRAIT = "(orientation: portrait)";
+
+/** Cloudinary se redimensiona sola con su loader; lo demás, como siempre. */
+function opciones(src: string) {
+  return isCloudinary(src)
+    ? { loader: cloudinaryLoader, unoptimized: false }
+    : { unoptimized: bypassOptimizer(src, HOSTS) };
+}
 
 /**
  * Foto de portada con dirección de arte: el navegador baja solo la versión que corresponde a la
@@ -34,11 +41,11 @@ export function HeroPicture({
   const common = { alt: "", fill: true, sizes } as const;
   const {
     props: { srcSet: mobileSet },
-  } = getImageProps({ ...common, src: photo.mobile, unoptimized: bypassOptimizer(photo.mobile, HOSTS) });
+  } = getImageProps({ ...common, src: photo.mobile, ...opciones(photo.mobile) });
   const { props } = getImageProps({
     ...common,
     src: photo.src,
-    unoptimized: bypassOptimizer(photo.src, HOSTS),
+    ...opciones(photo.src),
     loading: preload ? "eager" : "lazy",
     fetchPriority: preload ? "high" : undefined,
   });
