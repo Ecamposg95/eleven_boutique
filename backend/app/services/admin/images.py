@@ -7,6 +7,10 @@ import uuid
 from dataclasses import dataclass
 
 from PIL import Image, ImageCms, ImageOps, UnidentifiedImageError
+from pillow_heif import register_heif_opener
+
+# Teaches Pillow to read HEIC/HEIF, the default format of iPhone photos.
+register_heif_opener()
 
 MAX_FILE_BYTES = 20 * 1024 * 1024
 MAX_PIXELS = 60_000_000
@@ -19,6 +23,9 @@ FORMATS = {
     "PNG": ("png", "image/png"),
     "WEBP": ("webp", "image/webp"),
 }
+# Read but never stored: browsers cannot show them, so they are saved as the mapped format.
+CONVERTED = {"HEIF": "JPEG", "MPO": "JPEG"}  # MPO: multi-picture JPEGs from some cameras.
+_DECODERS = [*FORMATS, "HEIF"]
 _SAVE_OPTIONS = {
     "JPEG": {"quality": 88, "optimize": True, "progressive": True},
     "PNG": {"optimize": True},
@@ -64,19 +71,18 @@ def _to_srgb(image: Image.Image) -> Image.Image:
         return image
 
 
-_INVALID = ("invalid_image", "Solo se aceptan imágenes JPEG, PNG o WebP válidas")
+_INVALID = ("invalid_image", "Solo se aceptan imágenes JPEG, PNG, WebP o HEIC válidas")
 _DECODE_ERRORS = (UnidentifiedImageError, OSError, ValueError, SyntaxError, EOFError, TypeError)
 
 
 def _decode(data: bytes) -> tuple[Image.Image, str]:
     too_big = ImageRejected(413, "image_too_large", "La imagen supera los 60 megapíxeles")
     try:
-        image = Image.open(io.BytesIO(data), formats=list(FORMATS))
+        image = Image.open(io.BytesIO(data), formats=_DECODERS)
         # Dimensions come from the header: checked before any pixel is decoded.
         if image.width * image.height > MAX_PIXELS:
             raise too_big
-        # Multi-picture JPEGs, common from some cameras, open as MPO: they are still JPEG files.
-        image_format = "JPEG" if image.format == "MPO" else image.format
+        image_format = CONVERTED.get(image.format, image.format)
         image.load()
     except Image.DecompressionBombError as error:
         raise too_big from error

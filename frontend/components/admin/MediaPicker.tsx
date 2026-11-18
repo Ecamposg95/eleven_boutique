@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api, errorText, uploadMedia } from "@/lib/admin/client";
 import { moveItem } from "@/lib/admin/reorder";
-import { createUploadQueue, countUploads, validateImageFile, type UploadItem } from "@/lib/admin/upload-queue";
+import { IMAGE_ACCEPT, createUploadQueue, countUploads, validateImageFile, type UploadItem } from "@/lib/admin/upload-queue";
 import type { MediaAsset } from "@/lib/admin/types";
 import { Notice, Pager, Thumb } from "./ui";
 
@@ -136,7 +136,7 @@ export function MediaPicker({
               <input
                 type="file"
                 multiple={multiple}
-                accept="image/jpeg,image/png,image/webp"
+                accept={IMAGE_ACCEPT}
                 className="sr-only"
                 onChange={(event) => {
                   const files = [...(event.target.files ?? [])];

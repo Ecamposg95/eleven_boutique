@@ -4,7 +4,7 @@ import logging
 from collections.abc import Callable
 from typing import Literal
 
-from sqlalchemy import ColumnElement, Select, func, or_, select
+from sqlalchemy import ColumnElement, Select, exists, func, or_, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, contains_eager, joinedload, selectinload
 
@@ -231,6 +231,11 @@ def _visible_products(demo_mode: bool) -> Select:
     )
 
 
+def _photo_first() -> ColumnElement:
+    """Las piezas con foto van antes que las que aún no tienen, en listados y búsqueda."""
+    return exists().where(ProductMedia.product_id == Product.id).desc()
+
+
 def _paginate(db: Session, stmt: Select, page: int, page_size: int) -> schemas.Page:
     total = db.scalar(select(func.count()).select_from(stmt.order_by(None).subquery()))
     products = db.scalars(stmt.offset((page - 1) * page_size).limit(page_size)).all()
@@ -266,7 +271,8 @@ def list_products(
     if featured is not None:
         stmt = stmt.where(Product.is_featured.is_(featured))
 
-    stmt = stmt.order_by(Product.available.desc())  # Agotadas al final de cada orden.
+    # Con foto primero; dentro de cada grupo, las agotadas al final de cada orden.
+    stmt = stmt.order_by(_photo_first(), Product.available.desc())
     if sort == "recent":
         stmt = stmt.order_by(Product.commercial_added_at.desc().nulls_last())
     elif sort == "display":
@@ -279,7 +285,12 @@ def list_novedades(db: Session, demo_mode: bool, *, page: int, page_size: int) -
     stmt = (
         _visible_products(demo_mode)
         .where(Product.commercial_added_at.is_not(None))
-        .order_by(Product.available.desc(), Product.commercial_added_at.desc(), Product.slug)
+        .order_by(
+            _photo_first(),
+            Product.available.desc(),
+            Product.commercial_added_at.desc(),
+            Product.slug,
+        )
     )
     return _paginate(db, stmt, page, page_size)
 
@@ -521,7 +532,13 @@ def search(db: Session, q: str | None, demo_mode: bool) -> schemas.SearchResults
                 (Brand.kind == KIND_BRAND) & _brand_name_match(query),
             )
         )
-        .order_by(Product.available.desc(), Product.display_order, Product.search_text, Product.slug)
+        .order_by(
+            _photo_first(),
+            Product.available.desc(),
+            Product.display_order,
+            Product.search_text,
+            Product.slug,
+        )
         .limit(SEARCH_PRODUCT_LIMIT)
     )
     products = db.scalars(product_stmt).all()

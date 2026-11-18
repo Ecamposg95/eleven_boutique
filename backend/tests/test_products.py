@@ -186,6 +186,27 @@ def test_hidden_on_web_product_is_not_public_anywhere(db, public_client):
     assert consult.json()["missing_slugs"] == ["oculta"]
 
 
+def test_products_with_photos_are_listed_first(db, public_client):
+    brand, category = make_brand(db, "Prada"), make_category(db)
+    bare = make_product(db, brand, category, "Aaa Sin Foto", display_order=0)
+    bare.media.clear()
+    sold_out = make_product(db, brand, category, "Bbb Agotada Sin Foto", available=False)
+    sold_out.media.clear()
+    make_product(db, brand, category, "Yyy Agotada Con Foto", available=False, display_order=1)
+    make_product(db, brand, category, "Zzz Con Foto", display_order=9)
+    for product in db.scalars(select(Product)):
+        product.commercial_added_at = at(1)
+    db.commit()
+
+    expected = ["zzz-con-foto", "yyy-agotada-con-foto", "aaa-sin-foto", "bbb-agotada-sin-foto"]
+    for sort in ("display", "name", "recent"):
+        assert slugs(public_client.get("/api/v1/products", params={"sort": sort})) == expected
+    assert slugs(public_client.get("/api/v1/novedades")) == expected
+    found = public_client.get("/api/v1/search", params={"q": "prada"}).json()
+    assert [p["slug"] for p in found["products"]] == expected
+    assert public_client.get("/api/v1/products").json()["total"] == 4
+
+
 def test_sold_out_product_is_listed_last_with_available_false(db, public_client):
     brand, category = make_brand(db, "Prada"), make_category(db)
     make_product(db, brand, category, "Aaa Agotada", available=False, display_order=0)

@@ -66,7 +66,7 @@ Un producto solo pasa a `published` si tiene nombre, marca (o clasificación "Si
 
 ## Fotos
 
-- Solo JPEG, PNG y WebP, verificados por contenido, no por extensión. Máx. 20 MB y 60 MP.
+- Solo JPEG, PNG, WebP y HEIC/HEIF (las fotos del iPhone, que se guardan como JPEG), verificados por contenido, no por extensión. Máx. 20 MB y 60 MP.
 - Se reescriben con Pillow: orientación aplicada, sin EXIF, lado mayor máx. 2400 px. Nombre aleatorio; el nombre original se guarda solo como dato, sanitizado.
 - `StorageBackend` con implementación local (`MEDIA_ROOT`, default `backend/media/`, en `.gitignore`), preparado para S3. FastAPI sirve `/media`; Next hace rewrite de `/media/:path*` al backend.
 

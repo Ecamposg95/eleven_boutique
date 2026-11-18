@@ -118,13 +118,21 @@ export function countUploads(items: readonly { status: UploadStatus }[]): Upload
   return counts;
 }
 
-const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]);
+const IMAGE_EXTENSIONS = /\.(jpe?g|png|webp|hei[cf])$/i;
+/** Para el atributo `accept`. Las extensiones cubren los navegadores que no conocen el tipo HEIC. */
+export const IMAGE_ACCEPT = "image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif";
 export const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
+
+function isGenericType(type: string): boolean {
+  return type === "" || type === "application/octet-stream";
+}
 
 /** Filtro previo para no gastar la subida. El servidor verifica el contenido real. */
 export function validateImageFile(file: { name: string; type: string; size: number }): string | null {
-  if (file.type ? !IMAGE_TYPES.has(file.type) : !/\.(jpe?g|png|webp)$/i.test(file.name)) {
-    return "Formato no admitido. Use JPEG, PNG o WebP.";
+  // Varios navegadores entregan las HEIC sin tipo o con uno genérico: ahí decide la extensión.
+  if (!IMAGE_TYPES.has(file.type) && !(isGenericType(file.type) && IMAGE_EXTENSIONS.test(file.name))) {
+    return "Formato no admitido. Use JPEG, PNG, WebP o HEIC.";
   }
   if (file.size > MAX_UPLOAD_BYTES) return "Pesa más de 20 MB.";
   if (file.size === 0) return "El archivo está vacío.";

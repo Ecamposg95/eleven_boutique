@@ -106,14 +106,20 @@ describe("createUploadQueue", () => {
 
 describe("validateImageFile", () => {
   const file = (name: string, type: string, size = 100) => ({ name, type, size });
-  it("acepta JPEG, PNG y WebP", () => {
+  it("acepta JPEG, PNG, WebP y HEIC", () => {
     expect(validateImageFile(file("a.jpg", "image/jpeg"))).toBeNull();
     expect(validateImageFile(file("a.webp", "image/webp"))).toBeNull();
     expect(validateImageFile(file("a.PNG", ""))).toBeNull();
+    expect(validateImageFile(file("IMG_0001.HEIC", "image/heic"))).toBeNull();
+    expect(validateImageFile(file("a.heif", "image/heif"))).toBeNull();
+    // Android y varios navegadores de escritorio no reconocen el tipo de las HEIC.
+    expect(validateImageFile(file("a.heic", ""))).toBeNull();
+    expect(validateImageFile(file("a.heic", "application/octet-stream"))).toBeNull();
   });
   it("rechaza otros formatos, vacíos y más de 20 MB", () => {
     expect(validateImageFile(file("a.gif", "image/gif"))).toMatch(/Formato/);
-    expect(validateImageFile(file("a.heic", ""))).toMatch(/Formato/);
+    expect(validateImageFile(file("a.tiff", ""))).toMatch(/Formato/);
+    expect(validateImageFile(file("a.jpg", "image/gif"))).toMatch(/Formato/);
     expect(validateImageFile(file("a.jpg", "image/jpeg", 21 * 1024 * 1024))).toMatch(/20 MB/);
     expect(validateImageFile(file("a.jpg", "image/jpeg", 0))).toMatch(/vacío/);
   });

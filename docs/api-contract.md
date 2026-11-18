@@ -28,7 +28,7 @@ type ProductCard = {
   brand: { slug: string | null; name: string | null };   // null si es "Sin marca"
   category: { slug: string; name: string };
   primary_image: Media | null; secondary_image: Media | null;
-  available: boolean;           // false = agotada: se muestra, al final de cada listado
+  available: boolean;           // false = agotada: se muestra, al final de su grupo (con foto / sin foto)
 };
 type ProductDetail = ProductCard & {
   variants: { color: string | null; size: string | null; available: boolean }[]; // por talla y color; [] si no tiene variantes

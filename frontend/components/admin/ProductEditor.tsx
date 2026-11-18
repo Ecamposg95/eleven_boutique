@@ -9,7 +9,7 @@ import { formatDateTime } from "@/lib/admin/format";
 import { mediaOrderPayload, moveItem, setPrimary } from "@/lib/admin/reorder";
 import { missingForPublish } from "@/lib/admin/rules";
 import type { AdminCategory, Brand, MediaAsset, Product, ProductMediaItem, Status } from "@/lib/admin/types";
-import { createUploadQueue, validateImageFile } from "@/lib/admin/upload-queue";
+import { IMAGE_ACCEPT, createUploadQueue, validateImageFile } from "@/lib/admin/upload-queue";
 import { productHref } from "@/lib/url";
 import { MediaPicker } from "./MediaPicker";
 import { CheckField, ReadOnlyField, Notice, PageHead, SelectField, StatusLabel, TextAreaField, TextField, Thumb, useConfirm, useDragReorder, useUnsavedWarning } from "./ui";
@@ -169,7 +169,7 @@ function PhotoManager({
             <input
               type="file"
               multiple
-              accept="image/jpeg,image/png,image/webp"
+              accept={IMAGE_ACCEPT}
               className="sr-only"
               onChange={(event) => {
                 const files = [...(event.target.files ?? [])];

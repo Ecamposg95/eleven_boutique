@@ -6,7 +6,7 @@ import { AdminApiError, api, errorText, uploadMedia } from "@/lib/admin/client";
 import { formatNumber, plural } from "@/lib/admin/format";
 import { assignPayload, chunk, confirmAllProposed, type Decision, toDecisions } from "@/lib/admin/rules";
 import type { AssignResult, MatchProposal, MediaAsset, ProductRef } from "@/lib/admin/types";
-import { countUploads, createUploadQueue, type UploadItem, validateImageFile } from "@/lib/admin/upload-queue";
+import { IMAGE_ACCEPT, countUploads, createUploadQueue, type UploadItem, validateImageFile } from "@/lib/admin/upload-queue";
 import { withParams } from "@/lib/url";
 import { ProductSearch } from "./ProductSearch";
 import { CheckField, Empty, Notice, PageHead, Pager, Thumb, useConfirm } from "./ui";
@@ -83,7 +83,7 @@ function Uploader({ onDone, onAssign }: { onDone: () => void; onAssign: (assets:
             data-testid="upload-input"
             type="file"
             multiple
-            accept="image/jpeg,image/png,image/webp"
+            accept={IMAGE_ACCEPT}
             className="sr-only"
             onChange={(event) => {
               const files = [...(event.target.files ?? [])];
@@ -92,7 +92,7 @@ function Uploader({ onDone, onAssign }: { onDone: () => void; onAssign: (assets:
             }}
           />
         </label>
-        <p className="muted">JPEG, PNG o WebP, hasta 20 MB cada una.</p>
+        <p className="muted">JPEG, PNG, WebP o HEIC, hasta 20 MB cada una.</p>
       </div>
 
       {items.length > 0 ? (

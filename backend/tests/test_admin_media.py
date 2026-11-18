@@ -78,6 +78,45 @@ def test_multi_picture_jpeg_is_accepted_as_jpeg(client):
     assert image.format == "JPEG"
 
 
+def heic_bytes(size=(64, 32), exif: Image.Exif | None = None) -> bytes:
+    output = io.BytesIO()
+    image = Image.new("RGB", size, (200, 30, 30))
+    image.paste((30, 30, 200), (0, 0, size[0] // 2, size[1]))  # Left half blue, right half red.
+    if exif is not None:
+        # The encoder turns the orientation into the HEIF rotation box, as phones do.
+        image.info["exif"] = exif.tobytes()
+    image.save(output, format="HEIF")
+    return output.getvalue()
+
+
+def test_heic_from_a_phone_is_stored_as_jpeg(client):
+    source = heic_bytes()
+    assert source[4:12] == b"ftypheic"
+    item = upload(client, ("IMG_0001.HEIC", source)).json()["items"][0]
+    assert item["content_type"] == "image/jpeg"
+    assert item["url"].endswith(".jpg")
+    assert item["filename"] == "IMG_0001.HEIC"
+    assert (item["width"], item["height"]) == (64, 32)
+    image, _ = read_stored(client, item["url"])
+    assert image.format == "JPEG"
+    blue, _, red = image.convert("RGB").getpixel((8, 16))
+    assert red > 150 > 80 > blue
+
+
+def test_heic_orientation_is_applied_once_and_exif_stripped(client):
+    exif = Image.Exif()
+    exif[ExifTag.Orientation] = 6
+    exif[ExifTag.Make] = "CamaraSecreta"
+    item = upload(client, ("foto.heic", heic_bytes(exif=exif))).json()["items"][0]
+    image, raw = read_stored(client, item["url"])
+    assert b"CamaraSecreta" not in raw
+    assert not dict(image.getexif())
+    # Orientation 6 turns the 64x32 source a quarter turn clockwise: the blue left half ends on top.
+    assert image.size == (32, 64)
+    top, bottom = image.convert("RGB").getpixel((16, 8)), image.convert("RGB").getpixel((16, 56))
+    assert top[2] > 150 > top[0] and bottom[0] > 150 > bottom[2]
+
+
 def test_several_files_in_one_request_with_a_partial_failure(client):
     response = upload(client, ("a.jpg", image_bytes()), ("b.jpg", b"not an image"))
     assert response.status_code == 201
